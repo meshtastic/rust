@@ -32,7 +32,7 @@ fn main() -> std::io::Result<()> {
         derive_string.push_str("serde::Serialize, serde::Deserialize");
     }
 
-    #[cfg(all(feature = "ts-gen", not(feature = "serde")))]
+    #[cfg(feature = "ts-gen")]
     {
         derive_string.push_str("specta::Type");
     }
