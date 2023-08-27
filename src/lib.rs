@@ -3,6 +3,7 @@ pub mod utils;
 
 #[cfg(feature = "ts-gen")]
 pub mod ts {
+    #![allow(non_snake_case)]
     pub use specta;
 }
 

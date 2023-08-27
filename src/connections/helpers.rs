@@ -1,6 +1,42 @@
 use rand::{distributions::Standard, prelude::Distribution, Rng};
 use std::time::UNIX_EPOCH;
 
+/// A helper method to generate random numbers using the `rand` crate.
+///
+/// This method is intended to be used to generate random id values. This method
+/// is generic, and will generate a random value within the range of the passed generic type.
+///
+/// # Arguments
+///
+/// None
+///
+/// # Returns
+///
+/// A random value of the passed generic type.
+///
+/// # Examples
+///
+/// ```
+/// let packet_id = utils::generate_rand_id::<u32>();
+/// println!("Generated random id: {}", packet_id);
+/// ```
+///
+/// # Errors
+///
+/// None
+///
+/// # Panics
+///
+/// None
+///
+pub fn generate_rand_id<T>() -> T
+where
+    Standard: Distribution<T>,
+{
+    let mut rng = rand::thread_rng();
+    rng.gen::<T>()
+}
+
 pub(crate) fn get_current_time_u32() -> u32 {
     std::time::SystemTime::now()
         .duration_since(UNIX_EPOCH)
@@ -8,14 +44,6 @@ pub(crate) fn get_current_time_u32() -> u32 {
         .as_secs()
         .try_into()
         .expect("Could not convert u128 to u32")
-}
-
-pub fn generate_rand_id<T>() -> T
-where
-    Standard: Distribution<T>,
-{
-    let mut rng = rand::thread_rng();
-    rng.gen::<T>()
 }
 
 pub(crate) fn format_data_packet(data: Vec<u8>) -> Vec<u8> {
