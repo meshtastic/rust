@@ -5,6 +5,7 @@ edition = "2021"
 
 [features]
 default = ["serde"]
+
 serde = []
 ts-gen = ["serde"]
 
