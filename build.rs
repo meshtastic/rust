@@ -25,11 +25,26 @@ fn main() -> std::io::Result<()> {
 
     let mut config = prost_build::Config::new();
 
-    config.type_attribute(
-        ".",
-        "#[derive(serde::Serialize, serde::Deserialize, specta::Type)]",
-    );
-    config.type_attribute(".", "#[serde(rename_all = \"camelCase\")]");
+    let mut derive_string = String::from("#[derive(");
+
+    #[cfg(feature = "serde")]
+    {
+        derive_string.push_str("serde::Serialize, serde::Deserialize");
+    }
+
+    #[cfg(all(feature = "ts-gen", not(feature = "serde")))]
+    {
+        derive_string.push_str("specta::Type");
+    }
+
+    derive_string.push_str(")]");
+
+    config.type_attribute(".", derive_string.as_str());
+
+    #[cfg(feature = "serde")]
+    {
+        config.type_attribute(".", "#[serde(rename_all = \"camelCase\")]");
+    }
 
     config.compile_protos(&protos, &[protobufs_dir]).unwrap();
 

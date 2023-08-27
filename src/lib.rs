@@ -1,8 +1,15 @@
 pub mod connections;
 pub mod utils;
 
-pub use specta;
+#[cfg(feature = "ts-gen")]
+pub mod ts {
+    pub use specta::ts::{BigIntExportBehavior, ExportConfiguration, ModuleExportBehavior};
+}
+
+pub use prost::Message;
+
 pub mod protobufs {
+
     #![allow(non_snake_case)]
     include!(concat!(env!("OUT_DIR"), "/meshtastic.rs"));
 }
