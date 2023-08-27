@@ -29,12 +29,12 @@ fn main() -> std::io::Result<()> {
 
     #[cfg(feature = "serde")]
     {
-        derive_string.push_str("serde::Serialize, serde::Deserialize");
+        derive_string.push_str("serde::Serialize, serde::Deserialize, ");
     }
 
     #[cfg(feature = "ts-gen")]
     {
-        derive_string.push_str("specta::Type");
+        derive_string.push_str("specta::Type, ");
     }
 
     derive_string.push_str(")]");
