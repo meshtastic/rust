@@ -796,13 +796,6 @@ impl StreamApi {
         packet_router: &mut R,
         channel_config: protobufs::Channel,
     ) -> Result<(), String> {
-        // // Update local DB with channel changes, since channel changes won't restart device
-
-        // packet_router.add_channel(MeshChannel {
-        //     config: channel.clone(),
-        //     ..Default::default()
-        // });
-
         // Tell device to update channels
 
         let channel_packet = protobufs::AdminMessage {
@@ -947,10 +940,6 @@ impl StreamApi {
     /// None
     ///
     pub async fn start_config_transaction(&mut self) -> Result<(), String> {
-        // if device.config_in_progress {
-        //     return Err("Configuration already in progress".to_string());
-        // }
-
         let to_radio = protobufs::AdminMessage {
             payload_variant: Some(protobufs::admin_message::PayloadVariant::BeginEditSettings(
                 true,
@@ -963,7 +952,6 @@ impl StreamApi {
             .map_err(|e| e.to_string())?;
 
         self.send_raw(packet_buf).await?;
-        // packet_router.config_in_progress = true;
 
         Ok(())
     }
@@ -1014,10 +1002,6 @@ impl StreamApi {
     /// None
     ///    
     pub async fn commit_config_transaction(&mut self) -> Result<(), String> {
-        // if !packet_router.config_in_progress {
-        //     return Err("No configuration in progress".to_string());
-        // }
-
         let to_radio = protobufs::AdminMessage {
             payload_variant: Some(
                 protobufs::admin_message::PayloadVariant::CommitEditSettings(true),
@@ -1031,7 +1015,6 @@ impl StreamApi {
             .map_err(|e| e.to_string())?;
 
         self.send_raw(packet_buf).await?;
-        // packet_router.config_in_progress = false;
 
         Ok(())
     }
