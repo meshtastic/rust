@@ -26,19 +26,22 @@ pub const DEFAULT_RTS_PIN: bool = false;
 // methods are called in the correct order. This is done by using the typestate
 // pattern, which is a way of using the type system to enforce state transitions.
 // Reference: https://github.com/letsgetrusty/generics_and_zero_sized_types/blob/master/src/main.rs
-#[derive(Default)]
-pub struct Disconnected;
+pub mod state {
 
-#[derive(Default)]
-pub struct Connected;
+    #[derive(Default)]
+    pub struct Disconnected;
 
-#[derive(Default)]
-pub struct Configured;
+    #[derive(Default)]
+    pub struct Connected;
 
-pub trait CanTransmit {}
+    #[derive(Default)]
+    pub struct Configured;
 
-impl CanTransmit for Connected {}
-impl CanTransmit for Configured {}
+    pub trait CanTransmit {}
+
+    impl CanTransmit for Connected {}
+    impl CanTransmit for Configured {}
+}
 
 // StreamApi definition
 
@@ -68,7 +71,7 @@ pub struct StreamApi<State> {
 
 // Helper functions for building `AsyncReadExt + AsyncWriteExt` streams
 
-impl StreamApi<Disconnected> {
+impl StreamApi<state::Disconnected> {
     /// A helper method that uses the `tokio_serial` crate to build a serial stream
     /// that is compatible with the `StreamApi` API. This requires that the stream
     /// implements `AsyncReadExt + AsyncWriteExt` traits.
@@ -196,7 +199,7 @@ impl StreamApi<Disconnected> {
 
 // Internal helper functions
 
-impl<State: CanTransmit> StreamApi<State> {
+impl<State: state::CanTransmit> StreamApi<State> {
     async fn send_packet<M, E: Display, R: PacketRouter<M, E>>(
         &mut self,
         packet_router: &mut R,
@@ -280,7 +283,7 @@ impl<State: CanTransmit> StreamApi<State> {
 
 // Public connection management API
 
-impl StreamApi<Disconnected> {
+impl StreamApi<state::Disconnected> {
     /// A method to create an unconfigured instance of the `StreamApi` struct.
     ///
     /// # Arguments
@@ -305,7 +308,7 @@ impl StreamApi<Disconnected> {
     ///
     /// None
     ///
-    pub fn new() -> StreamApi<Disconnected> {
+    pub fn new() -> StreamApi<state::Disconnected> {
         Self::default()
     }
 
@@ -352,7 +355,7 @@ impl StreamApi<Disconnected> {
         stream: S,
     ) -> (
         UnboundedReceiver<protobufs::FromRadio>,
-        StreamApi<Connected>,
+        StreamApi<state::Connected>,
     )
     where
         S: AsyncReadExt + AsyncWriteExt + Send + 'static,
@@ -396,7 +399,7 @@ impl StreamApi<Disconnected> {
 
         (
             decoded_packet_rx,
-            StreamApi::<Connected> {
+            StreamApi::<state::Connected> {
                 write_input_tx: self.write_input_tx,
                 read_handle: self.read_handle,
                 write_handle: self.write_handle,
@@ -408,7 +411,7 @@ impl StreamApi<Disconnected> {
     }
 }
 
-impl StreamApi<Connected> {
+impl StreamApi<state::Connected> {
     /// This method is used to trigger the transmission of the current state of the
     /// radio, as well as to subscribe to future `FromRadio` mesh packets. This method
     /// can only be called after the `connect` method has been called.
@@ -460,7 +463,10 @@ impl StreamApi<Connected> {
     ///
     /// None
     ///
-    pub async fn configure(mut self, config_id: u32) -> Result<StreamApi<Configured>, String> {
+    pub async fn configure(
+        mut self,
+        config_id: u32,
+    ) -> Result<StreamApi<state::Configured>, String> {
         let to_radio = protobufs::ToRadio {
             payload_variant: Some(protobufs::to_radio::PayloadVariant::WantConfigId(config_id)),
         };
@@ -468,7 +474,7 @@ impl StreamApi<Connected> {
         let packet_buf = to_radio.encode_to_vec();
         self.send_raw(packet_buf).await?;
 
-        Ok(StreamApi::<Configured> {
+        Ok(StreamApi::<state::Configured> {
             write_input_tx: self.write_input_tx,
             read_handle: self.read_handle,
             write_handle: self.write_handle,
@@ -479,7 +485,7 @@ impl StreamApi<Connected> {
     }
 }
 
-impl StreamApi<Configured> {
+impl StreamApi<state::Configured> {
     /// A method to disconnect from a radio. This method will close all channels and
     /// join all worker threads. If connected via serial or TCP, this will also trigger
     /// the radio to terminate its current connection.
@@ -515,7 +521,7 @@ impl StreamApi<Configured> {
     ///
     /// None
     ///
-    pub async fn disconnect(mut self) -> Result<StreamApi<Disconnected>, String> {
+    pub async fn disconnect(mut self) -> Result<StreamApi<state::Disconnected>, String> {
         // Tell worker threads to shut down
         if let Some(token) = self.cancellation_token.take() {
             token.cancel();
@@ -547,7 +553,7 @@ impl StreamApi<Configured> {
 
         trace!("TCP handlers fully disconnected");
 
-        Ok(StreamApi::<Disconnected> {
+        Ok(StreamApi::<state::Disconnected> {
             write_input_tx: self.write_input_tx,
             read_handle: self.read_handle,
             write_handle: self.write_handle,
@@ -560,7 +566,7 @@ impl StreamApi<Configured> {
 
 // Public node management API
 
-impl StreamApi<Configured> {
+impl StreamApi<state::Configured> {
     /// Sends the specified text content over the mesh.
     ///
     /// # Arguments
