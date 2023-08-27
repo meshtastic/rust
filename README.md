@@ -133,6 +133,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 ```
 
+## Stats
+
+![Alt](https://repobeats.axiom.co/api/embed/18c638d36dc51fd03acfe5c2e52979ad67b04bc9.svg "Repobeats analytics image")
+
 ## Contributing
 
 Contributions are welcome! If you find a bug or want to propose a new feature, please open an issue or submit a pull request.
