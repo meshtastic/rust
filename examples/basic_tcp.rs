@@ -9,7 +9,7 @@ use meshtastic::connections::{helpers::generate_rand_id, stream_api::StreamApi};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let mut stream_api = StreamApi::new();
+    let stream_api = StreamApi::new();
 
     println!("Enter the address of a TCP port to connect to, in the form \"IP:PORT\":");
 
@@ -22,10 +22,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .expect("Could not read next line");
 
     let tcp_stream = StreamApi::build_tcp_stream(entered_address).await?;
-    let mut decoded_listener = stream_api.connect(tcp_stream).await;
+    let (mut decoded_listener, stream_api) = stream_api.connect(tcp_stream).await;
 
     let config_id = generate_rand_id();
-    stream_api.configure(config_id).await?;
+    let stream_api = stream_api.configure(config_id).await?;
 
     // This loop can be broken with ctrl+c, or by unpowering the radio.
     while let Some(decoded) = decoded_listener.recv().await {
@@ -36,7 +36,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // the radio is disconnected, as the above loop will never exit.
     // Typically you would allow the user to manually kill the loop,
     // for example with tokio::select!.
-    stream_api.disconnect().await?;
+    let _stream_api = stream_api.disconnect().await?;
 
     Ok(())
 }

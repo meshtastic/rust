@@ -1,7 +1,7 @@
 use crate::protobufs;
 use log::trace;
 use prost::Message;
-use std::{fmt::Display, time::Duration};
+use std::{fmt::Display, marker::PhantomData, time::Duration};
 use tokio::{
     io::{AsyncReadExt, AsyncWriteExt},
     sync::mpsc::{UnboundedReceiver, UnboundedSender},
@@ -16,12 +16,45 @@ use super::{
     PacketDestination, PacketRouter,
 };
 
+// Constants declarations
+
 pub const DEFAULT_SERIAL_BAUD: u32 = 115_200;
 pub const DEFAULT_DTR_PIN: bool = true;
 pub const DEFAULT_RTS_PIN: bool = false;
 
+// These structs are needed to guarantee that the `StreamApi` struct connection
+// methods are called in the correct order. This is done by using the typestate
+// pattern, which is a way of using the type system to enforce state transitions.
+// Reference: https://github.com/letsgetrusty/generics_and_zero_sized_types/blob/master/src/main.rs
+#[derive(Default)]
+pub struct Disconnected;
+
+#[derive(Default)]
+pub struct Connected;
+
+#[derive(Default)]
+pub struct Configured;
+
+pub trait CanTransmit {}
+
+impl CanTransmit for Connected {}
+impl CanTransmit for Configured {}
+
+// StreamApi definition
+
+/// A struct that provides a high-level API for communicating with a Meshtastic radio.
+///
+/// This struct can either be in the `Disconnected`, `Connected`, or `Configured` state.
+/// The `Disconnected` state is the default state, and is used to create an unconfigured
+/// instance of the `StreamApi` struct. The `Connected` state is used to indicate that
+/// the `connect` method has been called, and the `Configured` state is used to indicate
+/// that the `configure` method has been called.
+///
+/// These types are intended for internal use only, but are used along with the `CanTransmit`
+/// trait to enforce the correct order of method calls. This is to prevent the developer from
+/// calling methods in invalid orders (e.g., calling `configure` before `connect`).
 #[derive(Debug, Default)]
-pub struct StreamApi {
+pub struct StreamApi<State> {
     write_input_tx: Option<UnboundedSender<Vec<u8>>>,
 
     read_handle: Option<JoinHandle<()>>,
@@ -29,11 +62,13 @@ pub struct StreamApi {
     processing_handle: Option<JoinHandle<()>>,
 
     cancellation_token: Option<CancellationToken>,
+
+    typestate: PhantomData<State>,
 }
 
 // Helper functions for building `AsyncReadExt + AsyncWriteExt` streams
 
-impl StreamApi {
+impl StreamApi<Disconnected> {
     /// A helper method that uses the `tokio_serial` crate to build a serial stream
     /// that is compatible with the `StreamApi` API. This requires that the stream
     /// implements `AsyncReadExt + AsyncWriteExt` traits.
@@ -161,7 +196,7 @@ impl StreamApi {
 
 // Internal helper functions
 
-impl StreamApi {
+impl<State: CanTransmit> StreamApi<State> {
     async fn send_packet<M, E: Display, R: PacketRouter<M, E>>(
         &mut self,
         packet_router: &mut R,
@@ -231,7 +266,6 @@ impl StreamApi {
         Ok(())
     }
 
-    // TODO want a way to force connection before configuration
     async fn send_raw(&mut self, data: Vec<u8>) -> Result<(), String> {
         let channel = self
             .write_input_tx
@@ -246,7 +280,7 @@ impl StreamApi {
 
 // Public connection management API
 
-impl StreamApi {
+impl StreamApi<Disconnected> {
     /// A method to create an unconfigured instance of the `StreamApi` struct.
     ///
     /// # Arguments
@@ -271,7 +305,7 @@ impl StreamApi {
     ///
     /// None
     ///
-    pub fn new() -> Self {
+    pub fn new() -> StreamApi<Disconnected> {
         Self::default()
     }
 
@@ -296,12 +330,13 @@ impl StreamApi {
     ///
     /// ```
     /// // Example 1: Connect to a serial port
+    /// let stream_api = StreamApi::new();
     /// let serial_stream = build_serial_stream("/dev/ttyUSB0".to_string(), None, None, None)?;
-    /// let decoded_listener = stream_api.connect(serial_stream).await;
+    /// let (decoded_listener, stream_api) = stream_api.connect(serial_stream).await;
     ///
     /// // Example 2: Connect to a TCP port
     /// let tcp_stream = build_tcp_stream("localhost:4403".to_string())?;
-    /// let decoded_listener = stream_api.connect(tcp_stream).await;
+    /// let (decoded_listener, stream_api) = stream_api.connect(tcp_stream).await;
     /// ```
     ///
     /// # Errors
@@ -312,7 +347,13 @@ impl StreamApi {
     ///
     /// None
     ///
-    pub async fn connect<S>(&mut self, stream: S) -> UnboundedReceiver<protobufs::FromRadio>
+    pub async fn connect<S>(
+        mut self,
+        stream: S,
+    ) -> (
+        UnboundedReceiver<protobufs::FromRadio>,
+        StreamApi<Connected>,
+    )
     where
         S: AsyncReadExt + AsyncWriteExt + Send + 'static,
     {
@@ -353,14 +394,97 @@ impl StreamApi {
 
         // Return channel for receiving decoded packets
 
-        decoded_packet_rx
+        (
+            decoded_packet_rx,
+            StreamApi::<Connected> {
+                write_input_tx: self.write_input_tx,
+                read_handle: self.read_handle,
+                write_handle: self.write_handle,
+                processing_handle: self.processing_handle,
+                cancellation_token: self.cancellation_token,
+                typestate: PhantomData,
+            },
+        )
     }
+}
 
+impl StreamApi<Connected> {
+    /// This method is used to trigger the transmission of the current state of the
+    /// radio, as well as to subscribe to future `FromRadio` mesh packets. This method
+    /// can only be called after the `connect` method has been called.
+    ///
+    /// This method triggers a `WantConfigId` packet to be sent to the radio containing
+    /// an arbitrary configuration identifier. This will tell the radio that the client
+    /// wants to connect. The radio will respond by sending its current configuration,
+    /// module configuration, and channel configuration. The radio will indicate that it
+    /// has finished transmission by sending a `ConfigComplete` packet, which will contain
+    /// the same configuration identifier that was sent in the `WantConfigId` packet. Tracking
+    /// whether or not configuration completes successfully is not handled by this method.
+    ///
+    /// Once a radio connection has been configured, the radio will send all future packets
+    /// it receives through the decoded packet channel. This will continue until the
+    /// `disconnect` method is called.
+    ///
+    /// # Arguments
+    ///
+    /// * `config_id` - A randomly generated configuration ID that will be used
+    /// to check that the configuration process has completed.
+    ///
+    /// # Returns
+    ///
+    /// Returns a `Result` indicating whether or not the configuration was successful.
+    /// The configuration will fail if the `WantConfigId` packet fails to send.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let stream_api = StreamApi::new();
+    /// let tcp_stream = build_tcp_stream("localhost:4403".to_string())?;
+    /// let (decoded_listener, stream_api) = stream_api.connect(tcp_stream).await;
+    ///
+    /// let config_id = gen_random_id();
+    /// stream_api.configure(config_id).await?;
+    ///
+    /// while let Some(packet) = decoded_listener.recv().await {
+    ///     // Process packets
+    /// }
+    ///
+    /// stream_api.disconnect().await?;
+    /// ```
+    ///
+    /// # Errors
+    ///
+    /// Fails if the `WantConfigId` packet fails to send.
+    ///
+    /// # Panics
+    ///
+    /// None
+    ///
+    pub async fn configure(mut self, config_id: u32) -> Result<StreamApi<Configured>, String> {
+        let to_radio = protobufs::ToRadio {
+            payload_variant: Some(protobufs::to_radio::PayloadVariant::WantConfigId(config_id)),
+        };
+
+        let packet_buf = to_radio.encode_to_vec();
+        self.send_raw(packet_buf).await?;
+
+        Ok(StreamApi::<Configured> {
+            write_input_tx: self.write_input_tx,
+            read_handle: self.read_handle,
+            write_handle: self.write_handle,
+            processing_handle: self.processing_handle,
+            cancellation_token: self.cancellation_token,
+            typestate: PhantomData,
+        })
+    }
+}
+
+impl StreamApi<Configured> {
     /// A method to disconnect from a radio. This method will close all channels and
     /// join all worker threads. If connected via serial or TCP, this will also trigger
     /// the radio to terminate its current connection.
     ///
-    /// This method can only be called after the `connect` method has been called.
+    /// This method can only be called after the `configure` method has been called.
     ///
     /// # Arguments
     ///
@@ -374,8 +498,9 @@ impl StreamApi {
     /// # Examples
     ///
     /// ```
+    /// let stream_api = StreamApi::new();
     /// let tcp_stream = build_tcp_stream("localhost:4403".to_string())?;
-    /// let decoded_listener = stream_api.connect(tcp_stream).await;
+    /// let (decoded_listener, stream_api) = stream_api.connect(tcp_stream).await;
     ///
     /// // Process packets from the `decoded_listener` channel
     ///
@@ -390,7 +515,7 @@ impl StreamApi {
     ///
     /// None
     ///
-    pub async fn disconnect(&mut self) -> Result<(), String> {
+    pub async fn disconnect(mut self) -> Result<StreamApi<Disconnected>, String> {
         // Tell worker threads to shut down
         if let Some(token) = self.cancellation_token.take() {
             token.cancel();
@@ -422,74 +547,20 @@ impl StreamApi {
 
         trace!("TCP handlers fully disconnected");
 
-        Ok(())
-    }
-
-    /// This method is used to trigger the transmission of the current state of the
-    /// radio, as well as to subscribe to future `FromRadio` mesh packets. This method
-    /// must be called after the `connect` method.
-    ///
-    /// This method triggers a `WantConfigId` packet to be sent to the radio containing
-    /// an arbitrary configuration identifier. This will tell the radio that the client
-    /// wants to connect. The radio will respond by sending its current configuration,
-    /// module configuration, and channel configuration. The radio will indicate that it
-    /// has finished transmission by sending a `ConfigComplete` packet, which will contain
-    /// the same configuration identifier that was sent in the `WantConfigId` packet. Tracking
-    /// whether or not configuration completes successfully is not handled by this method.
-    ///
-    /// Once a radio connection has been configured, the radio will send all future packets
-    /// it receives through the decoded packet channel. This will continue until the
-    /// `disconnect` method is called.
-    ///
-    /// # Arguments
-    ///
-    /// * `config_id` - A randomly generated configuration ID that will be used
-    /// to check that the configuration process has completed.
-    ///
-    /// # Returns
-    ///
-    /// Returns a `Result` indicating whether or not the configuration was successful.
-    /// The configuration will fail if the `WantConfigId` packet fails to send.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// let tcp_stream = build_tcp_stream("localhost:4403".to_string())?;
-    /// let decoded_listener = stream_api.connect(tcp_stream).await;
-    ///
-    /// let config_id = gen_random_id();
-    /// stream_api.configure(config_id).await?;
-    ///
-    /// while let Some(packet) = decoded_listener.recv().await {
-    ///     // Process packets
-    /// }
-    ///
-    /// stream_api.disconnect().await?;
-    /// ```
-    ///
-    /// # Errors
-    ///
-    /// Fails if the `WantConfigId` packet fails to send.
-    ///
-    /// # Panics
-    ///
-    /// None
-    ///
-    pub async fn configure(&mut self, config_id: u32) -> Result<(), String> {
-        let to_radio = protobufs::ToRadio {
-            payload_variant: Some(protobufs::to_radio::PayloadVariant::WantConfigId(config_id)),
-        };
-
-        let packet_buf = to_radio.encode_to_vec();
-        self.send_raw(packet_buf).await?;
-
-        Ok(())
+        Ok(StreamApi::<Disconnected> {
+            write_input_tx: self.write_input_tx,
+            read_handle: self.read_handle,
+            write_handle: self.write_handle,
+            processing_handle: self.processing_handle,
+            cancellation_token: self.cancellation_token,
+            typestate: PhantomData,
+        })
     }
 }
 
 // Public node management API
 
-impl StreamApi {
+impl StreamApi<Configured> {
     /// Sends the specified text content over the mesh.
     ///
     /// # Arguments
@@ -509,8 +580,12 @@ impl StreamApi {
     /// # Examples
     ///
     /// ```
+    /// let stream_api = StreamApi::new();
     /// let tcp_stream = build_tcp_stream("localhost:4403".to_string())?;
-    /// let _decoded_listener = stream_api.connect(tcp_stream).await;
+    /// let (_decoded_listener, stream_api) = stream_api.connect(tcp_stream).await;
+    ///
+    /// let config_id = generate_rand_id();
+    /// let mut stream_api = stream_api.configure(config_id).await?;
     ///
     /// stream_api.send_text(packet_router, "Hello world!".to_string(), PacketDestination::Broadcast, true, 0).await?;
     /// ```
@@ -573,8 +648,12 @@ impl StreamApi {
     /// # Examples
     ///
     /// ```
+    /// let stream_api = StreamApi::new();
     /// let tcp_stream = build_tcp_stream("localhost:4403".to_string())?;
-    /// let _decoded_listener = stream_api.connect(tcp_stream).await;
+    /// let (_decoded_listener, stream_api) = stream_api.connect(tcp_stream).await;
+    ///
+    /// let config_id = generate_rand_id();
+    /// let mut stream_api = stream_api.configure(config_id).await?;
     ///
     /// let waypoint = crate::protobufs::Waypoint { ... };
     /// stream_api.send_waypoint(packet_router, waypoint, PacketDestination::Broadcast, true, 0).await?;
@@ -644,8 +723,12 @@ impl StreamApi {
     /// # Examples
     ///
     /// ```
+    /// let stream_api = StreamApi::new();
     /// let tcp_stream = build_tcp_stream("localhost:4403".to_string())?;
-    /// let _decoded_listener = stream_api.connect(tcp_stream).await;
+    /// let (_decoded_listener, stream_api) = stream_api.connect(tcp_stream).await;
+    ///
+    /// let config_id = generate_rand_id();
+    /// let mut stream_api = stream_api.configure(config_id).await?;
     ///
     /// let config_update = crate::protobufs::config::PositionConfig { ... };
     /// stream_api.update_config(packet_router, config_update).await?;
@@ -710,8 +793,12 @@ impl StreamApi {
     /// # Examples
     ///
     /// ```
+    /// let stream_api = StreamApi::new();
     /// let tcp_stream = build_tcp_stream("localhost:4403".to_string())?;
-    /// let _decoded_listener = stream_api.connect(tcp_stream).await;
+    /// let (_decoded_listener, stream_api) = stream_api.connect(tcp_stream).await;
+    ///
+    /// let config_id = generate_rand_id();
+    /// let mut stream_api = stream_api.configure(config_id).await?;
     ///
     /// let module_config_update = crate::protobufs::module_config::MqttConfig { ... };
     /// stream_api.update_module_config(packet_router, module_config_update).await?;
@@ -776,8 +863,12 @@ impl StreamApi {
     /// # Examples
     ///
     /// ```
+    /// let stream_api = StreamApi::new();
     /// let tcp_stream = build_tcp_stream("localhost:4403".to_string())?;
-    /// let _decoded_listener = stream_api.connect(tcp_stream).await;
+    /// let (_decoded_listener, stream_api) = stream_api.connect(tcp_stream).await;
+    ///
+    /// let config_id = generate_rand_id();
+    /// let mut stream_api = stream_api.configure(config_id).await?;
     ///
     /// let channel_config_update = crate::protobufs::Channel { id: 1, ... }
     /// stream_api.update_channel_config(packet_router, channel_config_update).await?;
@@ -839,8 +930,12 @@ impl StreamApi {
     /// # Examples
     ///
     /// ```
+    /// let stream_api = StreamApi::new();
     /// let tcp_stream = build_tcp_stream("localhost:4403".to_string())?;
-    /// let _decoded_listener = stream_api.connect(tcp_stream).await;
+    /// let (_decoded_listener, stream_api) = stream_api.connect(tcp_stream).await;
+    ///
+    /// let config_id = generate_rand_id();
+    /// let mut stream_api = stream_api.configure(config_id).await?;
     ///
     /// let new_user = crate::protobufs::User { ... };
     /// stream_api.update_user(packet_router, new_user).await?;
