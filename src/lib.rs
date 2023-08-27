@@ -7,6 +7,7 @@ pub mod ts {
     pub use specta::ts::{
         BigIntExportBehavior, ExportConfiguration, ModuleExportBehavior, TsExportError,
     };
+    pub use specta::Type;
 }
 
 pub use prost::Message;
