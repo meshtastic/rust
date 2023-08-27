@@ -1,11 +1,11 @@
 /// This example connects to a TCP port on the radio, and prints out all received packets.
 /// This can be used with a simulated radio via the Meshtastic Docker firmware image.
 /// https://meshtastic.org/docs/software/linux-native#usage-with-docker
-extern crate meshtastic_rust;
+extern crate meshtastic;
 
 use std::io::{self, BufRead};
 
-use meshtastic_rust::connections::{helpers::generate_rand_id, stream_api::StreamApi};
+use meshtastic::connections::{helpers::generate_rand_id, stream_api::StreamApi};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
