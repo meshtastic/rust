@@ -3,6 +3,12 @@ name = "meshtastic-rust"
 version = "0.1.0"
 edition = "2021"
 
+[[example]]
+name = "basic_serial"
+
+[[example]]
+name = "basic_tcp"
+
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [build-dependencies]

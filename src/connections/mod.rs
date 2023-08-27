@@ -3,7 +3,7 @@ use std::fmt::Display;
 use crate::protobufs;
 
 pub(crate) mod handlers;
-pub(crate) mod helpers;
+pub mod helpers;
 pub mod stream_api;
 pub(crate) mod stream_buffer;
 

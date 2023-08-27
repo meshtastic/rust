@@ -60,11 +60,11 @@ impl StreamApi {
     ///
     /// ```
     /// // Accept default parameters
-    /// let serial_stream = build_serial_stream("/dev/ttyUSB0".to_string(), None, None, None)?;
+    /// let serial_stream = StreamApi::build_serial_stream("/dev/ttyUSB0".to_string(), None, None, None)?;
     /// let decoded_listener = stream_api.connect(serial_stream).await;
     ///
     /// // Specify all parameters
-    /// let serial_stream = build_serial_stream("/dev/ttyUSB0".to_string(), Some(115_200), Some(true), Some(false))?;
+    /// let serial_stream = StreamApi::build_serial_stream("/dev/ttyUSB0".to_string(), Some(115_200), Some(true), Some(false))?;
     /// let decoded_listener = stream_api.connect(serial_stream).await;
     /// ```
     ///
@@ -123,11 +123,11 @@ impl StreamApi {
     ///
     /// ```
     /// // Connect to a radio
-    /// let tcp_stream = build_serial_stream("192.168.0.1:4403")?;
+    /// let tcp_stream = StreamApi::build_serial_stream("192.168.0.1:4403")?;
     /// let decoded_listener = stream_api.connect(tcp_stream).await;
     ///
     /// // Connect to a firmware Docker container
-    /// let tcp_stream = build_serial_stream("localhost:4403")?;
+    /// let tcp_stream = StreamApi::build_serial_stream("localhost:4403")?;
     /// let decoded_listener = stream_api.connect(tcp_stream).await;
     /// ```
     ///

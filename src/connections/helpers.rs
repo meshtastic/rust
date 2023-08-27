@@ -1,7 +1,7 @@
 use rand::{distributions::Standard, prelude::Distribution, Rng};
 use std::time::UNIX_EPOCH;
 
-pub fn get_current_time_u32() -> u32 {
+pub(crate) fn get_current_time_u32() -> u32 {
     std::time::SystemTime::now()
         .duration_since(UNIX_EPOCH)
         .expect("Could not get time since unix epoch")
@@ -18,7 +18,7 @@ where
     rng.gen::<T>()
 }
 
-pub fn format_data_packet(data: Vec<u8>) -> Vec<u8> {
+pub(crate) fn format_data_packet(data: Vec<u8>) -> Vec<u8> {
     let (msb, _) = data.len().overflowing_shr(8);
     let lsb = (data.len() & 0xff) as u8;
 
