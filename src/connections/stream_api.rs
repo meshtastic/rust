@@ -289,7 +289,7 @@ impl<State: state::CanTransmit> StreamApi<State> {
         Ok(())
     }
 
-    pub async fn get_write_input_sender(&mut self) -> Result<UnboundedSender<Vec<u8>>, String> {
+    pub fn get_write_input_sender(&mut self) -> Result<UnboundedSender<Vec<u8>>, String> {
         self.write_input_tx
             .clone()
             .ok_or("Could not get write input sender".to_string())
