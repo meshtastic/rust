@@ -28,13 +28,13 @@ pub const DEFAULT_RTS_PIN: bool = false;
 // Reference: https://github.com/letsgetrusty/generics_and_zero_sized_types/blob/master/src/main.rs
 pub mod state {
 
-    #[derive(Default)]
+    #[derive(Debug, Default)]
     pub struct Disconnected;
 
-    #[derive(Default)]
+    #[derive(Debug, Default)]
     pub struct Connected;
 
-    #[derive(Default)]
+    #[derive(Debug, Default)]
     pub struct Configured;
 
     pub trait CanTransmit {}
@@ -57,7 +57,7 @@ pub mod state {
 /// trait to enforce the correct order of method calls. This is to prevent the developer from
 /// calling methods in invalid orders (e.g., calling `configure` before `connect`).
 #[derive(Debug, Default)]
-pub struct StreamApi<State> {
+pub struct StreamApi<State = state::Configured> {
     write_input_tx: Option<UnboundedSender<Vec<u8>>>,
 
     read_handle: Option<JoinHandle<()>>,
