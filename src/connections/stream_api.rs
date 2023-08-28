@@ -255,16 +255,17 @@ impl<State: state::CanTransmit> StreamApi<State> {
                 .map_err(|e| e.to_string())?;
         }
 
-        let to_radio_packet = protobufs::ToRadio {
-            payload_variant: Some(protobufs::to_radio::PayloadVariant::Packet(mesh_packet)),
-        };
-
-        self.send_to_radio_packet(to_radio_packet).await?;
+        let payload_variant = Some(protobufs::to_radio::PayloadVariant::Packet(mesh_packet));
+        self.send_to_radio_packet(payload_variant).await?;
 
         Ok(())
     }
 
-    pub async fn send_to_radio_packet(&mut self, packet: protobufs::ToRadio) -> Result<(), String> {
+    pub async fn send_to_radio_packet(
+        &mut self,
+        payload_variant: Option<protobufs::to_radio::PayloadVariant>,
+    ) -> Result<(), String> {
+        let packet = protobufs::ToRadio { payload_variant };
         let mut packet_buf: Vec<u8> = vec![];
 
         packet
