@@ -197,10 +197,10 @@ impl StreamApi<state::Disconnected> {
     }
 }
 
-// Internal helper functions
+// Packet helper functions
 
 impl<State: state::CanTransmit> StreamApi<State> {
-    async fn send_packet<M, E: Display, R: PacketRouter<M, E>>(
+    pub async fn send_mesh_packet<M, E: Display, R: PacketRouter<M, E>>(
         &mut self,
         packet_router: &mut R,
         byte_data: Vec<u8>,
@@ -222,7 +222,7 @@ impl<State: state::CanTransmit> StreamApi<State> {
             PacketDestination::Node(id) => id,
         };
 
-        let mut packet = protobufs::MeshPacket {
+        let mut mesh_packet = protobufs::MeshPacket {
             payload_variant: Some(protobufs::mesh_packet::PayloadVariant::Decoded(
                 protobufs::Data {
                     portnum: port_num as i32,
@@ -249,18 +249,25 @@ impl<State: state::CanTransmit> StreamApi<State> {
         };
 
         if echo_response {
-            packet.rx_time = get_current_time_u32();
+            mesh_packet.rx_time = get_current_time_u32();
             packet_router
-                .handle_mesh_packet(packet.clone())
+                .handle_mesh_packet(mesh_packet.clone())
                 .map_err(|e| e.to_string())?;
         }
 
-        let to_radio = protobufs::ToRadio {
-            payload_variant: Some(protobufs::to_radio::PayloadVariant::Packet(packet)),
+        let to_radio_packet = protobufs::ToRadio {
+            payload_variant: Some(protobufs::to_radio::PayloadVariant::Packet(mesh_packet)),
         };
 
+        self.send_to_radio_packet(to_radio_packet).await?;
+
+        Ok(())
+    }
+
+    pub async fn send_to_radio_packet(&mut self, packet: protobufs::ToRadio) -> Result<(), String> {
         let mut packet_buf: Vec<u8> = vec![];
-        to_radio
+
+        packet
             .encode::<Vec<u8>>(&mut packet_buf)
             .map_err(|e| e.to_string())?;
 
@@ -269,7 +276,7 @@ impl<State: state::CanTransmit> StreamApi<State> {
         Ok(())
     }
 
-    async fn send_raw(&mut self, data: Vec<u8>) -> Result<(), String> {
+    pub async fn send_raw(&mut self, data: Vec<u8>) -> Result<(), String> {
         let channel = self
             .write_input_tx
             .as_ref()
@@ -277,6 +284,7 @@ impl<State: state::CanTransmit> StreamApi<State> {
             .map_err(|e| e.to_string())?;
 
         channel.send(data).map_err(|e| e.to_string())?;
+
         Ok(())
     }
 }
@@ -614,7 +622,7 @@ impl StreamApi<state::Configured> {
     ) -> Result<(), String> {
         let byte_data = text.into_bytes();
 
-        self.send_packet(
+        self.send_mesh_packet(
             packet_router,
             byte_data,
             protobufs::PortNum::TextMessageApp,
@@ -689,7 +697,7 @@ impl StreamApi<state::Configured> {
         }
         let byte_data = waypoint.encode_to_vec();
 
-        self.send_packet(
+        self.send_mesh_packet(
             packet_router,
             byte_data,
             protobufs::PortNum::WaypointApp,
@@ -759,7 +767,7 @@ impl StreamApi<state::Configured> {
 
         let byte_data = config_packet.encode_to_vec();
 
-        self.send_packet(
+        self.send_mesh_packet(
             packet_router,
             byte_data,
             protobufs::PortNum::AdminApp,
@@ -831,7 +839,7 @@ impl StreamApi<state::Configured> {
 
         let byte_data = module_config_packet.encode_to_vec();
 
-        self.send_packet(
+        self.send_mesh_packet(
             packet_router,
             byte_data,
             protobufs::PortNum::AdminApp,
@@ -903,7 +911,7 @@ impl StreamApi<state::Configured> {
 
         let byte_data = channel_packet.encode_to_vec();
 
-        self.send_packet(
+        self.send_mesh_packet(
             packet_router,
             byte_data,
             protobufs::PortNum::AdminApp,
@@ -966,7 +974,7 @@ impl StreamApi<state::Configured> {
 
         let byte_data = user_packet.encode_to_vec();
 
-        self.send_packet(
+        self.send_mesh_packet(
             packet_router,
             byte_data,
             protobufs::PortNum::AdminApp,
