@@ -9,6 +9,8 @@ pub mod ts {
 
 pub use prost::Message;
 
+pub type PacketReceiver = tokio::sync::mpsc::UnboundedReceiver<protobufs::FromRadio>;
+
 pub mod protobufs {
 
     #![allow(non_snake_case)]
