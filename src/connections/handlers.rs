@@ -109,11 +109,6 @@ async fn start_write_handler<W>(
             error!("Error writing to stream: {:?}", e);
             break;
         }
-
-        // if let Err(e) = write_stream.flush().await {
-        //     error!("Error flushing stream: {:?}", e);
-        //     break;
-        // }
     }
 
     debug!("Write handler finished");

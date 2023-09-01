@@ -188,7 +188,7 @@ impl StreamApi<state::Disconnected> {
                 return Err(format!(
                     "Timed out connecting to {} with error \"{}.\" Check that the radio is on, network is enabled, and the address is correct.",
                     address,
-                    e.to_string()
+                    e
                 ));
             }
         };
@@ -289,7 +289,7 @@ impl<State: state::CanTransmit> StreamApi<State> {
         Ok(())
     }
 
-    pub fn get_write_input_sender(&mut self) -> Result<UnboundedSender<Vec<u8>>, String> {
+    pub fn get_write_input_sender(&self) -> Result<UnboundedSender<Vec<u8>>, String> {
         self.write_input_tx
             .clone()
             .ok_or("Could not get write input sender".to_string())
