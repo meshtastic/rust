@@ -37,6 +37,16 @@ where
     rng.gen::<T>()
 }
 
+pub fn format_data_packet(data: Vec<u8>) -> Vec<u8> {
+    let (msb, _) = data.len().overflowing_shr(8);
+    let lsb = (data.len() & 0xff) as u8;
+
+    let magic_buffer = [0x94, 0xc3, msb as u8, lsb];
+    let packet_slice = data.as_slice();
+
+    [&magic_buffer, packet_slice].concat()
+}
+
 pub(crate) fn get_current_time_u32() -> u32 {
     std::time::SystemTime::now()
         .duration_since(UNIX_EPOCH)
