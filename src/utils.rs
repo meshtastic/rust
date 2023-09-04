@@ -17,7 +17,7 @@ use tokio_serial::available_ports;
 /// # Examples
 ///
 /// ```
-/// let serial_ports = utils::get_available_serial_ports().unwrap();
+/// let serial_ports = utils::available_serial_ports().unwrap();
 /// println!("Available serial ports: {:?}", serial_ports);
 /// ```
 ///
@@ -29,7 +29,7 @@ use tokio_serial::available_ports;
 ///
 /// None
 ///
-pub fn get_available_serial_ports() -> Result<Vec<String>, String> {
+pub fn available_serial_ports() -> Result<Vec<String>, String> {
     let ports = available_ports()
         .map_err(|e| e.to_string())?
         .into_iter()

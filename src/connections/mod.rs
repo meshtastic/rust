@@ -141,9 +141,7 @@ pub trait PacketRouter<M, E: Display> {
     /// # Examples
     ///
     /// ```
-    /// stream_api.start_config_transaction().await?;
-    /// stream_api.set_message_channel_config(packet_router, vec![ ... ]).await?;
-    /// stream_api.commit_config_transaction().await?;
+    /// let source_node_id = router.source_node_id();
     /// ```
     ///
     /// # Errors
@@ -154,5 +152,5 @@ pub trait PacketRouter<M, E: Display> {
     ///
     /// None
     ///
-    fn get_source_node_id(&self) -> u32;
+    fn source_node_id(&self) -> u32;
 }

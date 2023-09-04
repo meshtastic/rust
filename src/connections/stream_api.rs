@@ -12,7 +12,7 @@ use tokio_util::sync::CancellationToken;
 
 use super::{
     handlers,
-    helpers::{generate_rand_id, get_current_time_u32},
+    helpers::{current_time_u32, generate_rand_id},
     PacketDestination, PacketRouter,
 };
 
@@ -214,7 +214,7 @@ impl<State: state::CanTransmit> StreamApi<State> {
         emoji: Option<u32>,
     ) -> Result<(), String> {
         // let own_node_id: u32 = self.my_node_info.as_ref().unwrap().my_node_num;
-        let own_node_id: u32 = packet_router.get_source_node_id();
+        let own_node_id: u32 = packet_router.source_node_id();
 
         let packet_destination: u32 = match destination {
             PacketDestination::Local => own_node_id,
@@ -249,7 +249,7 @@ impl<State: state::CanTransmit> StreamApi<State> {
         };
 
         if echo_response {
-            mesh_packet.rx_time = get_current_time_u32();
+            mesh_packet.rx_time = current_time_u32();
             packet_router
                 .handle_mesh_packet(mesh_packet.clone())
                 .map_err(|e| e.to_string())?;
