@@ -1,13 +1,12 @@
 use crate::{errors::Error, protobufs};
 use log::trace;
 use prost::Message;
-use std::{fmt::Display, marker::PhantomData, time::Duration};
+use std::{fmt::Display, marker::PhantomData};
 use tokio::{
     io::{AsyncReadExt, AsyncWriteExt},
     sync::mpsc::{UnboundedReceiver, UnboundedSender},
     task::JoinHandle,
 };
-use tokio_serial::{SerialPort, SerialStream};
 use tokio_util::sync::CancellationToken;
 
 use super::{
@@ -16,12 +15,6 @@ use super::{
     PacketDestination, PacketRouter,
 };
 
-// Constants declarations
-
-pub const DEFAULT_SERIAL_BAUD: u32 = 115_200;
-pub const DEFAULT_DTR_PIN: bool = true;
-pub const DEFAULT_RTS_PIN: bool = false;
-
 // These structs are needed to guarantee that the `StreamApi` struct connection
 // methods are called in the correct order. This is done by using the typestate
 // pattern, which is a way of using the type system to enforce state transitions.
@@ -29,21 +22,16 @@ pub const DEFAULT_RTS_PIN: bool = false;
 pub mod state {
 
     #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
-    pub struct Disconnected;
-
-    #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
     pub struct Connected;
 
     #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
     pub struct Configured;
-
-    pub trait CanTransmit {}
-
-    impl CanTransmit for Connected {}
-    impl CanTransmit for Configured {}
 }
 
 // StreamApi definition
+
+#[derive(Debug)]
+pub struct StreamApi;
 
 /// A struct that provides a high-level API for communicating with a Meshtastic radio.
 ///
@@ -56,160 +44,76 @@ pub mod state {
 /// These types are intended for internal use only, but are used along with the `CanTransmit`
 /// trait to enforce the correct order of method calls. This is to prevent the developer from
 /// calling methods in invalid orders (e.g., calling `configure` before `connect`).
-#[derive(Debug, Default)]
-pub struct StreamApi<State = state::Configured> {
-    write_input_tx: Option<UnboundedSender<Vec<u8>>>,
+#[derive(Debug)]
+pub struct ConnectedStreamApi<State = state::Configured> {
+    write_input_tx: UnboundedSender<Vec<u8>>,
 
-    read_handle: Option<JoinHandle<()>>,
-    write_handle: Option<JoinHandle<()>>,
-    processing_handle: Option<JoinHandle<()>>,
+    read_handle: JoinHandle<()>,
+    write_handle: JoinHandle<()>,
+    processing_handle: JoinHandle<()>,
 
-    cancellation_token: Option<CancellationToken>,
+    cancellation_token: CancellationToken,
 
     typestate: PhantomData<State>,
 }
 
-// Helper functions for building `AsyncReadExt + AsyncWriteExt` streams
-
-impl StreamApi<state::Disconnected> {
-    /// A helper method that uses the `tokio_serial` crate to build a serial stream
-    /// that is compatible with the `StreamApi` API. This requires that the stream
-    /// implements `AsyncReadExt + AsyncWriteExt` traits.
-    ///
-    /// This method is intended to be used to create a `SerialStream` instance, which is
-    /// then passed into the `StreamApi::connect` method.
-    ///
-    /// # Arguments
-    ///
-    /// * `port_name` - The system-specific name of the serial port to open. Unix ports
-    /// will be of the form /dev/ttyUSBx, while Windows ports will be of the form COMx.
-    /// * `baud_rate` - The baud rate of the serial port. Defaults to `115_200` if not passed.
-    /// * `dtr` - Asserts the "Data Terminal Ready" signal for the serial port if `true`.
-    /// Defaults to `true` if not passed.
-    /// * `rts` - Asserts the "Request To Send" signal for the serial port if `true`.
-    /// Defaults to `false` if not passed.
-    ///
-    /// # Returns
-    ///
-    /// Returns a result that resolves to a `tokio_serial::SerialStream` instance, or
-    /// a `String` error message if the stream could not be created.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// // Accept default parameters
-    /// let serial_stream = StreamApi::build_serial_stream("/dev/ttyUSB0".to_string(), None, None, None)?;
-    /// let decoded_listener = stream_api.connect(serial_stream).await;
-    ///
-    /// // Specify all parameters
-    /// let serial_stream = StreamApi::build_serial_stream("/dev/ttyUSB0".to_string(), Some(115_200), Some(true), Some(false))?;
-    /// let decoded_listener = stream_api.connect(serial_stream).await;
-    /// ```
-    ///
-    /// # Errors
-    ///
-    /// Will return a `String` error message in the event the stream could not be opened, or
-    /// if the `dtr` and `rts` signals fail to assert.
-    ///
-    /// # Panics
-    ///
-    /// None
-    ///
-    pub fn build_serial_stream(
-        port_name: String,
-        baud_rate: Option<u32>,
-        dtr: Option<bool>,
-        rts: Option<bool>,
-    ) -> Result<SerialStream, Error> {
-        let builder =
-            tokio_serial::new(port_name.clone(), baud_rate.unwrap_or(DEFAULT_SERIAL_BAUD))
-                .flow_control(tokio_serial::FlowControl::Software)
-                .timeout(Duration::from_millis(10));
-
-        let mut serial_stream =
-            tokio_serial::SerialStream::open(&builder).map_err(|e| Error::StreamBuildError {
-                source: Box::new(e),
-                description: format!("Error opening serial port \"{}\"", port_name).to_string(),
-        })?;
-
-        serial_stream
-            .write_data_terminal_ready(dtr.unwrap_or(DEFAULT_DTR_PIN))
-            .map_err(|e| Error::StreamBuildError {
-                source: Box::new(e),
-                description: "Failed to set DTR line".to_string(),
-            })?;
-
-        serial_stream
-            .write_request_to_send(rts.unwrap_or(DEFAULT_RTS_PIN))
-            .map_err(|e| Error::StreamBuildError {
-                source: Box::new(e),
-                description: "Failed to set RTS line".to_string(),
-            })?;
-
-        Ok(serial_stream)
-    }
-
-    /// A helper method that uses the `tokio` crate to build a TCP stream
-    /// that is compatible with the `StreamApi` API. This requires that the stream
-    /// implements `AsyncReadExt + AsyncWriteExt` traits.
-    ///
-    /// This method is intended to be used to create a `TcpStream` instance, which is
-    /// then passed into the `StreamApi::connect` method.
-    ///
-    /// # Arguments
-    ///
-    /// * `address` - The full TCP address of the device, including the port.
-    ///
-    /// # Returns
-    ///
-    /// Returns a result that resolves to a `tokio::net::TcpStream` instance, or
-    /// a `String` error message if the stream could not be created.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// // Connect to a radio
-    /// let tcp_stream = StreamApi::build_serial_stream("192.168.0.1:4403")?;
-    /// let decoded_listener = stream_api.connect(tcp_stream).await;
-    ///
-    /// // Connect to a firmware Docker container
-    /// let tcp_stream = StreamApi::build_serial_stream("localhost:4403")?;
-    /// let decoded_listener = stream_api.connect(tcp_stream).await;
-    /// ```
-    ///
-    /// # Errors
-    ///
-    /// Will return a `String` error message in the event that the radio refuses the connection,
-    /// or if the specified address is invalid.
-    ///
-    /// # Panics
-    ///
-    /// None
-    ///
-    pub async fn build_tcp_stream(address: String) -> Result<tokio::net::TcpStream, Error> {
-        let connection_future = tokio::net::TcpStream::connect(address.clone());
-        let timeout_duration = Duration::from_millis(3000);
-
-        let stream = match tokio::time::timeout(timeout_duration, connection_future).await {
-            Ok(stream) => stream.map_err(|e| Error::StreamBuildError {
-                source: Box::new(e),
-                description: format!("Failed to connect to {}", address).to_string(),
-            })?,
-            Err(e) => {
-                return Err(Error::StreamBuildError{source:Box::new(e),description:format!(
-                    "Timed out connecting to {}. Check that the radio is on, network is enabled, and the address is correct.",
-                    address,
-                )});
-            }
-        };
-
-        Ok(stream)
-    }
-}
-
 // Packet helper functions
 
-impl<State: state::CanTransmit> StreamApi<State> {
+impl<State> ConnectedStreamApi<State> {
+    /// A helper method to send encoded byte data to the radio within a MeshPacket wrapper.
+    /// This method is generally intended for advanced users and should only be used when the
+    /// more specific "send" methods are not sufficient.
+    ///
+    /// # Arguments
+    ///
+    /// * `packet_router` - A generic packet router field that implements the `PacketRouter` trait.
+    /// * `byte_data` - A `Vec<u8>` containing the byte data to send.
+    /// * `port_num` - A `PortNum` enum that specifies the port number to send the packet on.
+    /// * `destination` - A `PacketDestination` enum that specifies the destination of the packet.
+    /// * `channel` - A `u32` that specifies the message channel to send the packet on, in the range [0..7).
+    /// * `want_ack` - A `bool` that specifies whether or not the radio should wait for acknowledgement
+    /// from other nodes on the mesh.
+    /// * `want_response` - A `bool` that specifies whether or not the radio should wait for a response
+    /// from other nodes on the mesh.
+    /// * `echo_response` - A `bool` that specifies whether or not the radio should echo the packet back
+    /// to the client.
+    /// * `reply_id` - An optional `u32` that specifies the ID of the packet to reply to.
+    /// * `emoji` - An optional `u32` that specifies the unicode emoji data to send with the packet.
+    ///
+    /// # Returns
+    ///
+    /// A result indicating whether the packet was successfully dispatched to the radio.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// // Example 1: Send a text message to a node
+    /// let byte_data = "Hello, world!".to_string().into_bytes();
+    ///
+    /// self.send_mesh_packet(
+    ///     packet_router,
+    ///     byte_data,
+    ///     protobufs::PortNum::TextMessageApp,
+    ///     destination,
+    ///     channel,
+    ///     want_ack,
+    ///     false,
+    ///     true,
+    ///     None,
+    ///     None,
+    /// )
+    /// .await?;
+    /// ```
+    ///
+    /// # Errors
+    ///
+    /// Return an error based on whether the packet is successfully dispatched to the radio.
+    ///
+    /// # Panics
+    ///
+    /// None
+    ///
+    #[allow(clippy::too_many_arguments)]
     pub async fn send_mesh_packet<
         M,
         E: Display + std::error::Error + 'static + 'static,
@@ -227,7 +131,6 @@ impl<State: state::CanTransmit> StreamApi<State> {
         reply_id: Option<u32>,
         emoji: Option<u32>,
     ) -> Result<(), Error> {
-        // let own_node_id: u32 = self.my_node_info.as_ref().unwrap().my_node_num;
         let own_node_id: u32 = packet_router.source_node_id();
 
         let packet_destination: u32 = match destination {
@@ -277,6 +180,35 @@ impl<State: state::CanTransmit> StreamApi<State> {
         Ok(())
     }
 
+    /// A helper method to send a raw `ToRadio` packet to the radio based on a provided `protobufs::to_radio::PayloadVariant`.
+    /// This method is generally intended for advanced users and should only be used when the
+    /// more specific "send" methods are not sufficient.
+    ///
+    /// # Arguments
+    ///
+    /// * `payload_variant` - An optional `PayloadVariant` enum that specifies the payload to attach to the `ToRadio` packet.
+    ///
+    /// # Returns
+    ///
+    /// A result indicating whether the packet was successfully dispatched to the radio.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// // Example 1: Send a mesh packet onto the mesh
+    /// let mesh_packet = protobufs::MeshPacket { ... };
+    /// let payload_variant = Some(protobufs::to_radio::PayloadVariant::Packet(mesh_packet));
+    /// self.send_to_radio_packet(payload_variant).await?;
+    /// ```
+    ///
+    /// # Errors
+    ///
+    /// Returns an error based on whether the packet is successfully encoded and dispatched to the radio.
+    ///
+    /// # Panics
+    ///
+    /// None
+    ///
     pub async fn send_to_radio_packet(
         &mut self,
         payload_variant: Option<protobufs::to_radio::PayloadVariant>,
@@ -290,32 +222,85 @@ impl<State: state::CanTransmit> StreamApi<State> {
         Ok(())
     }
 
-    // TODO document
+    /// A helper method to send a raw `ToRadio` packet to the radio based on an encoded `ToRadio` packet.
+    /// This method is generally intended for advanced users and should only be used when the
+    /// more specific "send" methods are not sufficient.
+    ///
+    /// # Arguments
+    ///
+    /// * `packet_buf` - A `Vec<u8>` containing the encoded `ToRadio` packet to send.
+    ///
+    /// # Returns
+    ///
+    /// A result indicating whether the packet was successfully dispatched to the radio.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// // Example 1: Encode and send a `ToRadio` packet based on variant
+    /// let packet = protobufs::ToRadio { payload_variant };
+    ///
+    /// let mut packet_buf: Vec<u8> = vec![];
+    /// packet.encode::<Vec<u8>>(&mut packet_buf)?;
+    /// self.send_raw(packet_buf).await?;
+    /// ```
+    ///
+    /// # Errors
+    ///
+    /// Returns an error based on whether the packet is successfully encoded and dispatched to the radio.
+    /// This method will fail if the channel fails to send the encoded packet.
+    ///
+    /// # Panics
+    ///
+    /// None
+    ///
     pub async fn send_raw(&mut self, data: Vec<u8>) -> Result<(), Error> {
-        let channel = self
-            .write_input_tx
-            .as_ref()
-            .ok_or("Could not send message to write channel")
-            .map_err(|_e| Error::MissingOptionValue("write_input_tx".into()))?;
-
+        let channel = self.write_input_tx.clone();
         channel.send(data)?;
-
         Ok(())
     }
 
-    // TODO document
-    pub fn write_input_sender(&self) -> Result<UnboundedSender<Vec<u8>>, Error> {
-        self.write_input_tx
-            .clone()
-            .ok_or("Could not get write input sender".to_string())
-            .map_err(|_e| Error::MissingOptionValue("write_input_tx".into()))
-            .map(|tx| tx.clone())
+    /// A helper method to allow advanced users access to the internal `UnboundedSender` channel
+    /// used to send raw data to the radio. This method is generally intended for advanced users
+    /// and should only be used when the more specific "send" methods are not sufficient. This
+    /// method returns a copy of the internal `tokio::sync::mpsc::UnboundedSender` sender channel.
+    ///
+    /// This method is intended to be used when a user needs very low-level access to the radio
+    /// interface, for example to send a packet that isn't supported by the current "send" methods.
+    ///
+    /// **Note:** This sender is only intended to be used to send encoded packet data. This **does not**
+    /// include the 4 packet header bytes, which are attached to the payload in an internal worker thread.
+    ///
+    /// # Arguments
+    ///
+    /// None
+    ///
+    /// # Returns
+    ///
+    /// Returns an `UnboundedSender` channel that can be used to send raw data to the radio.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let write_input_sender = stream_api.write_input_sender();
+    /// ```
+    ///
+    /// # Errors
+    ///
+    /// None
+    ///
+    /// # Panics
+    ///
+    /// None
+    ///
+    pub fn write_input_sender(&self) -> UnboundedSender<Vec<u8>> {
+        self.write_input_tx.clone()
     }
 }
 
 // Public connection management API
 
-impl StreamApi<state::Disconnected> {
+impl StreamApi {
     /// A method to create an unconfigured instance of the `StreamApi` struct.
     ///
     /// # Arguments
@@ -340,8 +325,9 @@ impl StreamApi<state::Disconnected> {
     ///
     /// None
     ///
-    pub fn new() -> StreamApi<state::Disconnected> {
-        Self::default()
+    #[allow(clippy::new_without_default)]
+    pub fn new() -> StreamApi {
+        StreamApi
     }
 
     /// A method to connect to a radio via a provided stream. This method is generic,
@@ -383,11 +369,11 @@ impl StreamApi<state::Disconnected> {
     /// None
     ///
     pub async fn connect<S>(
-        mut self,
+        self,
         stream: S,
     ) -> (
         UnboundedReceiver<protobufs::FromRadio>,
-        StreamApi<state::Connected>,
+        ConnectedStreamApi<state::Connected>,
     )
     where
         S: AsyncReadExt + AsyncWriteExt + Send + 'static,
@@ -404,46 +390,40 @@ impl StreamApi<state::Disconnected> {
         let (read_stream, write_stream) = tokio::io::split(stream);
         let cancellation_token = CancellationToken::new();
 
-        self.read_handle = Some(handlers::spawn_read_handler(
-            cancellation_token.clone(),
-            read_stream,
-            read_output_tx,
-        ));
+        let read_handle =
+            handlers::spawn_read_handler(cancellation_token.clone(), read_stream, read_output_tx);
 
-        self.write_handle = Some(handlers::spawn_write_handler(
-            cancellation_token.clone(),
-            write_stream,
-            write_input_rx,
-        ));
+        let write_handle =
+            handlers::spawn_write_handler(cancellation_token.clone(), write_stream, write_input_rx);
 
-        self.processing_handle = Some(handlers::spawn_processing_handler(
+        let processing_handle = handlers::spawn_processing_handler(
             cancellation_token.clone(),
             read_output_rx,
             decoded_packet_tx,
-        ));
+        );
 
         // Persist channels and kill switch to struct
 
-        self.write_input_tx = Some(write_input_tx);
-        self.cancellation_token = Some(cancellation_token);
+        let write_input_tx = write_input_tx;
+        let cancellation_token = cancellation_token;
 
         // Return channel for receiving decoded packets
 
         (
             decoded_packet_rx,
-            StreamApi::<state::Connected> {
-                write_input_tx: self.write_input_tx,
-                read_handle: self.read_handle,
-                write_handle: self.write_handle,
-                processing_handle: self.processing_handle,
-                cancellation_token: self.cancellation_token,
+            ConnectedStreamApi::<state::Connected> {
+                write_input_tx,
+                read_handle,
+                write_handle,
+                processing_handle,
+                cancellation_token,
                 typestate: PhantomData,
             },
         )
     }
 }
 
-impl StreamApi<state::Connected> {
+impl ConnectedStreamApi<state::Connected> {
     /// This method is used to trigger the transmission of the current state of the
     /// radio, as well as to subscribe to future `FromRadio` mesh packets. This method
     /// can only be called after the `connect` method has been called.
@@ -498,7 +478,7 @@ impl StreamApi<state::Connected> {
     pub async fn configure(
         mut self,
         config_id: u32,
-    ) -> Result<StreamApi<state::Configured>, Error> {
+    ) -> Result<ConnectedStreamApi<state::Configured>, Error> {
         let to_radio = protobufs::ToRadio {
             payload_variant: Some(protobufs::to_radio::PayloadVariant::WantConfigId(config_id)),
         };
@@ -506,7 +486,7 @@ impl StreamApi<state::Connected> {
         let packet_buf = to_radio.encode_to_vec();
         self.send_raw(packet_buf).await?;
 
-        Ok(StreamApi::<state::Configured> {
+        Ok(ConnectedStreamApi::<state::Configured> {
             write_input_tx: self.write_input_tx,
             read_handle: self.read_handle,
             write_handle: self.write_handle,
@@ -517,7 +497,7 @@ impl StreamApi<state::Connected> {
     }
 }
 
-impl StreamApi<state::Configured> {
+impl ConnectedStreamApi<state::Configured> {
     /// A method to disconnect from a radio. This method will close all channels and
     /// join all worker threads. If connected via serial or TCP, this will also trigger
     /// the radio to terminate its current connection.
@@ -553,52 +533,37 @@ impl StreamApi<state::Configured> {
     ///
     /// None
     ///
-    pub async fn disconnect(mut self) -> Result<StreamApi<state::Disconnected>, String> {
+    pub async fn disconnect(self) -> Result<StreamApi, String> {
         // Tell worker threads to shut down
-        if let Some(token) = self.cancellation_token.take() {
-            token.cancel();
-        }
+        self.cancellation_token.cancel();
 
-        // Close channels, which will kill worker threads
+        // Close writer channel, which will kill worker threads
 
-        self.write_input_tx = None;
+        drop(self.write_input_tx);
 
         // Close worker threads
 
-        if let Some(serial_read_handle) = self.read_handle.take() {
-            serial_read_handle
-                .await
-                .map_err(|_e| "Error joining serial_read_handle".to_string())?;
-        }
+        self.read_handle
+            .await
+            .map_err(|_e| "Error joining serial_read_handle".to_string())?;
 
-        if let Some(serial_write_handle) = self.write_handle.take() {
-            serial_write_handle
-                .await
-                .map_err(|_e| "Error joining serial_write_handle".to_string())?;
-        }
+        self.write_handle
+            .await
+            .map_err(|_e| "Error joining serial_write_handle".to_string())?;
 
-        if let Some(processing_handle) = self.processing_handle.take() {
-            processing_handle
-                .await
-                .map_err(|_e| "Error joining message_processing_handle".to_string())?;
-        }
+        self.processing_handle
+            .await
+            .map_err(|_e| "Error joining message_processing_handle".to_string())?;
 
         trace!("TCP handlers fully disconnected");
 
-        Ok(StreamApi::<state::Disconnected> {
-            write_input_tx: self.write_input_tx,
-            read_handle: self.read_handle,
-            write_handle: self.write_handle,
-            processing_handle: self.processing_handle,
-            cancellation_token: self.cancellation_token,
-            typestate: PhantomData,
-        })
+        Ok(StreamApi)
     }
 }
 
 // Public node management API
 
-impl StreamApi<state::Configured> {
+impl ConnectedStreamApi<state::Configured> {
     /// Sends the specified text content over the mesh.
     ///
     /// # Arguments

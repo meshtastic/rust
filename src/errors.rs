@@ -12,8 +12,6 @@ pub enum Error {
     EncodeError(#[from] prost::EncodeError),
     #[error(transparent)]
     ChannelWriteFailure(#[from] tokio::sync::mpsc::error::SendError<Vec<u8>>),
-    #[error("Missing optional value with key {0}")]
-    MissingOptionValue(String), // ok_or
     #[error(transparent)]
     JoinError(#[from] tokio::task::JoinError),
     #[error("Packet handler failed with error {source:?}")]

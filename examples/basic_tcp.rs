@@ -5,7 +5,10 @@ extern crate meshtastic;
 
 use std::io::{self, BufRead};
 
-use meshtastic::connections::{helpers::generate_rand_id, stream_api::StreamApi};
+use meshtastic::{
+    connections::{helpers::generate_rand_id, stream_api::StreamApi},
+    utils,
+};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -21,7 +24,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .expect("Failed to find next line")
         .expect("Could not read next line");
 
-    let tcp_stream = StreamApi::build_tcp_stream(entered_address).await?;
+    let tcp_stream = utils::build_tcp_stream(entered_address).await?;
     let (mut decoded_listener, stream_api) = stream_api.connect(tcp_stream).await;
 
     let config_id = generate_rand_id();

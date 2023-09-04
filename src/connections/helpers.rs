@@ -37,6 +37,47 @@ where
     rng.gen::<T>()
 }
 
+/// A helper function that takes a vector of bytes (u8) representing an encoded packet, and
+/// reuturns a new vector of bytes representing the encoded packet with the required packet
+/// header attached.
+///
+/// The header format is shown below:
+///
+/// ```text
+/// | 0x94 (1 byte) | 0xc3 (1 byte) | MSB (1 byte) | LSB (1 byte) | DATA ((MSB << 8) | LSB bytes) |
+/// ```
+///
+/// * `0x94` and `0xc3` are the magic bytes that are required to be at the start of every packet.
+/// * `(MSB << 8) | LSB` represents the length of the packet data (`DATA`) in bytes.
+/// * `DATA` is the encoded packet data that is passed to this function.
+///
+/// # Arguments
+///
+/// * `data` - A vector of bytes representing the encoded packet data.
+///
+/// # Returns
+///
+/// A vector of bytes representing the encoded packet with the required packet header attached.
+///
+/// # Examples
+///
+/// ```
+/// let packet = protobufs::ToRadio { payload_variant };
+///
+/// let mut packet_buf: Vec<u8> = vec![];
+/// packet.encode::<Vec<u8>>(&mut packet_buf)?;
+///
+/// let packet_buf_with_header = utils::format_data_packet(packet_buf);
+/// ```
+///
+/// # Errors
+///
+/// None
+///
+/// # Panics
+///
+/// None
+///
 pub fn format_data_packet(data: Vec<u8>) -> Vec<u8> {
     let (msb, _) = data.len().overflowing_shr(8);
     let lsb = (data.len() & 0xff) as u8;

@@ -7,14 +7,14 @@ use std::io::{self, BufRead};
 
 use meshtastic::{
     connections::{helpers::generate_rand_id, stream_api::StreamApi},
-    utils::available_serial_ports,
+    utils,
 };
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let stream_api = StreamApi::new();
 
-    let available_ports = available_serial_ports()?;
+    let available_ports = utils::available_serial_ports()?;
     println!("Available ports: {:?}", available_ports);
     println!("Enter the name of a port to connect to:");
 
@@ -26,7 +26,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .expect("Failed to find next line")
         .expect("Could not read next line");
 
-    let serial_stream = StreamApi::build_serial_stream(entered_port, None, None, None)?;
+    let serial_stream = utils::build_serial_stream(entered_port, None, None, None)?;
     let (mut decoded_listener, stream_api) = stream_api.connect(serial_stream).await;
 
     let config_id = generate_rand_id();
