@@ -29,9 +29,8 @@ use tokio_serial::available_ports;
 ///
 /// None
 ///
-pub fn available_serial_ports() -> Result<Vec<String>, String> {
-    let ports = available_ports()
-        .map_err(|e| e.to_string())?
+pub fn available_serial_ports() -> Result<Vec<String>, tokio_serial::Error> {
+    let ports = available_ports()?
         .into_iter()
         .map(|port| port.port_name)
         .collect();

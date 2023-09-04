@@ -1,4 +1,4 @@
-use crate::protobufs;
+use crate::{errors::Error, protobufs};
 use log::trace;
 use prost::Message;
 use std::{fmt::Display, marker::PhantomData, time::Duration};
@@ -28,13 +28,13 @@ pub const DEFAULT_RTS_PIN: bool = false;
 // Reference: https://github.com/letsgetrusty/generics_and_zero_sized_types/blob/master/src/main.rs
 pub mod state {
 
-    #[derive(Debug, Default)]
+    #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
     pub struct Disconnected;
 
-    #[derive(Debug, Default)]
+    #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
     pub struct Connected;
 
-    #[derive(Debug, Default)]
+    #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
     pub struct Configured;
 
     pub trait CanTransmit {}
@@ -120,23 +120,31 @@ impl StreamApi<state::Disconnected> {
         baud_rate: Option<u32>,
         dtr: Option<bool>,
         rts: Option<bool>,
-    ) -> Result<SerialStream, String> {
+    ) -> Result<SerialStream, Error> {
         let builder =
             tokio_serial::new(port_name.clone(), baud_rate.unwrap_or(DEFAULT_SERIAL_BAUD))
                 .flow_control(tokio_serial::FlowControl::Software)
                 .timeout(Duration::from_millis(10));
 
-        let mut serial_stream = tokio_serial::SerialStream::open(&builder).map_err(|e| {
-            format!("Error opening serial port \"{}\": {:?}", port_name, e).to_string()
+        let mut serial_stream =
+            tokio_serial::SerialStream::open(&builder).map_err(|e| Error::StreamBuildError {
+                source: Box::new(e),
+                description: format!("Error opening serial port \"{}\"", port_name).to_string(),
         })?;
 
         serial_stream
             .write_data_terminal_ready(dtr.unwrap_or(DEFAULT_DTR_PIN))
-            .map_err(|e| format!("Error setting DTR: {:?}", e).to_string())?;
+            .map_err(|e| Error::StreamBuildError {
+                source: Box::new(e),
+                description: "Failed to set DTR line".to_string(),
+            })?;
 
         serial_stream
             .write_request_to_send(rts.unwrap_or(DEFAULT_RTS_PIN))
-            .map_err(|e| format!("Error setting RTS: {:?}", e).to_string())?;
+            .map_err(|e| Error::StreamBuildError {
+                source: Box::new(e),
+                description: "Failed to set RTS line".to_string(),
+            })?;
 
         Ok(serial_stream)
     }
@@ -178,18 +186,20 @@ impl StreamApi<state::Disconnected> {
     ///
     /// None
     ///
-    pub async fn build_tcp_stream(address: String) -> Result<tokio::net::TcpStream, String> {
+    pub async fn build_tcp_stream(address: String) -> Result<tokio::net::TcpStream, Error> {
         let connection_future = tokio::net::TcpStream::connect(address.clone());
         let timeout_duration = Duration::from_millis(3000);
 
         let stream = match tokio::time::timeout(timeout_duration, connection_future).await {
-            Ok(stream) => stream.map_err(|e| e.to_string())?,
+            Ok(stream) => stream.map_err(|e| Error::StreamBuildError {
+                source: Box::new(e),
+                description: format!("Failed to connect to {}", address).to_string(),
+            })?,
             Err(e) => {
-                return Err(format!(
-                    "Timed out connecting to {} with error \"{}.\" Check that the radio is on, network is enabled, and the address is correct.",
+                return Err(Error::StreamBuildError{source:Box::new(e),description:format!(
+                    "Timed out connecting to {}. Check that the radio is on, network is enabled, and the address is correct.",
                     address,
-                    e
-                ));
+                )});
             }
         };
 
@@ -200,7 +210,11 @@ impl StreamApi<state::Disconnected> {
 // Packet helper functions
 
 impl<State: state::CanTransmit> StreamApi<State> {
-    pub async fn send_mesh_packet<M, E: Display, R: PacketRouter<M, E>>(
+    pub async fn send_mesh_packet<
+        M,
+        E: Display + std::error::Error + 'static + 'static,
+        R: PacketRouter<M, E>,
+    >(
         &mut self,
         packet_router: &mut R,
         byte_data: Vec<u8>,
@@ -212,7 +226,7 @@ impl<State: state::CanTransmit> StreamApi<State> {
         echo_response: bool,
         reply_id: Option<u32>,
         emoji: Option<u32>,
-    ) -> Result<(), String> {
+    ) -> Result<(), Error> {
         // let own_node_id: u32 = self.my_node_info.as_ref().unwrap().my_node_num;
         let own_node_id: u32 = packet_router.source_node_id();
 
@@ -252,7 +266,9 @@ impl<State: state::CanTransmit> StreamApi<State> {
             mesh_packet.rx_time = current_time_u32();
             packet_router
                 .handle_mesh_packet(mesh_packet.clone())
-                .map_err(|e| e.to_string())?;
+                .map_err(|e| Error::PacketHandlerFailure {
+                    source: Box::new(e),
+                })?;
         }
 
         let payload_variant = Some(protobufs::to_radio::PayloadVariant::Packet(mesh_packet));
@@ -264,35 +280,35 @@ impl<State: state::CanTransmit> StreamApi<State> {
     pub async fn send_to_radio_packet(
         &mut self,
         payload_variant: Option<protobufs::to_radio::PayloadVariant>,
-    ) -> Result<(), String> {
+    ) -> Result<(), Error> {
         let packet = protobufs::ToRadio { payload_variant };
+
         let mut packet_buf: Vec<u8> = vec![];
-
-        packet
-            .encode::<Vec<u8>>(&mut packet_buf)
-            .map_err(|e| e.to_string())?;
-
+        packet.encode::<Vec<u8>>(&mut packet_buf)?;
         self.send_raw(packet_buf).await?;
 
         Ok(())
     }
 
-    pub async fn send_raw(&mut self, data: Vec<u8>) -> Result<(), String> {
+    // TODO document
+    pub async fn send_raw(&mut self, data: Vec<u8>) -> Result<(), Error> {
         let channel = self
             .write_input_tx
             .as_ref()
             .ok_or("Could not send message to write channel")
-            .map_err(|e| e.to_string())?;
+            .map_err(|_e| Error::MissingOptionValue("write_input_tx".into()))?;
 
-        channel.send(data).map_err(|e| e.to_string())?;
+        channel.send(data)?;
 
         Ok(())
     }
 
-    pub fn get_write_input_sender(&self) -> Result<UnboundedSender<Vec<u8>>, String> {
+    // TODO document
+    pub fn write_input_sender(&self) -> Result<UnboundedSender<Vec<u8>>, Error> {
         self.write_input_tx
             .clone()
             .ok_or("Could not get write input sender".to_string())
+            .map_err(|_e| Error::MissingOptionValue("write_input_tx".into()))
             .map(|tx| tx.clone())
     }
 }
@@ -482,7 +498,7 @@ impl StreamApi<state::Connected> {
     pub async fn configure(
         mut self,
         config_id: u32,
-    ) -> Result<StreamApi<state::Configured>, String> {
+    ) -> Result<StreamApi<state::Configured>, Error> {
         let to_radio = protobufs::ToRadio {
             payload_variant: Some(protobufs::to_radio::PayloadVariant::WantConfigId(config_id)),
         };
@@ -620,14 +636,14 @@ impl StreamApi<state::Configured> {
     ///
     /// None
     ///
-    pub async fn send_text<M, E: Display, R: PacketRouter<M, E>>(
+    pub async fn send_text<M, E: Display + std::error::Error + 'static, R: PacketRouter<M, E>>(
         &mut self,
         packet_router: &mut R,
         text: String,
         destination: PacketDestination,
         want_ack: bool,
         channel: u32,
-    ) -> Result<(), String> {
+    ) -> Result<(), Error> {
         let byte_data = text.into_bytes();
 
         self.send_mesh_packet(
@@ -689,14 +705,18 @@ impl StreamApi<state::Configured> {
     ///
     /// None
     ///
-    pub async fn send_waypoint<M, E: Display, R: PacketRouter<M, E>>(
+    pub async fn send_waypoint<
+        M,
+        E: Display + std::error::Error + 'static,
+        R: PacketRouter<M, E>,
+    >(
         &mut self,
         packet_router: &mut R,
         waypoint: crate::protobufs::Waypoint,
         destination: PacketDestination,
         want_ack: bool,
         channel: u32,
-    ) -> Result<(), String> {
+    ) -> Result<(), Error> {
         let mut waypoint = waypoint;
 
         // Waypoint with ID of zero denotes a new waypoint; check whether to generate its ID on backend
@@ -764,11 +784,15 @@ impl StreamApi<state::Configured> {
     ///
     /// None
     ///
-    pub async fn update_config<M, E: Display, R: PacketRouter<M, E>>(
+    pub async fn update_config<
+        M,
+        E: Display + std::error::Error + 'static,
+        R: PacketRouter<M, E>,
+    >(
         &mut self,
         packet_router: &mut R,
         config: protobufs::Config,
-    ) -> Result<(), String> {
+    ) -> Result<(), Error> {
         let config_packet = protobufs::AdminMessage {
             payload_variant: Some(protobufs::admin_message::PayloadVariant::SetConfig(config)),
         };
@@ -834,11 +858,15 @@ impl StreamApi<state::Configured> {
     ///
     /// None
     ///
-    pub async fn update_module_config<M, E: Display, R: PacketRouter<M, E>>(
+    pub async fn update_module_config<
+        M,
+        E: Display + std::error::Error + 'static,
+        R: PacketRouter<M, E>,
+    >(
         &mut self,
         packet_router: &mut R,
         module_config: protobufs::ModuleConfig,
-    ) -> Result<(), String> {
+    ) -> Result<(), Error> {
         let module_config_packet = protobufs::AdminMessage {
             payload_variant: Some(protobufs::admin_message::PayloadVariant::SetModuleConfig(
                 module_config,
@@ -904,11 +932,15 @@ impl StreamApi<state::Configured> {
     ///
     /// None
     ///
-    pub async fn update_channel_config<M, E: Display, R: PacketRouter<M, E>>(
+    pub async fn update_channel_config<
+        M,
+        E: Display + std::error::Error + 'static,
+        R: PacketRouter<M, E>,
+    >(
         &mut self,
         packet_router: &mut R,
         channel_config: protobufs::Channel,
-    ) -> Result<(), String> {
+    ) -> Result<(), Error> {
         // Tell device to update channels
 
         let channel_packet = protobufs::AdminMessage {
@@ -971,11 +1003,11 @@ impl StreamApi<state::Configured> {
     ///
     /// None
     ///
-    pub async fn update_user<M, E: Display, R: PacketRouter<M, E>>(
+    pub async fn update_user<M, E: Display + std::error::Error + 'static, R: PacketRouter<M, E>>(
         &mut self,
         packet_router: &mut R,
         user: protobufs::User,
-    ) -> Result<(), String> {
+    ) -> Result<(), Error> {
         let user_packet = protobufs::AdminMessage {
             payload_variant: Some(protobufs::admin_message::PayloadVariant::SetOwner(user)),
         };
@@ -1056,7 +1088,7 @@ impl StreamApi<state::Configured> {
     ///
     /// None
     ///
-    pub async fn start_config_transaction(&mut self) -> Result<(), String> {
+    pub async fn start_config_transaction(&mut self) -> Result<(), Error> {
         let to_radio = protobufs::AdminMessage {
             payload_variant: Some(protobufs::admin_message::PayloadVariant::BeginEditSettings(
                 true,
@@ -1064,10 +1096,7 @@ impl StreamApi<state::Configured> {
         };
 
         let mut packet_buf: Vec<u8> = vec![];
-        to_radio
-            .encode::<Vec<u8>>(&mut packet_buf)
-            .map_err(|e| e.to_string())?;
-
+        to_radio.encode::<Vec<u8>>(&mut packet_buf)?;
         self.send_raw(packet_buf).await?;
 
         Ok(())
@@ -1118,7 +1147,7 @@ impl StreamApi<state::Configured> {
     ///
     /// None
     ///    
-    pub async fn commit_config_transaction(&mut self) -> Result<(), String> {
+    pub async fn commit_config_transaction(&mut self) -> Result<(), Error> {
         let to_radio = protobufs::AdminMessage {
             payload_variant: Some(
                 protobufs::admin_message::PayloadVariant::CommitEditSettings(true),
@@ -1126,11 +1155,7 @@ impl StreamApi<state::Configured> {
         };
 
         let mut packet_buf: Vec<u8> = vec![];
-
-        to_radio
-            .encode::<Vec<u8>>(&mut packet_buf)
-            .map_err(|e| e.to_string())?;
-
+        to_radio.encode::<Vec<u8>>(&mut packet_buf)?;
         self.send_raw(packet_buf).await?;
 
         Ok(())
@@ -1169,11 +1194,15 @@ impl StreamApi<state::Configured> {
     ///
     /// None
     ///
-    pub async fn set_local_config<M, E: Display, R: PacketRouter<M, E>>(
+    pub async fn set_local_config<
+        M,
+        E: Display + std::error::Error + 'static,
+        R: PacketRouter<M, E>,
+    >(
         &mut self,
         packet_router: &mut R,
         local_config: protobufs::LocalConfig,
-    ) -> Result<(), String> {
+    ) -> Result<(), Error> {
         if let Some(c) = local_config.bluetooth {
             self.update_config(
                 packet_router,
@@ -1280,11 +1309,15 @@ impl StreamApi<state::Configured> {
     ///
     /// None
     ///
-    pub async fn set_local_module_config<M, E: Display, R: PacketRouter<M, E>>(
+    pub async fn set_local_module_config<
+        M,
+        E: Display + std::error::Error + 'static,
+        R: PacketRouter<M, E>,
+    >(
         &mut self,
         packet_router: &mut R,
         local_module_config: protobufs::LocalModuleConfig,
-    ) -> Result<(), String> {
+    ) -> Result<(), Error> {
         if let Some(c) = local_module_config.audio {
             self.update_module_config(
                 packet_router,
@@ -1419,11 +1452,15 @@ impl StreamApi<state::Configured> {
     ///
     /// None
     ///
-    pub async fn set_message_channel_config<M, E: Display, R: PacketRouter<M, E>>(
+    pub async fn set_message_channel_config<
+        M,
+        E: Display + std::error::Error + 'static,
+        R: PacketRouter<M, E>,
+    >(
         &mut self,
         packet_router: &mut R,
         channel_config: Vec<protobufs::Channel>,
-    ) -> Result<(), String> {
+    ) -> Result<(), Error> {
         for channel in channel_config {
             self.update_channel_config(packet_router, channel).await?;
         }

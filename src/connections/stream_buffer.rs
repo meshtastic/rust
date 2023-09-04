@@ -1,33 +1,44 @@
 use crate::protobufs;
 use log::{debug, error, info, warn};
 use prost::Message;
+use thiserror::Error;
 use tokio::sync::mpsc::UnboundedSender;
 
 /// A struct that represents a buffer of bytes received from a radio stream.
 /// This struct is used to store bytes received from a radio stream, and is
 /// used to incrementally decode bytes from the received stream into valid
 /// FromRadio packets.
+#[derive(Clone, Debug)]
 pub struct StreamBuffer {
     buffer: Vec<u8>,
     decoded_packet_tx: UnboundedSender<protobufs::FromRadio>,
 }
 
-#[derive(Debug, Clone)]
 /// An enum that represents the possible errors that can occur when processing
 /// a stream buffer. These errors are used to determine whether the application
 /// should wait to receive more data or if the buffer should be purged.
+#[derive(Error, Debug, Clone)]
 pub enum StreamBufferError {
-    MissingHeaderByte,      // Wait for more data
-    IncorrectFramingByte,   // Wait for more data
-    IncompletePacket,       // Wait for more data
-    MissingMSB,             // Wait for more data
-    MissingLSB,             // Wait for more data
-    MissingNextPacketIndex, // Wait for more data
-    MalformedPacket,        // Don't need more data, purge from buffer
-    DecodeFailure,          // Don't need more data, ignore decode failure
+    #[error("Could not find header byte 0x94 in buffer")]
+    MissingHeaderByte,
+    #[error("Incorrect framing byte: got {framing_byte}, expected 0xc3")]
+    IncorrectFramingByte { framing_byte: u8 },
+    #[error("Buffer data is shorter than packet header size: buffer contains {buffer_size} bytes, expected at least {packet_size} bytes")]
+    IncompletePacket {
+        buffer_size: usize,
+        packet_size: usize,
+    },
+    #[error("Buffer does not contain a value at MSB buffer index of {msb_index}")]
+    MissingMSB { msb_index: usize },
+    #[error("Buffer does not contain a value at LSB buffer index of {lsb_index}")]
+    MissingLSB { lsb_index: usize },
+    #[error("Next packet index could not be found, received value of None")]
+    MissingNextPacketIndex,
+    #[error("Detected malformed packet, packet buffer contains a framing byte at index {framing_byte_index}")]
+    MalformedPacket { framing_byte_index: usize },
+    #[error(transparent)]
+    DecodeFailure(#[from] prost::DecodeError),
 }
-
-type Result<T> = std::result::Result<T, StreamBufferError>;
 
 impl StreamBuffer {
     /// Creates a new StreamBuffer instance that will send decoded FromRadio packets
@@ -66,14 +77,14 @@ impl StreamBuffer {
             let decoded_packet = match self.process_packet_buffer() {
                 Ok(packet) => packet,
                 Err(err) => match err {
-                    StreamBufferError::MissingHeaderByte => break,
-                    StreamBufferError::IncorrectFramingByte => break,
-                    StreamBufferError::IncompletePacket => break,
-                    StreamBufferError::MissingMSB => break,
-                    StreamBufferError::MissingLSB => break,
-                    StreamBufferError::MissingNextPacketIndex => break,
-                    StreamBufferError::MalformedPacket => continue, // Don't need more data to continue
-                    StreamBufferError::DecodeFailure => continue, // Don't need more data to continue
+                    StreamBufferError::MissingHeaderByte => break, // Wait for more data
+                    StreamBufferError::IncorrectFramingByte { .. } => break, // Wait for more data
+                    StreamBufferError::IncompletePacket { .. } => break, // Wait for more data
+                    StreamBufferError::MissingMSB { .. } => break, // Wait for more data
+                    StreamBufferError::MissingLSB { .. } => break, // Wait for more data
+                    StreamBufferError::MissingNextPacketIndex => break, // Wait for more data
+                    StreamBufferError::MalformedPacket { .. } => continue, // Don't need more data to continue, purge from buffer
+                    StreamBufferError::DecodeFailure { .. } => continue, // Don't need more data to continue, ignore decode failure
                 },
             };
 
@@ -94,11 +105,14 @@ impl StreamBuffer {
     /// enough data to decode a packet, and is able to successfully decode the packet.
     ///
     /// **Note:** This function should only be called when not all received data in the buffer has been processed.
-    fn process_packet_buffer(&mut self) -> Result<protobufs::FromRadio> {
+    fn process_packet_buffer(&mut self) -> Result<protobufs::FromRadio, StreamBufferError> {
         // Check that the buffer can potentially contain a packet header
         if self.buffer.len() < 4 {
             debug!("Buffer data is shorter than packet header size, failing");
-            return Err(StreamBufferError::IncompletePacket);
+            return Err(StreamBufferError::IncompletePacket {
+                buffer_size: self.buffer.len(),
+                packet_size: 4,
+            });
         }
 
         // All valid packets start with the sequence [0x94 0xc3 size_msb size_lsb], where
@@ -118,14 +132,19 @@ impl StreamBuffer {
             Some(val) => val,
             None => {
                 debug!("Could not find framing byte, waiting for more data");
-                return Err(StreamBufferError::IncompletePacket);
+                return Err(StreamBufferError::IncompletePacket {
+                    buffer_size: self.buffer.len(),
+                    packet_size: 4,
+                });
             }
         };
 
         // Check that the framing byte is correct, and fail if not
         if *framing_byte != 0xc3 {
             warn!("Framing byte {} not equal to 0xc3", framing_byte);
-            return Err(StreamBufferError::IncorrectFramingByte);
+            return Err(StreamBufferError::IncorrectFramingByte {
+                framing_byte: *framing_byte,
+            });
         }
 
         // Drop beginning of buffer if the framing byte is found later in the buffer
@@ -140,20 +159,22 @@ impl StreamBuffer {
         }
 
         // Get the MSB of the packet header size, or wait to receive all data
-        let msb = match self.buffer.get(2) {
+        let msb_index: usize = 2;
+        let msb = match self.buffer.get(msb_index) {
             Some(val) => val,
             None => {
                 warn!("Could not find value for MSB");
-                return Err(StreamBufferError::MissingMSB);
+                return Err(StreamBufferError::MissingMSB { msb_index });
             }
         };
 
         // Get the LSB of the packet header size, or wait to receive all data
-        let lsb = match self.buffer.get(3) {
+        let lsb_index: usize = 3;
+        let lsb = match self.buffer.get(lsb_index) {
             Some(val) => val,
             None => {
                 warn!("Could not find value for LSB");
-                return Err(StreamBufferError::MissingLSB);
+                return Err(StreamBufferError::MissingLSB { lsb_index });
             }
         };
 
@@ -165,7 +186,10 @@ impl StreamBuffer {
         // Defer decoding until the correct number of bytes are received
         if self.buffer.len() < incoming_packet_size {
             warn!("Stream buffer size is less than size of packet");
-            return Err(StreamBufferError::IncompletePacket);
+            return Err(StreamBufferError::IncompletePacket {
+                buffer_size: self.buffer.len(),
+                packet_size: incoming_packet_size,
+            });
         }
 
         // Get packet data, excluding magic bytes
@@ -192,7 +216,9 @@ impl StreamBuffer {
             // Remove malformed packet from buffer
             self.buffer = self.buffer[next_packet_start_idx..].to_vec();
 
-            return Err(StreamBufferError::MalformedPacket);
+            return Err(StreamBufferError::MalformedPacket {
+                framing_byte_index: next_packet_start_idx,
+            });
         }
 
         // Get index of next packet after removing current packet from buffer
@@ -202,13 +228,7 @@ impl StreamBuffer {
         self.buffer = self.buffer[start_of_next_packet_idx..].to_vec();
 
         // Attempt to decode the current packet
-        let decoded_packet = match protobufs::FromRadio::decode(packet.as_slice()) {
-            Ok(d) => d,
-            Err(err) => {
-                error!("FromRadio packet deserialize failed: {:?}", err);
-                return Err(StreamBufferError::DecodeFailure);
-            }
-        };
+        let decoded_packet = protobufs::FromRadio::decode(packet.as_slice())?;
 
         Ok(decoded_packet)
     }

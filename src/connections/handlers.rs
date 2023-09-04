@@ -1,3 +1,4 @@
+use crate::errors::Error;
 use crate::protobufs;
 use log::{debug, error, trace};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
@@ -25,14 +26,17 @@ where
             _ = cancellation_token.cancelled() => {
                 debug!("Read handler cancelled");
             }
-            _ = handle => {
-                error!("Read handler unexpectedly terminated");
+            e = handle => {
+                error!("Read handler unexpectedly terminated: {:#?}", e);
             }
         }
     })
 }
 
-async fn start_read_handler<R>(read_stream: R, read_output_tx: UnboundedSender<Vec<u8>>)
+async fn start_read_handler<R>(
+    read_stream: R,
+    read_output_tx: UnboundedSender<Vec<u8>>,
+) -> Result<(), Error>
 where
     R: AsyncReadExt + Send + Unpin + 'static,
 {
@@ -48,20 +52,26 @@ where
                 trace!("Read {} bytes from stream", n);
                 let data = buffer[..n].to_vec();
                 trace!("Read data: {:?}", data);
-                if read_output_tx.send(data).is_err() {
-                    eprintln!("Failed to send data through channel");
-                    break;
+
+                if let Err(e) = read_output_tx.send(data) {
+                    error!("Failed to send data through channel");
+                    return Err(Error::ChannelWriteFailure(e));
                 }
             }
+
             // TODO check if port has fatally errored, and if so, tell UI
             Err(e) => {
-                eprintln!("Error reading from stream: {:?}", e);
-                break;
+                error!("Error reading from stream: {:?}", e);
+                return Err(Error::StreamReadError {
+                    source: Box::new(e),
+                });
             }
         }
     }
 
-    debug!("Read handler finished");
+    // trace!("Read handler finished");
+
+    // Return type should be never (!)
 }
 
 pub fn spawn_write_handler<W>(
@@ -87,10 +97,11 @@ where
 }
 
 async fn start_write_handler<W>(
-    cancellation_token: CancellationToken,
+    _cancellation_token: CancellationToken,
     mut write_stream: W,
     mut write_input_rx: tokio::sync::mpsc::UnboundedReceiver<Vec<u8>>,
-) where
+) -> Result<(), Error>
+where
     W: AsyncWriteExt + Send + Unpin + 'static,
 {
     debug!("Started write handler");
@@ -99,19 +110,23 @@ async fn start_write_handler<W>(
         let packet_data = format_data_packet(message);
         trace!("Writing packet data: {:?}", packet_data);
 
-        // This might not be necessary
-        if cancellation_token.is_cancelled() {
-            debug!("Write handler cancelled");
-            break;
-        }
+        // // This might not be necessary
+        // if cancellation_token.is_cancelled() {
+        //     debug!("Write handler cancelled");
+        //     break;
+        // }
 
         if let Err(e) = write_stream.write(&packet_data).await {
             error!("Error writing to stream: {:?}", e);
-            break;
+            return Err(Error::StreamWriteError {
+                source: Box::new(e),
+            });
         }
     }
 
     debug!("Write handler finished");
+
+    Ok(())
 }
 
 pub fn spawn_processing_handler(
@@ -136,7 +151,7 @@ pub fn spawn_processing_handler(
 async fn start_processing_handler(
     mut read_output_rx: tokio::sync::mpsc::UnboundedReceiver<Vec<u8>>,
     decoded_packet_tx: UnboundedSender<protobufs::FromRadio>,
-) {
+) -> Result<(), Error> {
     trace!("Started message processing handler");
 
     let mut buffer = StreamBuffer::new(decoded_packet_tx);
@@ -147,4 +162,6 @@ async fn start_processing_handler(
     }
 
     trace!("Processing read_output_rx channel closed");
+
+    Ok(())
 }

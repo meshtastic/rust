@@ -7,7 +7,6 @@ keywords = ["meshtastic", "mesh", "lora", "tcp", "serial"]
 authors = ["Adam McQuilkin"]
 readme = "README.md"
 license = "GPL-3.0"
-license-file = "LICENSE"
 version = "0.1.0"
 edition = "2021"
 
@@ -42,3 +41,4 @@ log = "0.4.20"
 specta = { git = "https://github.com/ajmcquilkin/specta.git", branch = "ajmcquilkin/ts-namespaces", optional = true }
 serde = { version = "1.0", features = ["derive"], optional = true }
 serde_json = { version = "1.0", optional = true }
+thiserror = "1.0.48"

@@ -37,7 +37,7 @@ pub enum PacketDestination {
 /// `send_packet` method. This method needs to be able to echo packets back to the client,
 /// and is only able to do this if the `send_packet` method has the ability to trigger
 /// the handling of arbitrary mesh packets.
-pub trait PacketRouter<M, E: Display> {
+pub trait PacketRouter<M, E: Display + std::error::Error + 'static> {
     /// A method that is used to handle `FromRadio` packets that are received from the radio.
     ///
     /// This method is generic on the `M` type, which allows the developer to return metadata on how the
