@@ -1,4 +1,4 @@
-use crate::errors::Error;
+use crate::errors_internal::Error;
 use crate::protobufs;
 use log::{debug, error, trace};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
@@ -7,8 +7,8 @@ use tokio::sync::mpsc::{UnboundedReceiver, UnboundedSender};
 use tokio::task::JoinHandle;
 use tokio_util::sync::CancellationToken;
 
-use crate::connections::helpers::format_data_packet;
 use crate::connections::stream_buffer::StreamBuffer;
+use crate::utils_internal::format_data_packet;
 
 pub fn spawn_read_handler<R>(
     cancellation_token: CancellationToken,

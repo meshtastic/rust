@@ -1,14 +1,21 @@
 use std::time::Duration;
+use std::time::UNIX_EPOCH;
 
+use rand::{distributions::Standard, prelude::Distribution, Rng};
 use tokio_serial::{available_ports, SerialPort, SerialStream};
 
-use crate::errors::Error;
+use crate::errors_internal::Error;
 
 // Constants declarations
 
+/// The default baud rate of incoming serial connections created by the `build_serial_stream` method.
 pub const DEFAULT_SERIAL_BAUD: u32 = 115_200;
-pub const DEFAULT_DTR_PIN: bool = true;
-pub const DEFAULT_RTS_PIN: bool = false;
+
+/// The default pin state of the DTR pin of incoming serial connections created by the `build_serial_stream` method.
+pub const DEFAULT_DTR_PIN_STATE: bool = true;
+
+/// The default pin state of the RTS pin of incoming serial connections created by the `build_serial_stream` method.
+pub const DEFAULT_RTS_PIN_STATE: bool = false;
 
 /// A helper method that uses the `tokio_serial` crate to list the names of all
 /// available serial ports on the system. This method is intended to be used
@@ -108,14 +115,14 @@ pub fn build_serial_stream(
         })?;
 
     serial_stream
-        .write_data_terminal_ready(dtr.unwrap_or(DEFAULT_DTR_PIN))
+        .write_data_terminal_ready(dtr.unwrap_or(DEFAULT_DTR_PIN_STATE))
         .map_err(|e| Error::StreamBuildError {
             source: Box::new(e),
             description: "Failed to set DTR line".to_string(),
         })?;
 
     serial_stream
-        .write_request_to_send(rts.unwrap_or(DEFAULT_RTS_PIN))
+        .write_request_to_send(rts.unwrap_or(DEFAULT_RTS_PIN_STATE))
         .map_err(|e| Error::StreamBuildError {
             source: Box::new(e),
             description: "Failed to set RTS line".to_string(),
@@ -179,4 +186,158 @@ pub async fn build_tcp_stream(address: String) -> Result<tokio::net::TcpStream, 
     };
 
     Ok(stream)
+}
+
+/// A helper method to generate random numbers using the `rand` crate.
+///
+/// This method is intended to be used to generate random id values. This method
+/// is generic, and will generate a random value within the range of the passed generic type.
+///
+/// # Arguments
+///
+/// None
+///
+/// # Returns
+///
+/// A random value of the passed generic type.
+///
+/// # Examples
+///
+/// ```
+/// let packet_id = utils::generate_rand_id::<u32>();
+/// println!("Generated random id: {}", packet_id);
+/// ```
+///
+/// # Errors
+///
+/// None
+///
+/// # Panics
+///
+/// None
+///
+pub fn generate_rand_id<T>() -> T
+where
+    Standard: Distribution<T>,
+{
+    let mut rng = rand::thread_rng();
+    rng.gen::<T>()
+}
+
+/// A helper function that takes a vector of bytes (u8) representing an encoded packet, and
+/// reuturns a new vector of bytes representing the encoded packet with the required packet
+/// header attached.
+///
+/// The header format is shown below:
+///
+/// ```text
+/// | 0x94 (1 byte) | 0xc3 (1 byte) | MSB (1 byte) | LSB (1 byte) | DATA ((MSB << 8) | LSB bytes) |
+/// ```
+///
+/// * `0x94` and `0xc3` are the magic bytes that are required to be at the start of every packet.
+/// * `(MSB << 8) | LSB` represents the length of the packet data (`DATA`) in bytes.
+/// * `DATA` is the encoded packet data that is passed to this function.
+///
+/// # Arguments
+///
+/// * `data` - A vector of bytes representing the encoded packet data.
+///
+/// # Returns
+///
+/// A vector of bytes representing the encoded packet with the required packet header attached.
+///
+/// # Examples
+///
+/// ```
+/// let packet = protobufs::ToRadio { payload_variant };
+///
+/// let mut packet_buf: Vec<u8> = vec![];
+/// packet.encode::<Vec<u8>>(&mut packet_buf)?;
+///
+/// let packet_buf_with_header = utils::format_data_packet(packet_buf);
+/// ```
+///
+/// # Errors
+///
+/// None
+///
+/// # Panics
+///
+/// None
+///
+pub fn format_data_packet(data: Vec<u8>) -> Vec<u8> {
+    let (msb, _) = data.len().overflowing_shr(8);
+    let lsb = (data.len() & 0xff) as u8;
+
+    let magic_buffer = [0x94, 0xc3, msb as u8, lsb];
+    let packet_slice = data.as_slice();
+
+    [&magic_buffer, packet_slice].concat()
+}
+
+/// A helper function that returns the number of seconds since the unix epoch.
+///
+/// # Arguments
+///
+/// None
+///
+/// # Returns
+///
+/// A u32 representing the number of seconds since the unix epoch.
+///
+/// # Examples
+///
+/// ```
+/// let epoch_secs = utils::current_epoch_secs_u32();
+/// println!("Seconds since unix epoch: {}", epoch_secs);
+/// ```
+///
+/// # Errors
+///
+/// None
+///
+/// # Panics
+///
+/// Panics if the current time is before the unix epoch. This should never happen.
+///
+/// Panics if the number of seconds since the unix epoch is greater than u32::MAX.
+/// This will require a complete rewrite of the core Meshtastic infrastructure,
+/// so this isn't something you should worry about.
+///
+pub fn current_epoch_secs_u32() -> u32 {
+    std::time::SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .expect("Could not get time since unix epoch")
+        .as_secs()
+        .try_into()
+        .expect("Could not convert u128 to u32")
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn valid_empty_packet() {
+        let data = vec![];
+        let serial_data = format_data_packet(data);
+
+        assert_eq!(serial_data, vec![0x94, 0xc3, 0x00, 0x00]);
+    }
+
+    #[test]
+    fn valid_non_empty_packet() {
+        let data = vec![0x00, 0xff, 0x88];
+        let serial_data = format_data_packet(data);
+
+        assert_eq!(serial_data, vec![0x94, 0xc3, 0x00, 0x03, 0x00, 0xff, 0x88]);
+    }
+
+    #[test]
+    fn valid_large_packet() {
+        let data = vec![0x00; 0x100];
+        let serial_data = format_data_packet(data);
+
+        assert_eq!(serial_data[..4], vec![0x94, 0xc3, 0x01, 0x00]);
+    }
 }

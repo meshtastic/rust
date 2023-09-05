@@ -1,49 +1,63 @@
-use crate::{errors::Error, protobufs};
 use log::trace;
 use prost::Message;
 use std::{fmt::Display, marker::PhantomData};
 use tokio::{
     io::{AsyncReadExt, AsyncWriteExt},
-    sync::mpsc::{UnboundedReceiver, UnboundedSender},
+    sync::mpsc::UnboundedSender,
     task::JoinHandle,
 };
 use tokio_util::sync::CancellationToken;
 
-use super::{
-    handlers,
-    helpers::{current_time_u32, generate_rand_id},
-    PacketDestination, PacketRouter,
+use crate::{errors_internal::Error, protobufs};
+use crate::{
+    packet::PacketReceiver,
+    utils_internal::{current_epoch_secs_u32, generate_rand_id},
 };
 
-// These structs are needed to guarantee that the `StreamApi` struct connection
-// methods are called in the correct order. This is done by using the typestate
-// pattern, which is a way of using the type system to enforce state transitions.
-// Reference: https://github.com/letsgetrusty/generics_and_zero_sized_types/blob/master/src/main.rs
+use super::{handlers, PacketDestination, PacketRouter};
+
+/// These structs are needed to guarantee that the `StreamApi` struct connection
+/// methods are called in the correct order. This is done by using the typestate
+/// pattern, which is a way of using the type system to enforce state transitions.
+///
+/// These structs are not intended to be used outside of the library.
+///
+/// Reference: <https://github.com/letsgetrusty/generics_and_zero_sized_types/blob/master/src/main.rs>
 pub mod state {
 
+    /// A unit struct indicating that the `ConnectedStreamApi` struct is in the `Connected` state.
     #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
     pub struct Connected;
 
+    /// A unit struct indicating that the `ConnectedStreamApi` struct is in the `Configured` state.
     #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
     pub struct Configured;
 }
 
 // StreamApi definition
 
+/// A struct that provides a high-level API for communicating with a Meshtastic radio.
+///
+/// The `StreamApi` struct starts in a disconnected state, and the user must call
+/// the `connect` command before being able to send and receive data from the radio.
+/// This will return an instance of the `ConnectedStreamApi` struct, which then allows the
+/// developer to call the `configure` method. The developer will then be able to interact with
+/// the radio by calling the various "send" methods, which will send packets onto the mesh.
 #[derive(Debug)]
 pub struct StreamApi;
 
 /// A struct that provides a high-level API for communicating with a Meshtastic radio.
 ///
-/// This struct can either be in the `Disconnected`, `Connected`, or `Configured` state.
-/// The `Disconnected` state is the default state, and is used to create an unconfigured
-/// instance of the `StreamApi` struct. The `Connected` state is used to indicate that
-/// the `connect` method has been called, and the `Configured` state is used to indicate
-/// that the `configure` method has been called.
+/// This struct cannot be created directly, and must be created by calling the `connect` method
+/// on the `StreamApi` struct. Once the user has called `StreamApi::connect`, the user is then expected
+/// to call the `configure` method on the resulting `ConnectedStreamApi` instance. The "send" methods
+/// will not be available to the user until `configure` has been called, as the device will not
+/// repond to them.
 ///
-/// These types are intended for internal use only, but are used along with the `CanTransmit`
-/// trait to enforce the correct order of method calls. This is to prevent the developer from
-/// calling methods in invalid orders (e.g., calling `configure` before `connect`).
+/// This struct can either be in the `Connected`, or `Configured` state. The `Connected` state is
+/// used to indicate that the user has connected to a radio, but that the device connection has not
+/// yet been configured. The `Configured` state is used to indicate that the `configure` method has been called
+/// and that the device will respond to "send" methods.
 #[derive(Debug)]
 pub struct ConnectedStreamApi<State = state::Configured> {
     write_input_tx: UnboundedSender<Vec<u8>>,
@@ -166,7 +180,7 @@ impl<State> ConnectedStreamApi<State> {
         };
 
         if echo_response {
-            mesh_packet.rx_time = current_time_u32();
+            mesh_packet.rx_time = current_epoch_secs_u32();
             packet_router
                 .handle_mesh_packet(mesh_packet.clone())
                 .map_err(|e| Error::PacketHandlerFailure {
@@ -371,10 +385,7 @@ impl StreamApi {
     pub async fn connect<S>(
         self,
         stream: S,
-    ) -> (
-        UnboundedReceiver<protobufs::FromRadio>,
-        ConnectedStreamApi<state::Connected>,
-    )
+    ) -> (PacketReceiver, ConnectedStreamApi<state::Connected>)
     where
         S: AsyncReadExt + AsyncWriteExt + Send + 'static,
     {

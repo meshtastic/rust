@@ -236,7 +236,7 @@ impl StreamBuffer {
 
 #[cfg(test)]
 mod tests {
-    use crate::{connections::helpers::format_data_packet, protobufs};
+    use crate::{protobufs, utils_internal::format_data_packet};
     use prost::Message;
     use tokio::sync::mpsc::unbounded_channel;
 

@@ -2,10 +2,9 @@ use std::fmt::Display;
 
 use crate::protobufs;
 
-pub(crate) mod handlers;
-pub mod helpers;
+pub mod handlers;
 pub mod stream_api;
-pub(crate) mod stream_buffer;
+pub mod stream_buffer;
 
 /// An enum that defines the possible destinations for a mesh packet.
 /// This enum is used to specify the destination of a packet when sending

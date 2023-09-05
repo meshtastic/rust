@@ -42,10 +42,8 @@ This example requires a Meshtastic with an exposed IP port, or a simulated radio
 
 use std::io::{self, BufRead};
 
-use meshtastic::{
-    connections::{helpers::generate_rand_id, stream_api::StreamApi},
-    utils,
-};
+use meshtastic::api::StreamApi;
+use meshtastic::utils;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -61,10 +59,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .expect("Failed to find next line")
         .expect("Could not read next line");
 
-    let tcp_stream = utils::build_tcp_stream(entered_address).await?;
+    let tcp_stream = utils::stream::build_tcp_stream(entered_address).await?;
     let (mut decoded_listener, stream_api) = stream_api.connect(tcp_stream).await;
 
-    let config_id = generate_rand_id();
+    let config_id = utils::generate_rand_id();
     let stream_api = stream_api.configure(config_id).await?;
 
     // This loop can be broken with ctrl+c, or by unpowering the radio.
@@ -93,16 +91,14 @@ This example requires a powered and flashed Meshtastic radio connected to the ho
 
 use std::io::{self, BufRead};
 
-use meshtastic::{
-    connections::{helpers::generate_rand_id, stream_api::StreamApi},
-    utils,
-};
+use meshtastic::api::StreamApi;
+use meshtastic::utils;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let stream_api = StreamApi::new();
 
-    let available_ports = utils::available_serial_ports()?;
+    let available_ports = utils::stream::available_serial_ports()?;
     println!("Available ports: {:?}", available_ports);
     println!("Enter the name of a port to connect to:");
 
@@ -114,10 +110,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .expect("Failed to find next line")
         .expect("Could not read next line");
 
-    let serial_stream = utils::build_serial_stream(entered_port, None, None, None)?;
+    let serial_stream = utils::stream::build_serial_stream(entered_port, None, None, None)?;
     let (mut decoded_listener, stream_api) = stream_api.connect(serial_stream).await;
 
-    let config_id = generate_rand_id();
+    let config_id = utils::generate_rand_id();
     let stream_api = stream_api.configure(config_id).await?;
 
     // This loop can be broken with ctrl+c, or by disconnecting
