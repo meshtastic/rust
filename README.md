@@ -7,18 +7,16 @@ to be used on a desktop environment, and currently supports connecting to radios
 
 This crate is designed to be used within the tokio asynchronous runtime.
 
-<!-- [![Crates.io](https://img.shields.io/crates/v/crate_name)](https://crates.io/crates/crate_name)
-[![Documentation](https://docs.rs/crate_name/badge.svg)](https://docs.rs/crate_name)
-[![License](https://img.shields.io/crates/l/crate_name)](https://github.com/your_username/crate_name/blob/main/LICENSE) -->
+[![Crates.io](https://img.shields.io/crates/v/meshtastic)](https://crates.io/crates/meshtastic)
+[![Documentation](https://docs.rs/meshtastic/badge.svg)](https://docs.rs/meshtastic)
+[![License](https://img.shields.io/crates/l/meshtastic)](https://github.com/meshtastic/rust/blob/main/LICENSE)
 
 ## Installation
 
-We are currently working to stablilize the API of this crate and publish it to crates.io. Until then, you can
-install this crate using its git repository URL.
+You can add this crate to your project using the following command:
 
-```toml
-[dependencies]
-meshtastic = { git = "https://github.com/meshtastic/rust" }
+```shell
+cargo add meshtastic
 ```
 
 ## Usage
