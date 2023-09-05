@@ -129,3 +129,37 @@ pub mod utils {
         pub use crate::utils_internal::build_tcp_stream;
     }
 }
+
+/// This module exposes wrappers around common types that are used throughout the library.
+/// These wrappers are used to simplify the API of the library, and to provide additional
+/// type safety.
+///
+/// The `NodeId` struct is a wrapper around a `u32` value that represents the ID of a node
+/// in the mesh. This struct is used to provide additional type safety when specifying
+/// node IDs.
+///
+/// The `MeshChannel` enum is a wrapper around a `u32` value that represents the channel
+/// of the mesh. This struct is used to provide additional type safety when specifying
+/// mesh channels, as it will only allow channels with indices between 0 and 7, inclusive.
+///
+/// The `EncodedMeshPacketData` struct is a wrapper around a `Vec<u8>` value that represents
+/// the payload data of a mesh packet (e.g., a text message).
+///
+/// The `EncodedToRadioPacket` struct is a wrapper around a `Vec<u8>` value that represents
+/// the payload data of a packet that is intended to be sent to the radio. This struct
+/// **does not** represent the full packet that is sent to the radio, as it does not include
+/// the required packet header.
+///
+/// The `EncodedToRadioPacketWithHeader` struct is a wrapper around a `Vec<u8>` value that
+/// represents the payload data of a packet that is intended to be sent to the radio. This
+/// struct includes the required packet header, and can be sent to the radio.
+pub mod types {
+    pub use crate::connections::wrappers::NodeId;
+
+    pub use crate::connections::wrappers::mesh_channel::MeshChannel;
+
+    pub use crate::connections::wrappers::encoded_data::EncodedMeshPacketData;
+    pub use crate::connections::wrappers::encoded_data::EncodedToRadioPacket;
+    pub use crate::connections::wrappers::encoded_data::EncodedToRadioPacketWithHeader;
+    pub use crate::connections::wrappers::encoded_data::IncomingStreamData;
+}

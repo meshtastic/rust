@@ -4,6 +4,7 @@ description = "A Rust library for communicating with and configuring Meshtastic 
 homepage = "https://meshtastic.org/"
 repository = "https://github.com/meshtastic/rust"
 keywords = ["meshtastic", "mesh", "lora", "tcp", "serial"]
+categories = ["embedded", "config", "encoding"]
 authors = ["Adam McQuilkin"]
 readme = "README.md"
 license = "GPL-3.0"

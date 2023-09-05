@@ -14,7 +14,15 @@ use crate::{
     utils_internal::{current_epoch_secs_u32, generate_rand_id},
 };
 
-use super::{handlers, PacketDestination, PacketRouter};
+use super::{
+    handlers,
+    wrappers::{
+        encoded_data::{EncodedMeshPacketData, EncodedToRadioPacket, IncomingStreamData},
+        mesh_channel::MeshChannel,
+        NodeId,
+    },
+    PacketDestination, PacketRouter,
+};
 
 /// These structs are needed to guarantee that the `StreamApi` struct connection
 /// methods are called in the correct order. This is done by using the typestate
@@ -60,7 +68,7 @@ pub struct StreamApi;
 /// and that the device will respond to "send" methods.
 #[derive(Debug)]
 pub struct ConnectedStreamApi<State = state::Configured> {
-    write_input_tx: UnboundedSender<Vec<u8>>,
+    write_input_tx: UnboundedSender<EncodedToRadioPacket>,
 
     read_handle: JoinHandle<()>,
     write_handle: JoinHandle<()>,
@@ -135,21 +143,21 @@ impl<State> ConnectedStreamApi<State> {
     >(
         &mut self,
         packet_router: &mut R,
-        byte_data: Vec<u8>,
+        packet_data: EncodedMeshPacketData,
         port_num: protobufs::PortNum,
         destination: PacketDestination,
-        channel: u32, // TODO this should be scoped to 0-7
+        channel: MeshChannel,
         want_ack: bool,
         want_response: bool,
         echo_response: bool,
         reply_id: Option<u32>,
         emoji: Option<u32>,
     ) -> Result<(), Error> {
-        let own_node_id: u32 = packet_router.source_node_id();
+        let own_node_id = packet_router.source_node_id();
 
-        let packet_destination: u32 = match destination {
+        let packet_destination: NodeId = match destination {
             PacketDestination::Local => own_node_id,
-            PacketDestination::Broadcast => 0xffffffff,
+            PacketDestination::Broadcast => u32::MAX.into(),
             PacketDestination::Node(id) => id,
         };
 
@@ -157,7 +165,7 @@ impl<State> ConnectedStreamApi<State> {
             payload_variant: Some(protobufs::mesh_packet::PayloadVariant::Decoded(
                 protobufs::Data {
                     portnum: port_num as i32,
-                    payload: byte_data,
+                    payload: packet_data.data_vec(),
                     want_response,
                     reply_id: reply_id.unwrap_or(0),
                     emoji: emoji.unwrap_or(0),
@@ -172,11 +180,11 @@ impl<State> ConnectedStreamApi<State> {
             priority: 0,  // * not transmitted
             rx_rssi: 0,   // * not transmitted
             delayed: 0,   // * not transmitted
-            from: own_node_id,
-            to: packet_destination,
+            from: own_node_id.id(),
+            to: packet_destination.id(),
             id: generate_rand_id(),
             want_ack,
-            channel,
+            channel: channel.channel(),
         };
 
         if echo_response {
@@ -231,7 +239,7 @@ impl<State> ConnectedStreamApi<State> {
 
         let mut packet_buf: Vec<u8> = vec![];
         packet.encode::<Vec<u8>>(&mut packet_buf)?;
-        self.send_raw(packet_buf).await?;
+        self.send_raw(packet_buf.into()).await?;
 
         Ok(())
     }
@@ -268,9 +276,12 @@ impl<State> ConnectedStreamApi<State> {
     ///
     /// None
     ///
-    pub async fn send_raw(&mut self, data: Vec<u8>) -> Result<(), Error> {
+    pub async fn send_raw(&mut self, data: EncodedToRadioPacket) -> Result<(), Error> {
         let channel = self.write_input_tx.clone();
-        channel.send(data)?;
+        channel
+            .send(data)
+            .map_err(|e| Error::InternalChannelError(e.into()))?;
+
         Ok(())
     }
 
@@ -307,7 +318,7 @@ impl<State> ConnectedStreamApi<State> {
     ///
     /// None
     ///
-    pub fn write_input_sender(&self) -> UnboundedSender<Vec<u8>> {
+    pub fn write_input_sender(&self) -> UnboundedSender<EncodedToRadioPacket> {
         self.write_input_tx.clone()
     }
 }
@@ -391,8 +402,12 @@ impl StreamApi {
     {
         // Create message channels
 
-        let (write_input_tx, write_input_rx) = tokio::sync::mpsc::unbounded_channel::<Vec<u8>>();
-        let (read_output_tx, read_output_rx) = tokio::sync::mpsc::unbounded_channel::<Vec<u8>>();
+        let (write_input_tx, write_input_rx) =
+            tokio::sync::mpsc::unbounded_channel::<EncodedToRadioPacket>();
+
+        let (read_output_tx, read_output_rx) =
+            tokio::sync::mpsc::unbounded_channel::<IncomingStreamData>();
+
         let (decoded_packet_tx, decoded_packet_rx) =
             tokio::sync::mpsc::unbounded_channel::<protobufs::FromRadio>();
 
@@ -494,7 +509,7 @@ impl ConnectedStreamApi<state::Connected> {
             payload_variant: Some(protobufs::to_radio::PayloadVariant::WantConfigId(config_id)),
         };
 
-        let packet_buf = to_radio.encode_to_vec();
+        let packet_buf: EncodedToRadioPacket = to_radio.encode_to_vec().into();
         self.send_raw(packet_buf).await?;
 
         Ok(ConnectedStreamApi::<state::Configured> {
@@ -618,13 +633,13 @@ impl ConnectedStreamApi<state::Configured> {
         text: String,
         destination: PacketDestination,
         want_ack: bool,
-        channel: u32,
+        channel: MeshChannel,
     ) -> Result<(), Error> {
         let byte_data = text.into_bytes();
 
         self.send_mesh_packet(
             packet_router,
-            byte_data,
+            byte_data.into(),
             protobufs::PortNum::TextMessageApp,
             destination,
             channel,
@@ -691,7 +706,7 @@ impl ConnectedStreamApi<state::Configured> {
         waypoint: crate::protobufs::Waypoint,
         destination: PacketDestination,
         want_ack: bool,
-        channel: u32,
+        channel: MeshChannel,
     ) -> Result<(), Error> {
         let mut waypoint = waypoint;
 
@@ -699,11 +714,12 @@ impl ConnectedStreamApi<state::Configured> {
         if waypoint.id == 0 {
             waypoint.id = generate_rand_id();
         }
+
         let byte_data = waypoint.encode_to_vec();
 
         self.send_mesh_packet(
             packet_router,
-            byte_data,
+            byte_data.into(),
             protobufs::PortNum::WaypointApp,
             destination,
             channel,
@@ -777,10 +793,10 @@ impl ConnectedStreamApi<state::Configured> {
 
         self.send_mesh_packet(
             packet_router,
-            byte_data,
+            byte_data.into(),
             protobufs::PortNum::AdminApp,
             PacketDestination::Local,
-            0,
+            MeshChannel::new(0)?,
             true,
             true,
             false,
@@ -853,10 +869,10 @@ impl ConnectedStreamApi<state::Configured> {
 
         self.send_mesh_packet(
             packet_router,
-            byte_data,
+            byte_data.into(),
             protobufs::PortNum::AdminApp,
             PacketDestination::Local,
-            0,
+            MeshChannel::new(0)?,
             true,
             true,
             false,
@@ -929,10 +945,10 @@ impl ConnectedStreamApi<state::Configured> {
 
         self.send_mesh_packet(
             packet_router,
-            byte_data,
+            byte_data.into(),
             protobufs::PortNum::AdminApp,
             PacketDestination::Local,
-            0,
+            MeshChannel::new(0)?,
             true,
             true,
             false,
@@ -992,10 +1008,10 @@ impl ConnectedStreamApi<state::Configured> {
 
         self.send_mesh_packet(
             packet_router,
-            byte_data,
+            byte_data.into(),
             protobufs::PortNum::AdminApp,
             PacketDestination::Local,
-            0,
+            MeshChannel::new(0)?,
             true,
             true,
             false,
@@ -1073,7 +1089,7 @@ impl ConnectedStreamApi<state::Configured> {
 
         let mut packet_buf: Vec<u8> = vec![];
         to_radio.encode::<Vec<u8>>(&mut packet_buf)?;
-        self.send_raw(packet_buf).await?;
+        self.send_raw(packet_buf.into()).await?;
 
         Ok(())
     }
@@ -1132,7 +1148,7 @@ impl ConnectedStreamApi<state::Configured> {
 
         let mut packet_buf: Vec<u8> = vec![];
         to_radio.encode::<Vec<u8>>(&mut packet_buf)?;
-        self.send_raw(packet_buf).await?;
+        self.send_raw(packet_buf.into()).await?;
 
         Ok(())
     }

@@ -4,6 +4,8 @@ use prost::Message;
 use thiserror::Error;
 use tokio::sync::mpsc::UnboundedSender;
 
+use super::wrappers::encoded_data::IncomingStreamData;
+
 /// A struct that represents a buffer of bytes received from a radio stream.
 /// This struct is used to store bytes received from a radio stream, and is
 /// used to incrementally decode bytes from the received stream into valid
@@ -67,9 +69,9 @@ impl StreamBuffer {
     ///    buffer.process_incoming_bytes(message);
     /// }
     /// ```
-    pub fn process_incoming_bytes(&mut self, message: Vec<u8>) {
-        let mut message = message;
-        self.buffer.append(&mut message);
+    pub fn process_incoming_bytes(&mut self, message: IncomingStreamData) {
+        let message = message.data();
+        self.buffer.append(Vec::from(message).as_mut());
 
         // While there are still bytes in the buffer and processing isn't completed,
         // continue processing the buffer
@@ -265,14 +267,14 @@ mod tests {
             });
 
         let (packet, packet_data) = mock_encoded_from_radio_packet(1, payload_variant);
-        let encoded_packet = format_data_packet(packet_data);
+        let encoded_packet = format_data_packet(packet_data.into());
 
         let (mock_tx, mut mock_rx) = unbounded_channel::<protobufs::FromRadio>();
 
         // Attempt to decode packet
 
         let mut buffer = StreamBuffer::new(mock_tx);
-        buffer.process_incoming_bytes(encoded_packet);
+        buffer.process_incoming_bytes(encoded_packet.data().into());
 
         assert_eq!(mock_rx.recv().await.unwrap(), packet);
         assert_eq!(buffer.buffer.len(), 0);
@@ -297,16 +299,16 @@ mod tests {
         let (packet1, packet_data1) = mock_encoded_from_radio_packet(1, payload_variant1);
         let (packet2, packet_data2) = mock_encoded_from_radio_packet(2, payload_variant2);
 
-        let mut encoded_packet1 = format_data_packet(packet_data1);
-        let encoded_packet2 = format_data_packet(packet_data2);
+        let encoded_packet1 = format_data_packet(packet_data1.into());
+        let encoded_packet2 = format_data_packet(packet_data2.into());
 
         let (mock_tx, mut mock_rx) = unbounded_channel::<protobufs::FromRadio>();
 
         // Attempt to decode packets
 
         let mut buffer = StreamBuffer::new(mock_tx);
-        buffer.buffer.append(&mut encoded_packet1);
-        buffer.process_incoming_bytes(encoded_packet2);
+        buffer.buffer.append(&mut encoded_packet1.data_vec());
+        buffer.process_incoming_bytes(encoded_packet2.data().into());
 
         assert_eq!(mock_rx.recv().await.unwrap(), packet1);
         assert_eq!(mock_rx.recv().await.unwrap(), packet2);

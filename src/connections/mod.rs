@@ -2,9 +2,12 @@ use std::fmt::Display;
 
 use crate::protobufs;
 
+use self::wrappers::NodeId;
+
 pub mod handlers;
 pub mod stream_api;
 pub mod stream_buffer;
+pub mod wrappers;
 
 /// An enum that defines the possible destinations for a mesh packet.
 /// This enum is used to specify the destination of a packet when sending
@@ -25,7 +28,7 @@ pub enum PacketDestination {
     Local,
     #[default]
     Broadcast,
-    Node(u32),
+    Node(NodeId),
 }
 
 /// This trait defines the behavior of a struct that is able to route mesh packets.
@@ -36,7 +39,7 @@ pub enum PacketDestination {
 /// `send_packet` method. This method needs to be able to echo packets back to the client,
 /// and is only able to do this if the `send_packet` method has the ability to trigger
 /// the handling of arbitrary mesh packets.
-pub trait PacketRouter<M, E: Display + std::error::Error + 'static> {
+pub trait PacketRouter<M: Sized, E: Display + std::error::Error + 'static> {
     /// A method that is used to handle `FromRadio` packets that are received from the radio.
     ///
     /// This method is generic on the `M` type, which allows the developer to return metadata on how the
@@ -151,5 +154,5 @@ pub trait PacketRouter<M, E: Display + std::error::Error + 'static> {
     ///
     /// None
     ///
-    fn source_node_id(&self) -> u32;
+    fn source_node_id(&self) -> NodeId;
 }
