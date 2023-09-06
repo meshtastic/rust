@@ -22,13 +22,13 @@ pub enum Error {
     /// An error indicating that a struct implementing the `PacketRouter` trait failed to handle a packet.
     #[error("Packet handler failed with error {source:?}")]
     PacketHandlerFailure {
-        source: Box<dyn std::error::Error + 'static>,
+        source: Box<dyn std::error::Error + Send + Sync + 'static>,
     },
 
     /// An error indicating that the library failed to build a data stream within a stream builder utility function.
     #[error("Failed to build input data stream with error {source:?}")]
     StreamBuildError {
-        source: Box<dyn std::error::Error + 'static>,
+        source: Box<dyn std::error::Error + Send + Sync + 'static>,
         description: String,
     },
 
@@ -55,13 +55,13 @@ pub enum InternalStreamError {
     /// An error indicating that the library failed to read from the from_radio data stream half implementing `AsyncReadExt`.
     #[error("Failed to read from stream with error {source:?}")]
     StreamReadError {
-        source: Box<dyn std::error::Error + 'static>,
+        source: Box<dyn std::error::Error + Send + Sync + 'static>,
     },
 
     /// An error indicating that the library failed to write to the to_radio data stream half implementing `AsyncWriteExt`.
     #[error("Failed to write to stream with error {source:?}")]
     StreamWriteError {
-        source: Box<dyn std::error::Error + 'static>,
+        source: Box<dyn std::error::Error + Send + Sync + 'static>,
     },
 }
 
@@ -82,4 +82,18 @@ pub enum InternalChannelError {
     /// An error indicating that the library failed to write to an internal data channel.
     #[error(transparent)]
     IncomingStreamDataWriteError(#[from] tokio::sync::mpsc::error::SendError<IncomingStreamData>),
+}
+
+mod test {
+    #[allow(dead_code)]
+    fn is_send<T: Send>() {}
+
+    #[allow(dead_code)]
+    fn is_sync<T: Sync>() {}
+
+    #[test]
+    fn test_send_sync() {
+        is_send::<super::Error>();
+        is_sync::<super::Error>();
+    }
 }
