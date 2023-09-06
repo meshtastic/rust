@@ -8,7 +8,7 @@ use tokio::{
 };
 use tokio_util::sync::CancellationToken;
 
-use crate::{errors_internal::Error, protobufs};
+use crate::{errors_internal::Error, protobufs, types::EncodedToRadioPacketWithHeader, utils};
 use crate::{
     packet::PacketReceiver,
     utils_internal::{current_epoch_secs_u32, generate_rand_id},
@@ -68,7 +68,7 @@ pub struct StreamApi;
 /// and that the device will respond to "send" methods.
 #[derive(Debug)]
 pub struct ConnectedStreamApi<State = state::Configured> {
-    write_input_tx: UnboundedSender<EncodedToRadioPacket>,
+    write_input_tx: UnboundedSender<EncodedToRadioPacketWithHeader>,
 
     read_handle: JoinHandle<()>,
     write_handle: JoinHandle<()>,
@@ -278,8 +278,10 @@ impl<State> ConnectedStreamApi<State> {
     ///
     pub async fn send_raw(&mut self, data: EncodedToRadioPacket) -> Result<(), Error> {
         let channel = self.write_input_tx.clone();
+        let data_with_header = utils::format_data_packet(data);
+
         channel
-            .send(data)
+            .send(data_with_header)
             .map_err(|e| Error::InternalChannelError(e.into()))?;
 
         Ok(())
@@ -318,7 +320,7 @@ impl<State> ConnectedStreamApi<State> {
     ///
     /// None
     ///
-    pub fn write_input_sender(&self) -> UnboundedSender<EncodedToRadioPacket> {
+    pub fn write_input_sender(&self) -> UnboundedSender<EncodedToRadioPacketWithHeader> {
         self.write_input_tx.clone()
     }
 }
@@ -403,7 +405,7 @@ impl StreamApi {
         // Create message channels
 
         let (write_input_tx, write_input_rx) =
-            tokio::sync::mpsc::unbounded_channel::<EncodedToRadioPacket>();
+            tokio::sync::mpsc::unbounded_channel::<EncodedToRadioPacketWithHeader>();
 
         let (read_output_tx, read_output_rx) =
             tokio::sync::mpsc::unbounded_channel::<IncomingStreamData>();

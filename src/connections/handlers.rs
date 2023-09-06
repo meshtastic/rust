@@ -1,5 +1,6 @@
 use crate::errors_internal::{Error, InternalStreamError};
 use crate::protobufs;
+use crate::types::EncodedToRadioPacketWithHeader;
 use log::{debug, error, trace};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::spawn;
@@ -8,9 +9,8 @@ use tokio::task::JoinHandle;
 use tokio_util::sync::CancellationToken;
 
 use crate::connections::stream_buffer::StreamBuffer;
-use crate::utils_internal::format_data_packet;
 
-use super::wrappers::encoded_data::{EncodedToRadioPacket, IncomingStreamData};
+use super::wrappers::encoded_data::IncomingStreamData;
 
 pub fn spawn_read_handler<R>(
     cancellation_token: CancellationToken,
@@ -81,7 +81,7 @@ where
 pub fn spawn_write_handler<W>(
     cancellation_token: CancellationToken,
     write_stream: W,
-    write_input_rx: tokio::sync::mpsc::UnboundedReceiver<EncodedToRadioPacket>,
+    write_input_rx: tokio::sync::mpsc::UnboundedReceiver<EncodedToRadioPacketWithHeader>,
 ) -> JoinHandle<()>
 where
     W: AsyncWriteExt + Send + Unpin + 'static,
@@ -103,7 +103,7 @@ where
 async fn start_write_handler<W>(
     _cancellation_token: CancellationToken,
     mut write_stream: W,
-    mut write_input_rx: tokio::sync::mpsc::UnboundedReceiver<EncodedToRadioPacket>,
+    mut write_input_rx: tokio::sync::mpsc::UnboundedReceiver<EncodedToRadioPacketWithHeader>,
 ) -> Result<(), Error>
 where
     W: AsyncWriteExt + Send + Unpin + 'static,
@@ -111,10 +111,9 @@ where
     debug!("Started write handler");
 
     while let Some(message) = write_input_rx.recv().await {
-        let packet_data = format_data_packet(message);
-        trace!("Writing packet data: {:?}", packet_data);
+        trace!("Writing packet data: {:?}", message);
 
-        if let Err(e) = write_stream.write(packet_data.data()).await {
+        if let Err(e) = write_stream.write(message.data()).await {
             error!("Error writing to stream: {:?}", e);
             return Err(Error::InternalStreamError(
                 InternalStreamError::StreamWriteError {
