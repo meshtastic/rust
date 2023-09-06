@@ -10,6 +10,18 @@ impl std::fmt::Display for NodeId {
     }
 }
 
+impl PartialEq<u32> for NodeId {
+    fn eq(&self, other: &u32) -> bool {
+        self.0 == *other
+    }
+}
+
+impl PartialOrd<u32> for NodeId {
+    fn partial_cmp(&self, other: &u32) -> Option<std::cmp::Ordering> {
+        self.0.partial_cmp(other)
+    }
+}
+
 impl NodeId {
     /// Creates a new `NodeId` from a `u32`.
     pub fn new(id: u32) -> NodeId {
