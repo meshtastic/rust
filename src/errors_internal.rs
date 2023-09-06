@@ -32,6 +32,13 @@ pub enum Error {
         description: String,
     },
 
+    /// An error indicating that the method failed to remove a packet header from a packet buffer
+    /// due to the packet buffer being too small to contain a header.
+    #[error("Failed to remove packet header from packet buffer due to insufficient data length: {packet}")]
+    InsufficientPacketBufferLength {
+        packet: EncodedToRadioPacketWithHeader,
+    },
+
     /// An error indicating that the library failed when performing an operation on an internal data stream.
     #[error(transparent)]
     InternalStreamError(#[from] InternalStreamError),

@@ -113,6 +113,7 @@ pub mod utils {
     pub use crate::utils_internal::current_epoch_secs_u32;
     pub use crate::utils_internal::format_data_packet;
     pub use crate::utils_internal::generate_rand_id;
+    pub use crate::utils_internal::strip_data_packet_header;
 
     /// This module contains utility functions that are used to build the `Stream` instances
     /// that are used to connect to the radio. Since the `StreamApi::connect` method only

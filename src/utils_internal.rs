@@ -278,6 +278,63 @@ pub fn format_data_packet(packet: EncodedToRadioPacket) -> EncodedToRadioPacketW
     [&magic_buffer, data].concat().into()
 }
 
+/// A helper function that takes a vector of bytes (u8) representing an encoded packet with a 4-byte header,
+/// and returns a new vector of bytes representing the encoded packet with the packet header removed.
+///
+/// The header format is shown below:
+///
+/// ```text
+/// | 0x94 (1 byte) | 0xc3 (1 byte) | MSB (1 byte) | LSB (1 byte) | DATA ((MSB << 8) | LSB bytes) |
+/// ```
+///
+/// * `0x94` and `0xc3` are the magic bytes that are required to be at the start of every packet.
+/// * `(MSB << 8) | LSB` represents the length of the packet data (`DATA`) in bytes.
+/// * `DATA` is the encoded packet data that is passed to this function.
+///
+/// # Arguments
+///
+/// * `packet` - A vector of bytes representing the encoded packet with the packet header attached.
+///
+/// # Returns
+///
+/// A vector of bytes representing the encoded packet with the packet header removed.
+///
+/// # Examples
+///
+/// ```
+/// let packet = protobufs::ToRadio { payload_variant };
+///
+/// let mut packet_buf: Vec<u8> = vec![];
+/// packet.encode::<Vec<u8>>(&mut packet_buf)?;
+///
+/// let packet_buf_with_header = utils::format_data_packet(packet_buf);
+/// let stripped_packet_buf = utils::strip_data_packet_header(packet_buf_with_header)?;
+///
+/// assert_eq!(packet_buf, stripped_packet_buf.data_vec());
+/// ```
+///
+/// # Errors
+///
+/// Will return an `Error::InsufficientPacketBufferLength` error if the passed packet buffer
+/// is less than 4 bytes in length.
+///
+/// # Panics
+///
+/// None
+///
+pub fn strip_data_packet_header(
+    packet: EncodedToRadioPacketWithHeader,
+) -> Result<EncodedToRadioPacket, Error> {
+    let data = packet.data_vec();
+
+    let stripped_data = match data.get(4..) {
+        Some(data) => data,
+        None => return Err(Error::InsufficientPacketBufferLength { packet }),
+    };
+
+    Ok(stripped_data.into())
+}
+
 /// A helper function that returns the number of seconds since the unix epoch.
 ///
 /// # Arguments
