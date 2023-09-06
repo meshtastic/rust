@@ -138,7 +138,7 @@ impl<State> ConnectedStreamApi<State> {
     #[allow(clippy::too_many_arguments)]
     pub async fn send_mesh_packet<
         M,
-        E: Display + std::error::Error + 'static + 'static,
+        E: Display + std::error::Error + Send + Sync + 'static,
         R: PacketRouter<M, E>,
     >(
         &mut self,
@@ -629,7 +629,11 @@ impl ConnectedStreamApi<state::Configured> {
     ///
     /// None
     ///
-    pub async fn send_text<M, E: Display + std::error::Error + 'static, R: PacketRouter<M, E>>(
+    pub async fn send_text<
+        M,
+        E: Display + std::error::Error + Send + Sync + 'static,
+        R: PacketRouter<M, E>,
+    >(
         &mut self,
         packet_router: &mut R,
         text: String,
@@ -700,7 +704,7 @@ impl ConnectedStreamApi<state::Configured> {
     ///
     pub async fn send_waypoint<
         M,
-        E: Display + std::error::Error + 'static,
+        E: Display + std::error::Error + Send + Sync + 'static,
         R: PacketRouter<M, E>,
     >(
         &mut self,
@@ -780,7 +784,7 @@ impl ConnectedStreamApi<state::Configured> {
     ///
     pub async fn update_config<
         M,
-        E: Display + std::error::Error + 'static,
+        E: Display + std::error::Error + Send + Sync + 'static,
         R: PacketRouter<M, E>,
     >(
         &mut self,
@@ -854,7 +858,7 @@ impl ConnectedStreamApi<state::Configured> {
     ///
     pub async fn update_module_config<
         M,
-        E: Display + std::error::Error + 'static,
+        E: Display + std::error::Error + Send + Sync + 'static,
         R: PacketRouter<M, E>,
     >(
         &mut self,
@@ -928,7 +932,7 @@ impl ConnectedStreamApi<state::Configured> {
     ///
     pub async fn update_channel_config<
         M,
-        E: Display + std::error::Error + 'static,
+        E: Display + std::error::Error + Send + Sync + 'static,
         R: PacketRouter<M, E>,
     >(
         &mut self,
@@ -997,7 +1001,11 @@ impl ConnectedStreamApi<state::Configured> {
     ///
     /// None
     ///
-    pub async fn update_user<M, E: Display + std::error::Error + 'static, R: PacketRouter<M, E>>(
+    pub async fn update_user<
+        M,
+        E: Display + std::error::Error + Send + Sync + 'static,
+        R: PacketRouter<M, E>,
+    >(
         &mut self,
         packet_router: &mut R,
         user: protobufs::User,
@@ -1190,7 +1198,7 @@ impl ConnectedStreamApi<state::Configured> {
     ///
     pub async fn set_local_config<
         M,
-        E: Display + std::error::Error + 'static,
+        E: Display + std::error::Error + Send + Sync + 'static,
         R: PacketRouter<M, E>,
     >(
         &mut self,
@@ -1305,7 +1313,7 @@ impl ConnectedStreamApi<state::Configured> {
     ///
     pub async fn set_local_module_config<
         M,
-        E: Display + std::error::Error + 'static,
+        E: Display + std::error::Error + Send + Sync + 'static,
         R: PacketRouter<M, E>,
     >(
         &mut self,
@@ -1448,7 +1456,7 @@ impl ConnectedStreamApi<state::Configured> {
     ///
     pub async fn set_message_channel_config<
         M,
-        E: Display + std::error::Error + 'static,
+        E: Display + std::error::Error + Send + Sync + 'static,
         R: PacketRouter<M, E>,
     >(
         &mut self,
