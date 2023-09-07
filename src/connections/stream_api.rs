@@ -641,11 +641,11 @@ impl ConnectedStreamApi<state::Configured> {
         want_ack: bool,
         channel: MeshChannel,
     ) -> Result<(), Error> {
-        let byte_data = text.into_bytes();
+        let byte_data: EncodedMeshPacketData = text.into_bytes().into();
 
         self.send_mesh_packet(
             packet_router,
-            byte_data.into(),
+            byte_data,
             protobufs::PortNum::TextMessageApp,
             destination,
             channel,
@@ -670,7 +670,7 @@ impl ConnectedStreamApi<state::Configured> {
     ///
     /// * `packet_router` - A generic packet router field that implements the `PacketRouter` trait.
     /// This router is used in the event a packet needs to be echoed.
-    /// * `wypoint` - An instance of the `Waypoint` struct to send.
+    /// * `waypoint` - An instance of the `Waypoint` struct to send.
     /// * `destination` - A `PacketDestination` enum that specifies the destination of the packet.
     /// * `want_ack` - A `bool` that specifies whether or not the radio should wait for acknowledgement
     /// from other nodes on the mesh.
@@ -721,12 +721,86 @@ impl ConnectedStreamApi<state::Configured> {
             waypoint.id = generate_rand_id();
         }
 
-        let byte_data = waypoint.encode_to_vec();
+        let byte_data: EncodedMeshPacketData = waypoint.encode_to_vec().into();
 
         self.send_mesh_packet(
             packet_router,
-            byte_data.into(),
+            byte_data,
             protobufs::PortNum::WaypointApp,
+            destination,
+            channel,
+            want_ack,
+            false,
+            true,
+            None,
+            None,
+        )
+        .await?;
+
+        Ok(())
+    }
+
+    /// Sends the specified `Positon` over the mesh.
+    ///
+    /// Sending a `Position` packet will update the internal position of the connected radio
+    /// in addition to sending the packet over the mesh.
+    ///
+    /// **Note:** If you want to send a point of interest (POI) over the mesh, use `send_waypoint`.
+    ///
+    /// # Arguments
+    ///
+    /// * `packet_router` - A generic packet router field that implements the `PacketRouter` trait.
+    /// This router is used in the event a packet needs to be echoed.
+    /// * `position` - An instance of the `Position` struct to send.
+    /// * `destination` - A `PacketDestination` enum that specifies the destination of the packet.
+    /// * `want_ack` - A `bool` that specifies whether or not the radio should wait for acknowledgement
+    /// from other nodes on the mesh.
+    /// * `channel` - A `u32` that specifies the message channel to send the packet on [0..7).
+    ///
+    /// # Returns
+    ///
+    /// A result indicating whether the packet was successfully sent to the radio.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let stream_api = StreamApi::new();
+    /// let tcp_stream = build_tcp_stream("localhost:4403".to_string())?;
+    /// let (_decoded_listener, stream_api) = stream_api.connect(tcp_stream).await;
+    ///
+    /// let config_id = generate_rand_id();
+    /// let mut stream_api = stream_api.configure(config_id).await?;
+    ///
+    /// let position = crate::protobufs::Position { ... };
+    /// stream_api.send_position(packet_router, position, PacketDestination::Broadcast, true, 0).await?;
+    /// ```
+    ///
+    /// # Errors
+    ///
+    /// Fails if the packet fails to send.
+    ///
+    /// # Panics
+    ///
+    /// None
+    ///
+    pub async fn send_position<
+        M,
+        E: Display + std::error::Error + Send + Sync + 'static,
+        R: PacketRouter<M, E>,
+    >(
+        &mut self,
+        packet_router: &mut R,
+        position: crate::protobufs::Position,
+        destination: PacketDestination,
+        want_ack: bool,
+        channel: MeshChannel,
+    ) -> Result<(), Error> {
+        let byte_data: EncodedMeshPacketData = position.encode_to_vec().into();
+
+        self.send_mesh_packet(
+            packet_router,
+            byte_data,
+            protobufs::PortNum::PositionApp,
             destination,
             channel,
             want_ack,
@@ -795,11 +869,11 @@ impl ConnectedStreamApi<state::Configured> {
             payload_variant: Some(protobufs::admin_message::PayloadVariant::SetConfig(config)),
         };
 
-        let byte_data = config_packet.encode_to_vec();
+        let byte_data: EncodedMeshPacketData = config_packet.encode_to_vec().into();
 
         self.send_mesh_packet(
             packet_router,
-            byte_data.into(),
+            byte_data,
             protobufs::PortNum::AdminApp,
             PacketDestination::Local,
             MeshChannel::new(0)?,
@@ -871,11 +945,11 @@ impl ConnectedStreamApi<state::Configured> {
             )),
         };
 
-        let byte_data = module_config_packet.encode_to_vec();
+        let byte_data: EncodedMeshPacketData = module_config_packet.encode_to_vec().into();
 
         self.send_mesh_packet(
             packet_router,
-            byte_data.into(),
+            byte_data,
             protobufs::PortNum::AdminApp,
             PacketDestination::Local,
             MeshChannel::new(0)?,
@@ -947,11 +1021,11 @@ impl ConnectedStreamApi<state::Configured> {
             )),
         };
 
-        let byte_data = channel_packet.encode_to_vec();
+        let byte_data: EncodedMeshPacketData = channel_packet.encode_to_vec().into();
 
         self.send_mesh_packet(
             packet_router,
-            byte_data.into(),
+            byte_data,
             protobufs::PortNum::AdminApp,
             PacketDestination::Local,
             MeshChannel::new(0)?,
@@ -1014,11 +1088,11 @@ impl ConnectedStreamApi<state::Configured> {
             payload_variant: Some(protobufs::admin_message::PayloadVariant::SetOwner(user)),
         };
 
-        let byte_data = user_packet.encode_to_vec();
+        let byte_data: EncodedMeshPacketData = user_packet.encode_to_vec().into();
 
         self.send_mesh_packet(
             packet_router,
-            byte_data.into(),
+            byte_data,
             protobufs::PortNum::AdminApp,
             PacketDestination::Local,
             MeshChannel::new(0)?,
