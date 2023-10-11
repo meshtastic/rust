@@ -12,6 +12,76 @@ use meshtastic::utils;
 // Re-export of prost::Message
 use meshtastic::Message;
 
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let stream_api = StreamApi::new();
+
+    let available_ports = utils::stream::available_serial_ports()?;
+    println!("Available ports: {:?}", available_ports);
+    println!("Enter the name of a port to connect to:");
+
+    let stdin = io::stdin();
+    let entered_port = stdin
+        .lock()
+        .lines()
+        .next()
+        .expect("Failed to find next line")
+        .expect("Could not read next line");
+
+    let serial_stream = utils::stream::build_serial_stream(entered_port, None, None, None)?;
+    let (mut decoded_listener, stream_api) = stream_api.connect(serial_stream).await;
+
+    let config_id = utils::generate_rand_id();
+    let stream_api = stream_api.configure(config_id).await?;
+
+    // This loop can be broken with ctrl+c, or by disconnecting
+    // the attached serial port.
+    while let Some(decoded_packet) = decoded_listener.recv().await {
+        handle_from_radio_packet(decoded_packet)
+    }
+
+    // Note that in this specific example, this will only be called when
+    // the radio is disconnected, as the above loop will never exit.
+    // Typically you would allow the user to manually kill the loop,
+    // for example with tokio::select!.
+    let _stream_api = stream_api.disconnect().await?;
+
+    Ok(())
+}
+
+/// A helper function to handle packets coming directly from the radio connection.
+/// The Meshtastic `PhoneAPI` will return decoded `FromRadio` packets, which
+/// can then be handled based on their payload variant. Note that the payload
+/// variant can be `None`, in which case the packet should be ignored.
+fn handle_from_radio_packet(from_radio_packet: meshtastic::protobufs::FromRadio) {
+    // Remove `None` variants to get the payload variant
+    let payload_variant = match from_radio_packet.payload_variant {
+        Some(payload_variant) => payload_variant,
+        None => {
+            println!("Received FromRadio packet with no payload variant, not handling...");
+            return;
+        }
+    };
+
+    // `FromRadio` packets can be differentiated based on their payload variant,
+    // which in Rust is represented as an enum. This means the payload variant
+    // can be matched on, and the appropriate user-defined action can be taken.
+    match payload_variant {
+        meshtastic::protobufs::from_radio::PayloadVariant::Channel(channel) => {
+            println!("Received channel packet: {:?}", channel);
+        }
+        meshtastic::protobufs::from_radio::PayloadVariant::NodeInfo(node_info) => {
+            println!("Received node info packet: {:?}", node_info);
+        }
+        meshtastic::protobufs::from_radio::PayloadVariant::Packet(mesh_packet) => {
+            handle_mesh_packet(mesh_packet);
+        }
+        _ => {
+            println!("Received other FromRadio packet, not handling...");
+        }
+    };
+}
+
 /// A helper function to handle `MeshPacket` messages, which are a subset
 /// of all `FromRadio` messages. Note that the payload variant can be `None`,
 /// and that the payload variant can be `Encrypted`, in which case the packet
@@ -72,74 +142,4 @@ fn handle_mesh_packet(mesh_packet: meshtastic::protobufs::MeshPacket) {
             );
         }
     }
-}
-
-/// A helper function to handle packets coming directly from the radio connection.
-/// The Meshtastic `PhoneAPI` will return decoded `FromRadio` packets, which
-/// can then be handled based on their payload variant. Note that the payload
-/// variant can be `None`, in which case the packet should be ignored.
-fn handle_from_radio_packet(from_radio_packet: meshtastic::protobufs::FromRadio) {
-    // Remove `None` variants to get the payload variant
-    let payload_variant = match from_radio_packet.payload_variant {
-        Some(payload_variant) => payload_variant,
-        None => {
-            println!("Received FromRadio packet with no payload variant, not handling...");
-            return;
-        }
-    };
-
-    // `FromRadio` packets can be differentiated based on their payload variant,
-    // which in Rust is represented as an enum. This means the payload variant
-    // can be matched on, and the appropriate user-defined action can be taken.
-    match payload_variant {
-        meshtastic::protobufs::from_radio::PayloadVariant::Channel(channel) => {
-            println!("Received channel packet: {:?}", channel);
-        }
-        meshtastic::protobufs::from_radio::PayloadVariant::NodeInfo(node_info) => {
-            println!("Received node info packet: {:?}", node_info);
-        }
-        meshtastic::protobufs::from_radio::PayloadVariant::Packet(mesh_packet) => {
-            handle_mesh_packet(mesh_packet);
-        }
-        _ => {
-            println!("Received other FromRadio packet, not handling...");
-        }
-    };
-}
-
-#[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let stream_api = StreamApi::new();
-
-    let available_ports = utils::stream::available_serial_ports()?;
-    println!("Available ports: {:?}", available_ports);
-    println!("Enter the name of a port to connect to:");
-
-    let stdin = io::stdin();
-    let entered_port = stdin
-        .lock()
-        .lines()
-        .next()
-        .expect("Failed to find next line")
-        .expect("Could not read next line");
-
-    let serial_stream = utils::stream::build_serial_stream(entered_port, None, None, None)?;
-    let (mut decoded_listener, stream_api) = stream_api.connect(serial_stream).await;
-
-    let config_id = utils::generate_rand_id();
-    let stream_api = stream_api.configure(config_id).await?;
-
-    // This loop can be broken with ctrl+c, or by disconnecting
-    // the attached serial port.
-    while let Some(decoded_packet) = decoded_listener.recv().await {
-        handle_from_radio_packet(decoded_packet)
-    }
-
-    // Note that in this specific example, this will only be called when
-    // the radio is disconnected, as the above loop will never exit.
-    // Typically you would allow the user to manually kill the loop,
-    // for example with tokio::select!.
-    let _stream_api = stream_api.disconnect().await?;
-
-    Ok(())
 }
