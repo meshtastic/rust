@@ -12,7 +12,15 @@ use meshtastic::utils;
 // Re-export of prost::Message
 use meshtastic::Message;
 
+/// A helper function to handle `MeshPacket` messages, which are a subset
+/// of all `FromRadio` messages. Note that the payload variant can be `None`,
+/// and that the payload variant can be `Encrypted`, in which case the packet
+/// should be ignored within client applications.
+///
+/// Mesh packets are the most commonly used type of packet, and are usually
+/// what people are referring to when they talk about "packets."
 fn handle_mesh_packet(mesh_packet: meshtastic::protobufs::MeshPacket) {
+    // Remove `None` variants to get the payload variant
     let payload_variant = match mesh_packet.payload_variant {
         Some(payload_variant) => payload_variant,
         None => {
@@ -21,6 +29,7 @@ fn handle_mesh_packet(mesh_packet: meshtastic::protobufs::MeshPacket) {
         }
     };
 
+    // Only handle decoded (unencrypted) mesh packets
     let packet_data = match payload_variant {
         meshtastic::protobufs::mesh_packet::PayloadVariant::Decoded(decoded_mesh_packet) => {
             decoded_mesh_packet
@@ -31,19 +40,29 @@ fn handle_mesh_packet(mesh_packet: meshtastic::protobufs::MeshPacket) {
         }
     };
 
+    // Meshtastic differentiates mesh packets based on a field called `portnum`.
+    // Meshtastic defines a set of standard port numbers [here](https://meshtastic.org/docs/development/firmware/portnum),
+    // but also allows for custom port numbers to be used.
     match packet_data.portnum() {
         meshtastic::protobufs::PortNum::PositionApp => {
+            // Note that `Data` structs contain a `payload` field, which is a vector of bytes.
+            // This data needs to be decoded into a protobuf struct, which is shown below.
+            // The `decode` function is provided by the `prost` crate, which is re-exported
+            // by the `meshtastic` crate.
             let decoded_position =
                 meshtastic::protobufs::Position::decode(packet_data.payload.as_slice()).unwrap();
+
             println!("Received position packet: {:?}", decoded_position);
         }
         meshtastic::protobufs::PortNum::TextMessageApp => {
             let decoded_text_message = String::from_utf8(packet_data.payload).unwrap();
+
             println!("Received text message packet: {:?}", decoded_text_message);
         }
         meshtastic::protobufs::PortNum::WaypointApp => {
             let decoded_waypoint =
                 meshtastic::protobufs::Waypoint::decode(packet_data.payload.as_slice()).unwrap();
+
             println!("Received waypoint packet: {:?}", decoded_waypoint);
         }
         _ => {
@@ -55,7 +74,12 @@ fn handle_mesh_packet(mesh_packet: meshtastic::protobufs::MeshPacket) {
     }
 }
 
+/// A helper function to handle packets coming directly from the radio connection.
+/// The Meshtastic `PhoneAPI` will return decoded `FromRadio` packets, which
+/// can then be handled based on their payload variant. Note that the payload
+/// variant can be `None`, in which case the packet should be ignored.
 fn handle_from_radio_packet(from_radio_packet: meshtastic::protobufs::FromRadio) {
+    // Remove `None` variants to get the payload variant
     let payload_variant = match from_radio_packet.payload_variant {
         Some(payload_variant) => payload_variant,
         None => {
@@ -64,6 +88,9 @@ fn handle_from_radio_packet(from_radio_packet: meshtastic::protobufs::FromRadio)
         }
     };
 
+    // `FromRadio` packets can be differentiated based on their payload variant,
+    // which in Rust is represented as an enum. This means the payload variant
+    // can be matched on, and the appropriate user-defined action can be taken.
     match payload_variant {
         meshtastic::protobufs::from_radio::PayloadVariant::Channel(channel) => {
             println!("Received channel packet: {:?}", channel);
