@@ -539,7 +539,6 @@ impl ConnectedStreamApi<state::Configured> {
     /// # Returns
     ///
     /// Returns a `Result` indicating whether or not the disconnection was successful.
-    /// If not successful, the `Err(String)` variant will contain information on the failure.
     ///
     /// # Examples
     ///
@@ -561,7 +560,7 @@ impl ConnectedStreamApi<state::Configured> {
     ///
     /// None
     ///
-    pub async fn disconnect(self) -> Result<StreamApi, String> {
+    pub async fn disconnect(self) -> Result<StreamApi, Error> {
         // Tell worker threads to shut down
         self.cancellation_token.cancel();
 
@@ -571,17 +570,9 @@ impl ConnectedStreamApi<state::Configured> {
 
         // Close worker threads
 
-        self.read_handle
-            .await
-            .map_err(|_e| "Error joining serial_read_handle".to_string())?;
-
-        self.write_handle
-            .await
-            .map_err(|_e| "Error joining serial_write_handle".to_string())?;
-
-        self.processing_handle
-            .await
-            .map_err(|_e| "Error joining message_processing_handle".to_string())?;
+        self.read_handle.await?;
+        self.write_handle.await?;
+        self.processing_handle.await?;
 
         trace!("TCP handlers fully disconnected");
 
