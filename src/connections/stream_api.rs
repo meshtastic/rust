@@ -383,7 +383,7 @@ impl StreamApi {
     /// let (decoded_listener, stream_api) = stream_api.connect(serial_stream).await;
     ///
     /// // Example 2: Connect to a TCP port
-    /// let tcp_stream = build_tcp_stream("localhost:4403".to_string())?;
+    /// let tcp_stream = build_tcp_stream("localhost:4403".to_string()).await?;
     /// let (decoded_listener, stream_api) = stream_api.connect(tcp_stream).await;
     /// ```
     ///
@@ -482,7 +482,7 @@ impl ConnectedStreamApi<state::Connected> {
     ///
     /// ```
     /// let stream_api = StreamApi::new();
-    /// let tcp_stream = build_tcp_stream("localhost:4403".to_string())?;
+    /// let tcp_stream = build_tcp_stream("localhost:4403".to_string()).await?;
     /// let (decoded_listener, stream_api) = stream_api.connect(tcp_stream).await;
     ///
     /// let config_id = gen_random_id();
@@ -544,7 +544,7 @@ impl ConnectedStreamApi<state::Configured> {
     ///
     /// ```
     /// let stream_api = StreamApi::new();
-    /// let tcp_stream = build_tcp_stream("localhost:4403".to_string())?;
+    /// let tcp_stream = build_tcp_stream("localhost:4403".to_string()).await?;
     /// let (decoded_listener, stream_api) = stream_api.connect(tcp_stream).await;
     ///
     /// // Process packets from the `decoded_listener` channel
@@ -603,7 +603,7 @@ impl ConnectedStreamApi<state::Configured> {
     ///
     /// ```
     /// let stream_api = StreamApi::new();
-    /// let tcp_stream = build_tcp_stream("localhost:4403".to_string())?;
+    /// let tcp_stream = build_tcp_stream("localhost:4403".to_string()).await?;
     /// let (_decoded_listener, stream_api) = stream_api.connect(tcp_stream).await;
     ///
     /// let config_id = generate_rand_id();
@@ -675,7 +675,7 @@ impl ConnectedStreamApi<state::Configured> {
     ///
     /// ```
     /// let stream_api = StreamApi::new();
-    /// let tcp_stream = build_tcp_stream("localhost:4403".to_string())?;
+    /// let tcp_stream = build_tcp_stream("localhost:4403".to_string()).await?;
     /// let (_decoded_listener, stream_api) = stream_api.connect(tcp_stream).await;
     ///
     /// let config_id = generate_rand_id();
@@ -756,7 +756,7 @@ impl ConnectedStreamApi<state::Configured> {
     ///
     /// ```
     /// let stream_api = StreamApi::new();
-    /// let tcp_stream = build_tcp_stream("localhost:4403".to_string())?;
+    /// let tcp_stream = build_tcp_stream("localhost:4403".to_string()).await?;
     /// let (_decoded_listener, stream_api) = stream_api.connect(tcp_stream).await;
     ///
     /// let config_id = generate_rand_id();
@@ -829,7 +829,7 @@ impl ConnectedStreamApi<state::Configured> {
     ///
     /// ```
     /// let stream_api = StreamApi::new();
-    /// let tcp_stream = build_tcp_stream("localhost:4403".to_string())?;
+    /// let tcp_stream = build_tcp_stream("localhost:4403".to_string()).await?;
     /// let (_decoded_listener, stream_api) = stream_api.connect(tcp_stream).await;
     ///
     /// let config_id = generate_rand_id();
@@ -903,7 +903,7 @@ impl ConnectedStreamApi<state::Configured> {
     ///
     /// ```
     /// let stream_api = StreamApi::new();
-    /// let tcp_stream = build_tcp_stream("localhost:4403".to_string())?;
+    /// let tcp_stream = build_tcp_stream("localhost:4403".to_string()).await?;
     /// let (_decoded_listener, stream_api) = stream_api.connect(tcp_stream).await;
     ///
     /// let config_id = generate_rand_id();
@@ -977,7 +977,7 @@ impl ConnectedStreamApi<state::Configured> {
     ///
     /// ```
     /// let stream_api = StreamApi::new();
-    /// let tcp_stream = build_tcp_stream("localhost:4403".to_string())?;
+    /// let tcp_stream = build_tcp_stream("localhost:4403".to_string()).await?;
     /// let (_decoded_listener, stream_api) = stream_api.connect(tcp_stream).await;
     ///
     /// let config_id = generate_rand_id();
@@ -1048,7 +1048,7 @@ impl ConnectedStreamApi<state::Configured> {
     ///
     /// ```
     /// let stream_api = StreamApi::new();
-    /// let tcp_stream = build_tcp_stream("localhost:4403".to_string())?;
+    /// let tcp_stream = build_tcp_stream("localhost:4403".to_string()).await?;
     /// let (_decoded_listener, stream_api) = stream_api.connect(tcp_stream).await;
     ///
     /// let config_id = generate_rand_id();

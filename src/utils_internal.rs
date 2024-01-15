@@ -154,11 +154,11 @@ pub fn build_serial_stream(
 ///
 /// ```
 /// // Connect to a radio
-/// let tcp_stream = utils::build_serial_stream("192.168.0.1:4403")?;
+/// let tcp_stream = utils::build_tcp_stream("192.168.0.1:4403").await?;
 /// let decoded_listener = stream_api.connect(tcp_stream).await;
 ///
 /// // Connect to a firmware Docker container
-/// let tcp_stream = utils::build_serial_stream("localhost:4403")?;
+/// let tcp_stream = utils::build_tcp_stream("localhost:4403").await?;
 /// let decoded_listener = stream_api.connect(tcp_stream).await;
 /// ```
 ///
