@@ -32,6 +32,10 @@ pub enum Error {
         description: String,
     },
 
+    /// An error indicating that too much data is being sent.
+    #[error("Trying to send too much data")]
+    InvalidaDataSize { data_length: usize },
+
     /// An error indicating that the method failed to remove a packet header from a packet buffer
     /// due to the packet buffer being too small to contain a header.
     #[error("Failed to remove packet header from packet buffer due to insufficient data length: {packet}")]
