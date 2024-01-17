@@ -1,3 +1,4 @@
+use futures_util::future::join3;
 use log::trace;
 use prost::Message;
 use std::{fmt::Display, marker::PhantomData};
@@ -70,9 +71,9 @@ pub struct StreamApi;
 pub struct ConnectedStreamApi<State = state::Configured> {
     write_input_tx: UnboundedSender<EncodedToRadioPacketWithHeader>,
 
-    read_handle: JoinHandle<()>,
-    write_handle: JoinHandle<()>,
-    processing_handle: JoinHandle<()>,
+    read_handle: JoinHandle<Result<(), Error>>,
+    write_handle: JoinHandle<Result<(), Error>>,
+    processing_handle: JoinHandle<Result<(), Error>>,
 
     cancellation_token: CancellationToken,
 
@@ -586,11 +587,15 @@ impl ConnectedStreamApi<state::Configured> {
 
         // Close worker threads
 
-        self.read_handle.await?;
-        self.write_handle.await?;
-        self.processing_handle.await?;
+        let (read_result, write_result, processing_result) =
+            join3(self.read_handle, self.write_handle, self.processing_handle).await;
 
-        trace!("TCP handlers fully disconnected");
+        // Note: we only return the first error.
+        read_result??;
+        write_result??;
+        processing_result??;
+
+        trace!("Handlers fully disconnected");
 
         Ok(StreamApi)
     }
