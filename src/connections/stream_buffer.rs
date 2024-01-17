@@ -182,8 +182,7 @@ impl StreamBuffer {
 
         // Combine MSB and LSB of incoming packet size bytes
         // Recall that packet size doesn't include the first four magic bytes
-        let shifted_msb: u32 = (*msb as u32).checked_shl(8).unwrap_or(0);
-        let incoming_packet_size: usize = 4 + shifted_msb as usize + (*lsb as usize);
+        let incoming_packet_size: usize = usize::from(4 + u16::from_le_bytes([*lsb, *msb]));
 
         // Defer decoding until the correct number of bytes are received
         if self.buffer.len() < incoming_packet_size {
@@ -223,11 +222,8 @@ impl StreamBuffer {
             });
         }
 
-        // Get index of next packet after removing current packet from buffer
-        let start_of_next_packet_idx: usize = 3 + (shifted_msb as usize) + ((*lsb) as usize) + 1;
-
         // Remove current packet from buffer based on start location of next packet
-        self.buffer = self.buffer[start_of_next_packet_idx..].to_vec();
+        self.buffer = self.buffer[incoming_packet_size..].to_vec();
 
         // Attempt to decode the current packet
         let decoded_packet = protobufs::FromRadio::decode(packet.as_slice())?;

@@ -270,10 +270,10 @@ where
 ///
 pub fn format_data_packet(packet: EncodedToRadioPacket) -> EncodedToRadioPacketWithHeader {
     let data = packet.data();
-    let (msb, _) = data.len().overflowing_shr(8);
-    let lsb = (data.len() & 0xff) as u8;
-
-    let magic_buffer = [0x94, 0xc3, msb as u8, lsb];
+    // Note that if data.len() has more than 2 bytes, there's no way to signal an error from this
+    // function.
+    let [lsb, msb, ..] = data.len().to_le_bytes();
+    let magic_buffer = [0x94, 0xc3, msb, lsb];
 
     [&magic_buffer, data].concat().into()
 }
