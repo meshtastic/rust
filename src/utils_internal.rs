@@ -268,14 +268,19 @@ where
 ///
 /// None
 ///
-pub fn format_data_packet(packet: EncodedToRadioPacket) -> EncodedToRadioPacketWithHeader {
+pub fn format_data_packet(
+    packet: EncodedToRadioPacket,
+) -> Result<EncodedToRadioPacketWithHeader, Error> {
     let data = packet.data();
-    // Note that if data.len() has more than 2 bytes, there's no way to signal an error from this
-    // function.
+    if data.len() >= 1 << 16 {
+        return Err(Error::InvalidaDataSize {
+            data_length: data.len(),
+        });
+    }
     let [lsb, msb, ..] = data.len().to_le_bytes();
     let magic_buffer = [0x94, 0xc3, msb, lsb];
 
-    [&magic_buffer, data].concat().into()
+    Ok([&magic_buffer, data].concat().into())
 }
 
 /// A helper function that takes a vector of bytes (u8) representing an encoded packet with a 4-byte header,
@@ -382,7 +387,7 @@ mod tests {
         let data = vec![];
         let serial_data = format_data_packet(data.into());
 
-        assert_eq!(serial_data.data(), vec![0x94, 0xc3, 0x00, 0x00]);
+        assert_eq!(serial_data.data(), Some(vec![0x94, 0xc3, 0x00, 0x00]));
     }
 
     #[test]
@@ -392,7 +397,7 @@ mod tests {
 
         assert_eq!(
             serial_data.data(),
-            vec![0x94, 0xc3, 0x00, 0x03, 0x00, 0xff, 0x88]
+            Some(vec![0x94, 0xc3, 0x00, 0x03, 0x00, 0xff, 0x88])
         );
     }
 
@@ -401,6 +406,19 @@ mod tests {
         let data = vec![0x00; 0x100];
         let serial_data = format_data_packet(data.into());
 
-        assert_eq!(serial_data.data()[..4], vec![0x94, 0xc3, 0x01, 0x00]);
+        assert_eq!(serial_data.data()[..4], Some(vec![0x94, 0xc3, 0x01, 0x00]));
+    }
+
+    #[test]
+    fn invalid_too_large_packet() {
+        let data = vec![0x00; 0x10000];
+        let serial_data = format_data_packet(data.into());
+
+        assert_eq!(
+            serial_data,
+            Err(Error::InvalidaDataSize {
+                data_length: 0x10000
+            })
+        );
     }
 }

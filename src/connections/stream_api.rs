@@ -278,7 +278,7 @@ impl<State> ConnectedStreamApi<State> {
     ///
     pub async fn send_raw(&mut self, data: EncodedToRadioPacket) -> Result<(), Error> {
         let channel = self.write_input_tx.clone();
-        let data_with_header = utils::format_data_packet(data);
+        let data_with_header = utils::format_data_packet(data)?;
 
         channel
             .send(data_with_header)
