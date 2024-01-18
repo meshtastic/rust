@@ -270,7 +270,7 @@ mod tests {
         // Attempt to decode packet
 
         let mut buffer = StreamBuffer::new(mock_tx);
-        buffer.process_incoming_bytes(encoded_packet.data().into());
+        buffer.process_incoming_bytes(encoded_packet.unwrap().data().into());
 
         assert_eq!(mock_rx.recv().await.unwrap(), packet);
         assert_eq!(buffer.buffer.len(), 0);
@@ -295,8 +295,8 @@ mod tests {
         let (packet1, packet_data1) = mock_encoded_from_radio_packet(1, payload_variant1);
         let (packet2, packet_data2) = mock_encoded_from_radio_packet(2, payload_variant2);
 
-        let encoded_packet1 = format_data_packet(packet_data1.into());
-        let encoded_packet2 = format_data_packet(packet_data2.into());
+        let encoded_packet1 = format_data_packet(packet_data1.into()).unwrap();
+        let encoded_packet2 = format_data_packet(packet_data2.into()).unwrap();
 
         let (mock_tx, mut mock_rx) = unbounded_channel::<protobufs::FromRadio>();
 
