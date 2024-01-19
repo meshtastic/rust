@@ -79,6 +79,22 @@ pub struct ConnectedStreamApi<State = state::Configured> {
     typestate: PhantomData<State>,
 }
 
+/// A struct that provides a reference to an underlying stream for reading/writing data and
+/// potentially an accompanying join handle that processes data on the other side of the stream.
+pub struct StreamHandle<T: AsyncReadExt + AsyncWriteExt + Send> {
+    pub stream: T,
+    pub join_handle: Option<JoinHandle<Result<(), Error>>>,
+}
+
+impl<T: AsyncReadExt + AsyncWriteExt + Send> StreamHandle<T> {
+    pub fn from_stream(stream: T) -> Self {
+        Self {
+            stream,
+            join_handle: None,
+        }
+    }
+}
+
 // Packet helper functions
 
 impl<State> ConnectedStreamApi<State> {
@@ -397,7 +413,7 @@ impl StreamApi {
     ///
     pub async fn connect<S>(
         self,
-        stream: S,
+        stream_handle: StreamHandle<S>,
     ) -> (PacketReceiver, ConnectedStreamApi<state::Connected>)
     where
         S: AsyncReadExt + AsyncWriteExt + Send + 'static,
@@ -415,7 +431,7 @@ impl StreamApi {
 
         // Spawn worker threads with kill switch
 
-        let (read_stream, write_stream) = tokio::io::split(stream);
+        let (read_stream, write_stream) = tokio::io::split(stream_handle.stream);
         let cancellation_token = CancellationToken::new();
 
         let read_handle =
