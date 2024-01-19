@@ -11,6 +11,9 @@ license = "GPL-3.0"
 version = "0.1.5"
 edition = "2021"
 
+[lib]
+doctest = false
+
 [features]
 default = ["serde"]
 

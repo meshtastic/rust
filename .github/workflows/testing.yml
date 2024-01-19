@@ -1,0 +1,34 @@
+name: "Testing Suite"
+on: [push, pull_request]
+
+jobs:
+  unit-test:
+    permissions:
+      contents: write
+    strategy:
+      matrix:
+        platform: [macos-latest, ubuntu-20.04, windows-latest]
+
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - uses: actions/checkout@v3
+      - run: git submodule update --init
+
+      - name: Initialize Rust Cache
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Run test suite
+        working-directory: ./
+        run: cargo test

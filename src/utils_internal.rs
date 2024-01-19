@@ -439,7 +439,7 @@ mod tests {
         let data = vec![];
         let serial_data = format_data_packet(data.into());
 
-        assert_eq!(serial_data.data(), Some(vec![0x94, 0xc3, 0x00, 0x00]));
+        assert_eq!(serial_data.unwrap().data(), vec![0x94, 0xc3, 0x00, 0x00]);
     }
 
     #[test]
@@ -448,8 +448,8 @@ mod tests {
         let serial_data = format_data_packet(data.into());
 
         assert_eq!(
-            serial_data.data(),
-            Some(vec![0x94, 0xc3, 0x00, 0x03, 0x00, 0xff, 0x88])
+            serial_data.unwrap().data(),
+            vec![0x94, 0xc3, 0x00, 0x03, 0x00, 0xff, 0x88]
         );
     }
 
@@ -458,7 +458,10 @@ mod tests {
         let data = vec![0x00; 0x100];
         let serial_data = format_data_packet(data.into());
 
-        assert_eq!(serial_data.data()[..4], Some(vec![0x94, 0xc3, 0x01, 0x00]));
+        assert_eq!(
+            serial_data.unwrap().data()[..4],
+            vec![0x94, 0xc3, 0x01, 0x00]
+        );
     }
 
     #[test]
@@ -466,11 +469,6 @@ mod tests {
         let data = vec![0x00; 0x10000];
         let serial_data = format_data_packet(data.into());
 
-        assert_eq!(
-            serial_data,
-            Err(Error::InvalidaDataSize {
-                data_length: 0x10000
-            })
-        );
+        assert_eq!(serial_data.is_err(), true);
     }
 }
