@@ -88,6 +88,10 @@ pub enum InternalChannelError {
     IncomingStreamDataWriteError(#[from] tokio::sync::mpsc::error::SendError<IncomingStreamData>),
 }
 
+#[derive(Error, Debug)]
+#[error("Bluetooth low energy connection error")]
+pub struct BleConnectionError();
+
 mod test {
     #[allow(dead_code)]
     fn is_send<T: Send>() {}
