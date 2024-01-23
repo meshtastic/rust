@@ -4,6 +4,7 @@ use std::time::UNIX_EPOCH;
 use rand::{distributions::Standard, prelude::Distribution, Rng};
 use tokio_serial::{available_ports, SerialPort, SerialStream};
 
+use crate::connections::stream_api::StreamHandle;
 use crate::connections::wrappers::encoded_data::{
     EncodedToRadioPacket, EncodedToRadioPacketWithHeader,
 };
@@ -106,7 +107,7 @@ pub fn build_serial_stream(
     baud_rate: Option<u32>,
     dtr: Option<bool>,
     rts: Option<bool>,
-) -> Result<SerialStream, Error> {
+) -> Result<StreamHandle<SerialStream>, Error> {
     let builder = tokio_serial::new(port_name.clone(), baud_rate.unwrap_or(DEFAULT_SERIAL_BAUD))
         .flow_control(tokio_serial::FlowControl::Software)
         .timeout(Duration::from_millis(10));
@@ -131,7 +132,7 @@ pub fn build_serial_stream(
             description: "Failed to set RTS line".to_string(),
         })?;
 
-    Ok(serial_stream)
+    Ok(StreamHandle::from_stream(serial_stream))
 }
 
 /// A helper method that uses the `tokio` crate to build a TCP stream
@@ -171,7 +172,9 @@ pub fn build_serial_stream(
 ///
 /// None
 ///
-pub async fn build_tcp_stream(address: String) -> Result<tokio::net::TcpStream, Error> {
+pub async fn build_tcp_stream(
+    address: String,
+) -> Result<StreamHandle<tokio::net::TcpStream>, Error> {
     let connection_future = tokio::net::TcpStream::connect(address.clone());
     let timeout_duration = Duration::from_millis(3000);
 
@@ -188,7 +191,7 @@ pub async fn build_tcp_stream(address: String) -> Result<tokio::net::TcpStream, 
         }
     };
 
-    Ok(stream)
+    Ok(StreamHandle::from_stream(stream))
 }
 
 /// A helper method to generate random numbers using the `rand` crate.
