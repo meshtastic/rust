@@ -1,4 +1,4 @@
-use crate::errors_internal::{Error, InternalStreamError};
+use crate::errors_internal::{Error, InternalChannelError, InternalStreamError};
 use crate::protobufs;
 use crate::types::EncodedToRadioPacketWithHeader;
 use log::{debug, error, trace};
@@ -16,7 +16,7 @@ pub fn spawn_read_handler<R>(
     cancellation_token: CancellationToken,
     read_stream: R,
     read_output_tx: UnboundedSender<IncomingStreamData>,
-) -> JoinHandle<()>
+) -> JoinHandle<Result<(), Error>>
 where
     R: AsyncReadExt + Send + Unpin + 'static,
 {
@@ -27,9 +27,11 @@ where
         tokio::select! {
             _ = cancellation_token.cancelled() => {
                 debug!("Read handler cancelled");
+                Ok(())
             }
             e = handle => {
                 error!("Read handler unexpectedly terminated: {:#?}", e);
+                e
             }
         }
     })
@@ -82,7 +84,7 @@ pub fn spawn_write_handler<W>(
     cancellation_token: CancellationToken,
     write_stream: W,
     write_input_rx: tokio::sync::mpsc::UnboundedReceiver<EncodedToRadioPacketWithHeader>,
-) -> JoinHandle<()>
+) -> JoinHandle<Result<(), Error>>
 where
     W: AsyncWriteExt + Send + Unpin + 'static,
 {
@@ -91,10 +93,14 @@ where
     spawn(async move {
         tokio::select! {
             _ = cancellation_token.cancelled() => {
-              debug!("Write handler cancelled");
+                debug!("Write handler cancelled");
+                Ok(())
             }
-            _ = handle => {
-                error!("Write handler unexpectedly terminated");
+            write_result = handle => {
+                if let Err(e) = &write_result {
+                    error!("Write handler unexpectedly terminated {e:?}");
+                }
+                write_result
             }
         }
     })
@@ -132,16 +138,18 @@ pub fn spawn_processing_handler(
     cancellation_token: CancellationToken,
     read_output_rx: UnboundedReceiver<IncomingStreamData>,
     decoded_packet_tx: UnboundedSender<protobufs::FromRadio>,
-) -> JoinHandle<()> {
+) -> JoinHandle<Result<(), Error>> {
     let handle = start_processing_handler(read_output_rx, decoded_packet_tx);
 
     spawn(async move {
         tokio::select! {
             _ = cancellation_token.cancelled() => {
-              debug!("Message processing handler cancelled");
+                debug!("Message processing handler cancelled");
+                Ok(())
             }
             _ = handle => {
-              error!("Message processing handler unexpectedly terminated");
+                error!("Message processing handler unexpectedly terminated");
+                Err(Error::InternalChannelError(InternalChannelError::ChannelClosedEarly {}))
             }
         }
     })
@@ -150,7 +158,7 @@ pub fn spawn_processing_handler(
 async fn start_processing_handler(
     mut read_output_rx: tokio::sync::mpsc::UnboundedReceiver<IncomingStreamData>,
     decoded_packet_tx: UnboundedSender<protobufs::FromRadio>,
-) -> Result<(), Error> {
+) {
     trace!("Started message processing handler");
 
     let mut buffer = StreamBuffer::new(decoded_packet_tx);
@@ -161,6 +169,4 @@ async fn start_processing_handler(
     }
 
     trace!("Processing read_output_rx channel closed");
-
-    Ok(())
 }

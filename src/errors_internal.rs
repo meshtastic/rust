@@ -86,6 +86,9 @@ pub enum InternalChannelError {
     /// An error indicating that the library failed to write to an internal data channel.
     #[error(transparent)]
     IncomingStreamDataWriteError(#[from] tokio::sync::mpsc::error::SendError<IncomingStreamData>),
+
+    #[error("Channel unexpectedly closed")]
+    ChannelClosedEarly,
 }
 
 #[derive(Error, Debug)]
