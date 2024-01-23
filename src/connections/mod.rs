@@ -4,6 +4,8 @@ use crate::protobufs;
 
 use self::wrappers::NodeId;
 
+#[cfg(feature = "bluetooth-le")]
+pub mod ble_handler;
 pub mod handlers;
 pub mod stream_api;
 pub mod stream_buffer;
