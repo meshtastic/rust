@@ -1,16 +1,6 @@
-#[cfg(feature = "bluetooth-le")]
-use crate::errors_internal::BleConnectionError;
 use crate::errors_internal::Error;
-#[cfg(feature = "bluetooth-le")]
-use btleplug::api::{Central, Manager as _, Peripheral as _, ScanFilter};
-#[cfg(feature = "bluetooth-le")]
-use btleplug::platform::{Adapter, Manager, Peripheral};
-#[cfg(feature = "bluetooth-le")]
-use log::error;
 use std::time::Duration;
 use std::time::UNIX_EPOCH;
-#[cfg(feature = "bluetooth-le")]
-use uuid::Uuid;
 
 use rand::{distributions::Standard, prelude::Distribution, Rng};
 use tokio_serial::{available_ports, SerialPort, SerialStream};
@@ -202,60 +192,6 @@ pub async fn build_tcp_stream(
     };
 
     Ok(StreamHandle::from_stream(stream))
-}
-
-#[cfg(feature = "bluetooth-le")]
-#[allow(dead_code)]
-const MSH_SERVICE: Uuid = Uuid::from_u128(0x6ba1b218_15a8_461f_9fa8_5dcae273eafd);
-
-#[cfg(feature = "bluetooth-le")]
-#[allow(dead_code)]
-async fn scan_peripherals(adapter: &Adapter) -> Result<Vec<Peripheral>, btleplug::Error> {
-    adapter
-        .start_scan(ScanFilter {
-            services: vec![MSH_SERVICE],
-        })
-        .await?;
-    adapter.peripherals().await
-}
-
-/// Finds a BLE radio matching a given name and running meshtastic.
-/// It searches for the 'MSH_SERVICE' running on the device.
-#[cfg(feature = "bluetooth-le")]
-#[allow(dead_code)]
-async fn find_ble_radio(name: String) -> Result<Peripheral, Error> {
-    //TODO: support searching both by a name and by a MAC address
-    let scan_error_fn = |e: btleplug::Error| Error::StreamBuildError {
-        source: Box::new(e),
-        description: "Failed to scan for BLE devices".to_owned(),
-    };
-    let manager = Manager::new().await.map_err(scan_error_fn)?;
-    let adapters = manager.adapters().await.map_err(scan_error_fn)?;
-
-    for adapter in &adapters {
-        let peripherals = scan_peripherals(adapter).await;
-        match peripherals {
-            Err(e) => {
-                error!("Error while scanning for meshtastic peripherals: {e:?}");
-                // We continue, as there can be another adapter that can work
-                continue;
-            }
-            Ok(peripherals) => {
-                for peripheral in peripherals {
-                    if let Ok(Some(peripheral_properties)) = peripheral.properties().await {
-                        if peripheral_properties.local_name == Some(name.clone()) {
-                            return Ok(peripheral);
-                        }
-                    }
-                }
-            }
-        }
-    }
-    Err(Error::StreamBuildError {
-        source: Box::new(BleConnectionError()),
-        description: format!("Failed to find {name}, or meshtastic is not running on the device")
-            + ", or it's already connected.",
-    })
 }
 
 /// A helper method to generate random numbers using the `rand` crate.
