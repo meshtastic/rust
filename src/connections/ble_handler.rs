@@ -1,6 +1,6 @@
 use btleplug::api::{
-    Central, Characteristic, Manager as _, Peripheral as _, ScanFilter, ValueNotification,
-    WriteType,
+    Central, CentralEvent, Characteristic, Manager as _, Peripheral as _, ScanFilter,
+    ValueNotification, WriteType,
 };
 use btleplug::platform::{Adapter, Manager, Peripheral};
 use futures_util::stream::BoxStream;
@@ -16,6 +16,7 @@ const FROMNUM: Uuid = Uuid::from_u128(0xed9da18c_a800_4f66_a670_aa7547e34453);
 
 pub struct BleHandler {
     radio: Peripheral,
+    adapter: Adapter,
     toradio_char: Characteristic,
     fromradio_char: Characteristic,
     fromnum_char: Characteristic,
@@ -24,7 +25,7 @@ pub struct BleHandler {
 #[allow(dead_code)]
 impl BleHandler {
     pub async fn new(name: String) -> Result<Self, Error> {
-        let radio = Self::find_ble_radio(&name).await?;
+        let (radio, adapter) = Self::find_ble_radio(&name).await?;
         radio.connect().await.map_err(|e| Error::StreamBuildError {
             source: Box::new(e),
             description: format!("Failed to connect to the device {name}"),
@@ -33,6 +34,7 @@ impl BleHandler {
             Self::find_characteristics(&radio).await?;
         Ok(BleHandler {
             radio,
+            adapter,
             toradio_char,
             fromradio_char,
             fromnum_char,
@@ -50,7 +52,9 @@ impl BleHandler {
 
     /// Finds a BLE radio matching a given name and running meshtastic.
     /// It searches for the 'MSH_SERVICE' running on the device.
-    async fn find_ble_radio(name: &str) -> Result<Peripheral, Error> {
+    ///
+    /// It also returns the associated adapter that can reach this radio.
+    async fn find_ble_radio(name: &str) -> Result<(Peripheral, Adapter), Error> {
         //TODO: support searching both by a name and by a MAC address
         let scan_error_fn = |e: btleplug::Error| Error::StreamBuildError {
             source: Box::new(e),
@@ -72,7 +76,7 @@ impl BleHandler {
                     for peripheral in peripherals {
                         if let Ok(Some(peripheral_properties)) = peripheral.properties().await {
                             if peripheral_properties.local_name == needle {
-                                return Ok(peripheral);
+                                return Ok((peripheral, adapter.clone()));
                             }
                         }
                     }
@@ -177,5 +181,22 @@ impl BleHandler {
             } => Some(Self::parse_u32(value).unwrap()),
             _ => None,
         }
+    }
+
+    pub async fn adapter_events(&self) -> Result<BoxStream<CentralEvent>, Error> {
+        self.adapter
+            .events()
+            .await
+            .map_err(|e| Error::StreamBuildError {
+                source: Box::new(e),
+                description: format!("Failed to listen to device events"),
+            })
+    }
+
+    pub fn is_disconnected_event(&self, event: Option<CentralEvent>) -> bool {
+        if let Some(CentralEvent::DeviceDisconnected(peripheral_id)) = event {
+            return self.radio.id() == peripheral_id;
+        }
+        return false;
     }
 }
