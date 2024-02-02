@@ -39,7 +39,9 @@ name = "message_filtering"
 name = "generate_typescript_types"
 required-features = ["ts-gen"]
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[[example]]
+name = "basic_ble"
+required-features = ["bluetooth-le"]
 
 [build-dependencies]
 prost-build = { version = "0.13.4", optional = true }

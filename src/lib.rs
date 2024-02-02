@@ -128,6 +128,8 @@ pub mod utils {
     /// only need to use these two methods to connect to a radio. The `available_serial_ports` method
     /// can also be used to list all available serial ports on the host machine.
     pub mod stream {
+        #[cfg(feature = "bluetooth-le")]
+        pub use crate::connections::ble_handler::BleId;
         pub use crate::utils_internal::available_serial_ports;
         #[cfg(feature = "bluetooth-le")]
         pub use crate::utils_internal::build_ble_stream;
