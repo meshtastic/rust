@@ -5,8 +5,14 @@ fn main() -> std::io::Result<()> {
     println!("cargo:rerun-if-changed={}", protobufs_dir);
 
     // Allows protobuf compilation without installing the `protoc` binary
-    let protoc_path = protoc_bin_vendored::protoc_bin_path().unwrap();
-    std::env::set_var("PROTOC", protoc_path);
+    match protoc_bin_vendored::protoc_bin_path() {
+        Ok(protoc_path) => {
+            std::env::set_var("PROTOC", protoc_path);
+        }
+        Err(err) => {
+            println!("Install protoc yourself, protoc-bin-vendored failed: {err}");
+        }
+    }
 
     let mut protos = vec![];
 
