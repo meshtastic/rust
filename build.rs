@@ -25,7 +25,7 @@ fn main() -> std::io::Result<()> {
 
     let mut config = prost_build::Config::new();
 
-    let mut derive_string = String::from("#[derive(Copy, ");
+    let mut derive_string = String::from("#[derive(");
 
     #[cfg(feature = "serde")]
     {
