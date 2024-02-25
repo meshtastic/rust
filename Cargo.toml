@@ -26,6 +26,12 @@ name = "basic_serial"
 [[example]]
 name = "basic_tcp"
 
+[[example]]
+name = "message_filtering"
+
+[[example]]
+name = "generate_typescript_types"
+
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [build-dependencies]
