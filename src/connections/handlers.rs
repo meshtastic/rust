@@ -48,6 +48,19 @@ where
 
     let mut read_stream = read_stream;
 
+    let (tx, mut rx) = tokio::sync::mpsc::unbounded_channel();
+
+    let handle = tokio::spawn(async move {
+        loop {
+            tokio::select! {
+              _ = rx.recv() => {}
+              _ = tokio::time::sleep(tokio::time::Duration::from_secs(60)) => {
+                error!("Didn't receive a message on read handler for 60s");
+              }
+            }
+        }
+    });
+
     loop {
         let mut buffer = [0u8; 1024];
         match read_stream.read(&mut buffer).await {
@@ -73,9 +86,13 @@ where
                 ));
             }
         }
+
+        tx.send("hello there").expect("send failed");
     }
 
-    // trace!("Read handler finished");
+    handle.abort();
+
+    trace!("Read handler finished");
 
     // Return type should be never (!)
 }
@@ -116,6 +133,19 @@ where
 {
     debug!("Started write handler");
 
+    let (tx, mut rx) = tokio::sync::mpsc::unbounded_channel();
+
+    let handle = tokio::spawn(async move {
+        loop {
+            tokio::select! {
+              _ = rx.recv() => {}
+              _ = tokio::time::sleep(tokio::time::Duration::from_secs(60)) => {
+                error!("Didn't receive a message on write handler for 60s");
+              }
+            }
+        }
+    });
+
     while let Some(message) = write_input_rx.recv().await {
         trace!("Writing packet data: {:?}", message);
 
@@ -127,7 +157,11 @@ where
                 },
             ));
         }
+
+        tx.send("hello there").expect("send failed");
     }
+
+    handle.abort();
 
     debug!("Write handler finished");
 
@@ -163,10 +197,26 @@ async fn start_processing_handler(
 
     let mut buffer = StreamBuffer::new(decoded_packet_tx);
 
+    let (tx, mut rx) = tokio::sync::mpsc::unbounded_channel();
+
+    let handle = tokio::spawn(async move {
+        loop {
+            tokio::select! {
+              _ = rx.recv() => {}
+              _ = tokio::time::sleep(tokio::time::Duration::from_secs(60)) => {
+                error!("Didn't receive a message on processing handler for 60s");
+              }
+            }
+        }
+    });
+
     while let Some(message) = read_output_rx.recv().await {
         trace!("Processing {} bytes from radio", message.data().len());
         buffer.process_incoming_bytes(message);
+        tx.send("hello there").expect("send failed");
     }
+
+    handle.abort();
 
     trace!("Processing read_output_rx channel closed");
 }
