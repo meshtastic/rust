@@ -1,5 +1,5 @@
 use crate::protobufs;
-use log::{debug, error, info, warn};
+use log::{debug, error, warn};
 use prost::Message;
 use thiserror::Error;
 use tokio::sync::mpsc::UnboundedSender;
@@ -209,7 +209,7 @@ impl StreamBuffer {
         // If the byte after the 0x94 is 0xc3, this means not all bytes were received
         // in the current packet, meaning the packet is malformed and should be purged
         if *malformed_packet_detector_byte.unwrap_or(&0) == 0xc3 {
-            info!("Detected malformed packet, purging");
+            error!("Detected malformed packet, purging");
 
             let next_packet_start_idx =
                 malformed_packet_detector_index.ok_or(StreamBufferError::MissingNextPacketIndex)?;
