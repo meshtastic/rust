@@ -67,6 +67,11 @@ pub enum InternalStreamError {
     StreamWriteError {
         source: Box<dyn std::error::Error + Send + Sync + 'static>,
     },
+
+    /// An error indicatiing that the connection has been lost and both reading and writing are
+    /// not possible anymore.
+    #[error("Connection lost")]
+    ConnectionLost,
 }
 
 /// An enum that defines the possible internal errors that can occur within the library when handling data channels.
