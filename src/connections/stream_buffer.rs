@@ -1,5 +1,5 @@
 use crate::protobufs;
-use log::{debug, error, warn};
+use log::{debug, error, trace, warn};
 use prost::Message;
 use thiserror::Error;
 use tokio::sync::mpsc::UnboundedSender;
@@ -108,6 +108,8 @@ impl StreamBuffer {
     ///
     /// **Note:** This function should only be called when not all received data in the buffer has been processed.
     fn process_packet_buffer(&mut self) -> Result<protobufs::FromRadio, StreamBufferError> {
+        trace!("Packet buffer: {:?}", self.buffer);
+
         // Check that the buffer can potentially contain a packet header
         if self.buffer.len() < 4 {
             debug!("Buffer data is shorter than packet header size, failing");
@@ -129,6 +131,20 @@ impl StreamBuffer {
             }
         };
 
+        // Drop beginning of buffer if the framing byte is found later in the buffer
+        // It is not possible to make a valid packet if the framing byte is not at the beginning
+        // ! This needs to be done before the framing byte is accessed, as not doing so blocks
+        // ! the processing of valid packets when an invalid packet is at the beginning of the buffer
+        // ! For example, having 0xc3 as the first byte in the buffer followed by a valid packet will break
+        if framing_index > 0 {
+            debug!(
+                "Found framing byte at index {}, shifting buffer",
+                framing_index
+            );
+
+            self.buffer = self.buffer[framing_index..].to_vec();
+        }
+
         // Get the "framing byte" after the start of the packet header, or fail if not found
         let framing_byte = match self.buffer.get(framing_index + 1) {
             Some(val) => val,
@@ -136,7 +152,7 @@ impl StreamBuffer {
                 debug!("Could not find framing byte, waiting for more data");
                 return Err(StreamBufferError::IncompletePacket {
                     buffer_size: self.buffer.len(),
-                    packet_size: 4,
+                    packet_size: 4, // ? Why 4?
                 });
             }
         };
@@ -147,17 +163,6 @@ impl StreamBuffer {
             return Err(StreamBufferError::IncorrectFramingByte {
                 framing_byte: *framing_byte,
             });
-        }
-
-        // Drop beginning of buffer if the framing byte is found later in the buffer
-        // It is not possible to make a valid packet if the framing byte is not at the beginning
-        if framing_index > 0 {
-            debug!(
-                "Found framing byte at index {}, shifting buffer",
-                framing_index
-            );
-
-            self.buffer = self.buffer[framing_index..].to_vec();
         }
 
         // Get the MSB of the packet header size, or wait to receive all data
