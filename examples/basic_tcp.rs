@@ -4,12 +4,34 @@
 extern crate meshtastic;
 
 use std::io::{self, BufRead};
+use std::time::SystemTime;
 
 use meshtastic::api::StreamApi;
 use meshtastic::utils;
 
+/// Set up the logger to output to the console and to a file.
+fn setup_logger() -> Result<(), fern::InitError> {
+    fern::Dispatch::new()
+        .format(|out, message, record| {
+            out.finish(format_args!(
+                "[{} {} {}] {}",
+                humantime::format_rfc3339_seconds(SystemTime::now()),
+                record.level(),
+                record.target(),
+                message
+            ))
+        })
+        .level(log::LevelFilter::Trace)
+        .chain(std::io::stdout())
+        .apply()?;
+
+    Ok(())
+}
+
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    setup_logger()?;
+
     let stream_api = StreamApi::new();
 
     println!("Enter the address of a TCP port to connect to, in the form \"IP:PORT\":");
@@ -29,8 +51,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let stream_api = stream_api.configure(config_id).await?;
 
     // This loop can be broken with ctrl+c, or by unpowering the radio.
-    while let Some(decoded) = decoded_listener.recv().await {
-        println!("Received: {:?}", decoded);
+    while let Some(_decoded) = decoded_listener.recv().await {
+        // println!("Received: {:?}", decoded);
     }
 
     // Note that in this specific example, this will only be called when
