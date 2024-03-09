@@ -1,10 +1,10 @@
 use futures_util::future::join3;
 use log::trace;
 use prost::Message;
-use std::{fmt::Display, marker::PhantomData};
+use std::{fmt::Display, marker::PhantomData, sync::Arc};
 use tokio::{
     io::{AsyncReadExt, AsyncWriteExt},
-    sync::mpsc::UnboundedSender,
+    sync::{mpsc::UnboundedSender, Mutex},
     task::JoinHandle,
 };
 use tokio_util::sync::CancellationToken;
@@ -74,6 +74,7 @@ pub struct ConnectedStreamApi<State = state::Configured> {
     read_handle: JoinHandle<Result<(), Error>>,
     write_handle: JoinHandle<Result<(), Error>>,
     processing_handle: JoinHandle<Result<(), Error>>,
+    heartbeat_handle: JoinHandle<Result<(), Error>>,
 
     cancellation_token: CancellationToken,
 
@@ -435,17 +436,25 @@ impl StreamApi {
         let (read_stream, write_stream) = tokio::io::split(stream_handle.stream);
         let cancellation_token = CancellationToken::new();
 
+        let write_stream_mutex = Arc::new(Mutex::new(write_stream));
+
         let read_handle =
             handlers::spawn_read_handler(cancellation_token.clone(), read_stream, read_output_tx);
 
-        let write_handle =
-            handlers::spawn_write_handler(cancellation_token.clone(), write_stream, write_input_rx);
+        let write_handle = handlers::spawn_write_handler(
+            cancellation_token.clone(),
+            write_stream_mutex.clone(),
+            write_input_rx,
+        );
 
         let processing_handle = handlers::spawn_processing_handler(
             cancellation_token.clone(),
             read_output_rx,
             decoded_packet_tx,
         );
+
+        let heartbeat_handle =
+            handlers::spawn_heartbeat_handler(cancellation_token.clone(), write_stream_mutex);
 
         // Persist channels and kill switch to struct
 
@@ -461,6 +470,7 @@ impl StreamApi {
                 read_handle,
                 write_handle,
                 processing_handle,
+                heartbeat_handle,
                 cancellation_token,
                 typestate: PhantomData,
             },
@@ -536,6 +546,7 @@ impl ConnectedStreamApi<state::Connected> {
             read_handle: self.read_handle,
             write_handle: self.write_handle,
             processing_handle: self.processing_handle,
+            heartbeat_handle: self.heartbeat_handle,
             cancellation_token: self.cancellation_token,
             typestate: PhantomData,
         })

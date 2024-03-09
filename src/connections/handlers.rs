@@ -1,10 +1,14 @@
+use std::sync::Arc;
+
 use crate::errors_internal::{Error, InternalChannelError, InternalStreamError};
 use crate::protobufs;
 use crate::types::EncodedToRadioPacketWithHeader;
 use log::{debug, error, trace};
+use prost::Message;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::spawn;
 use tokio::sync::mpsc::{UnboundedReceiver, UnboundedSender};
+use tokio::sync::Mutex;
 use tokio::task::JoinHandle;
 use tokio_util::sync::CancellationToken;
 
@@ -48,19 +52,6 @@ where
 
     let mut read_stream = read_stream;
 
-    let (tx, mut rx) = tokio::sync::mpsc::unbounded_channel();
-
-    let handle = tokio::spawn(async move {
-        loop {
-            tokio::select! {
-              _ = rx.recv() => {}
-              _ = tokio::time::sleep(tokio::time::Duration::from_secs(60)) => {
-                error!("Didn't receive a message on read handler for 60s");
-              }
-            }
-        }
-    });
-
     loop {
         let mut buffer = [0u8; 1024];
         match read_stream.read(&mut buffer).await {
@@ -86,20 +77,16 @@ where
                 ));
             }
         }
-
-        tx.send("hello there").expect("send failed");
     }
 
-    handle.abort();
-
-    trace!("Read handler finished");
+    // trace!("Read handler finished");
 
     // Return type should be never (!)
 }
 
 pub fn spawn_write_handler<W>(
     cancellation_token: CancellationToken,
-    write_stream: W,
+    write_stream: Arc<Mutex<W>>,
     write_input_rx: tokio::sync::mpsc::UnboundedReceiver<EncodedToRadioPacketWithHeader>,
 ) -> JoinHandle<Result<(), Error>>
 where
@@ -125,7 +112,7 @@ where
 
 async fn start_write_handler<W>(
     _cancellation_token: CancellationToken,
-    mut write_stream: W,
+    write_stream: Arc<Mutex<W>>,
     mut write_input_rx: tokio::sync::mpsc::UnboundedReceiver<EncodedToRadioPacketWithHeader>,
 ) -> Result<(), Error>
 where
@@ -133,21 +120,10 @@ where
 {
     debug!("Started write handler");
 
-    let (tx, mut rx) = tokio::sync::mpsc::unbounded_channel();
-
-    let handle = tokio::spawn(async move {
-        loop {
-            tokio::select! {
-              _ = rx.recv() => {}
-              _ = tokio::time::sleep(tokio::time::Duration::from_secs(60)) => {
-                error!("Didn't receive a message on write handler for 60s");
-              }
-            }
-        }
-    });
-
     while let Some(message) = write_input_rx.recv().await {
         trace!("Writing packet data: {:?}", message);
+
+        let mut write_stream = write_stream.lock().await;
 
         if let Err(e) = write_stream.write(message.data()).await {
             error!("Error writing to stream: {:?}", e);
@@ -157,11 +133,7 @@ where
                 },
             ));
         }
-
-        tx.send("hello there").expect("send failed");
     }
-
-    handle.abort();
 
     debug!("Write handler finished");
 
@@ -197,26 +169,75 @@ async fn start_processing_handler(
 
     let mut buffer = StreamBuffer::new(decoded_packet_tx);
 
-    let (tx, mut rx) = tokio::sync::mpsc::unbounded_channel();
-
-    let handle = tokio::spawn(async move {
-        loop {
-            tokio::select! {
-              _ = rx.recv() => {}
-              _ = tokio::time::sleep(tokio::time::Duration::from_secs(60)) => {
-                error!("Didn't receive a message on processing handler for 60s");
-              }
-            }
-        }
-    });
-
     while let Some(message) = read_output_rx.recv().await {
         trace!("Processing {} bytes from radio", message.data().len());
         buffer.process_incoming_bytes(message);
-        tx.send("hello there").expect("send failed");
     }
 
-    handle.abort();
-
     trace!("Processing read_output_rx channel closed");
+}
+
+pub fn spawn_heartbeat_handler<W>(
+    cancellation_token: CancellationToken,
+    write_stream: Arc<Mutex<W>>,
+) -> JoinHandle<Result<(), Error>>
+where
+    W: AsyncWriteExt + Send + Unpin + 'static,
+{
+    let handle = start_heartbeat_handler(cancellation_token.clone(), write_stream);
+
+    spawn(async move {
+        tokio::select! {
+            _ = cancellation_token.cancelled() => {
+                debug!("Heartbeat handler cancelled");
+                Ok(())
+            }
+            write_result = handle => {
+                if let Err(e) = &write_result {
+                    error!("Heartbeat handler unexpectedly terminated {e:?}");
+                }
+                write_result
+            }
+        }
+    })
+}
+
+async fn start_heartbeat_handler<W>(
+    _cancellation_token: CancellationToken,
+    write_stream: Arc<Mutex<W>>,
+) -> Result<(), Error>
+where
+    W: AsyncWriteExt + Send + Unpin + 'static,
+{
+    debug!("Started heartbeat handler");
+
+    loop {
+        tokio::time::sleep(std::time::Duration::from_secs(5 * 60)).await;
+
+        let mut write_stream = write_stream.lock().await;
+
+        let heartbeat_packet = protobufs::ToRadio::default();
+
+        let mut buffer = Vec::new();
+        match heartbeat_packet.encode(&mut buffer) {
+            Ok(_) => (),
+            Err(e) => {
+                error!("Error encoding heartbeat packet: {:?}", e);
+                continue;
+            }
+        };
+
+        if let Err(e) = write_stream.write(&buffer).await {
+            error!("Error writing heartbeat packet to stream: {:?}", e);
+            return Err(Error::InternalStreamError(
+                InternalStreamError::StreamWriteError {
+                    source: Box::new(e),
+                },
+            ));
+        }
+    }
+
+    // debug!("Heartbeat handler finished");
+
+    // Return type should be never (!)
 }
