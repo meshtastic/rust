@@ -239,6 +239,8 @@ impl StreamBuffer {
 
 #[cfg(test)]
 mod tests {
+    use std::time::Duration;
+
     use crate::{protobufs, utils_internal::format_data_packet};
     use prost::Message;
     use tokio::sync::mpsc::unbounded_channel;
@@ -314,5 +316,34 @@ mod tests {
         assert_eq!(mock_rx.recv().await.unwrap(), packet1);
         assert_eq!(mock_rx.recv().await.unwrap(), packet2);
         assert_eq!(buffer.buffer.len(), 0);
+    }
+
+    #[tokio::test]
+    async fn should_purge_buffer_before_testing_framing_byte() {
+        let mut malformed_packet_encoding = vec![0xc3, 0x00, 0x01, 0xff];
+
+        let payload_variant =
+            protobufs::from_radio::PayloadVariant::MyInfo(protobufs::MyNodeInfo {
+                my_node_num: 1,
+                ..Default::default()
+            });
+
+        let (valid_packet, valid_packet_encoding) =
+            mock_encoded_from_radio_packet(1, payload_variant);
+
+        let encoded_packet = format_data_packet(valid_packet_encoding.into()).unwrap();
+
+        let (mock_tx, mut mock_rx) = unbounded_channel::<protobufs::FromRadio>();
+
+        let mut buffer = StreamBuffer::new(mock_tx);
+        buffer.buffer.append(&mut malformed_packet_encoding);
+        buffer.process_incoming_bytes(encoded_packet.data().into());
+
+        assert_eq!(
+            tokio::time::timeout(Duration::from_millis(100), mock_rx.recv())
+                .await
+                .unwrap(),
+            Some(valid_packet)
+        );
     }
 }
