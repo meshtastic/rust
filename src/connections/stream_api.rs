@@ -198,6 +198,8 @@ impl<State> ConnectedStreamApi<State> {
             priority: 0,  // * not transmitted
             rx_rssi: 0,   // * not transmitted
             delayed: 0,   // * not transmitted
+            hop_start: 0, // * set on device
+            via_mqtt: false,
             from: own_node_id.id(),
             to: packet_destination.id(),
             id: generate_rand_id(),

@@ -220,7 +220,7 @@ where
 
         let mut write_stream = write_stream.lock().await;
 
-        let heartbeat_packet = protobufs::ToRadio::default();
+        let heartbeat_packet = protobufs::Heartbeat::default();
 
         let mut buffer = Vec::new();
         match heartbeat_packet.encode(&mut buffer) {
