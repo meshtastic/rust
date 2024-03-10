@@ -61,6 +61,7 @@ pub mod errors {
 /// The `PacketReceiver` type defines the type of the tokio channel that is used to receive decoded packets from the radio.
 /// This is intended to simplify the complexity of the underlying channel type.
 pub mod packet {
+    pub use crate::connections::handlers::CLIENT_HEARTBEAT_INTERVAL;
     pub use crate::connections::PacketDestination;
     pub use crate::connections::PacketRouter;
 
