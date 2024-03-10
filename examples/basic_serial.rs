@@ -9,7 +9,8 @@ use std::time::SystemTime;
 use meshtastic::api::StreamApi;
 use meshtastic::utils;
 
-/// Set up the logger to output to the console and to a file.
+/// Set up the logger to output to stdout  
+/// **Note:** the invokation of this function is commented out in main by default.
 fn setup_logger() -> Result<(), fern::InitError> {
     fern::Dispatch::new()
         .format(|out, message, record| {
@@ -30,7 +31,8 @@ fn setup_logger() -> Result<(), fern::InitError> {
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    setup_logger()?;
+    // Uncomment this to enable logging
+    // setup_logger()?;
 
     let stream_api = StreamApi::new();
 
@@ -54,8 +56,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // This loop can be broken with ctrl+c, or by disconnecting
     // the attached serial port.
-    while let Some(_decoded) = decoded_listener.recv().await {
-        // println!("Received: {:?}", decoded);
+    while let Some(decoded) = decoded_listener.recv().await {
+        println!("Received: {:?}", decoded);
     }
 
     // Note that in this specific example, this will only be called when
