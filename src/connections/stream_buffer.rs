@@ -367,6 +367,9 @@ mod tests {
         let (mock_tx, mut mock_rx) = unbounded_channel::<protobufs::FromRadio>();
 
         let mut buffer = StreamBuffer::new(mock_tx);
+
+        // Add two malformed packets to the buffer to test `while` loop
+        buffer.buffer.append(&mut malformed_packet_encoding.clone());
         buffer.buffer.append(&mut malformed_packet_encoding);
 
         buffer.process_incoming_bytes(encoded_packet2.data().into());
