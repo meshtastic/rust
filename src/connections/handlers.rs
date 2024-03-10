@@ -16,6 +16,10 @@ use crate::connections::stream_buffer::StreamBuffer;
 
 use super::wrappers::encoded_data::IncomingStreamData;
 
+/// Interval for sending heartbeat packets to the radio (in seconds).
+/// Needs to be less than this: https://github.com/meshtastic/firmware/blob/eb372c190ec82366998c867acc609a418130d842/src/SerialConsole.cpp#L8
+pub const SERIAL_HEARTBEAT_INTERVAL: u64 = 5 * 60; // 5 minutes
+
 pub fn spawn_read_handler<R>(
     cancellation_token: CancellationToken,
     read_stream: R,
@@ -212,7 +216,7 @@ where
     debug!("Started heartbeat handler");
 
     loop {
-        tokio::time::sleep(std::time::Duration::from_secs(5 * 60)).await;
+        tokio::time::sleep(std::time::Duration::from_secs(SERIAL_HEARTBEAT_INTERVAL)).await;
 
         let mut write_stream = write_stream.lock().await;
 
@@ -235,6 +239,8 @@ where
                 },
             ));
         }
+
+        log::info!("Sent heartbeat packet");
     }
 
     // debug!("Heartbeat handler finished");
