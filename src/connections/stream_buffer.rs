@@ -121,6 +121,24 @@ impl StreamBuffer {
             });
         }
 
+        let framing_index = self.shift_buffer_to_first_valid_packet()?;
+
+        // Note: the framing index should always be 0 at this point, keeping for clarity
+        let incoming_packet_data_size = self.extract_data_size_from_header(framing_index)?;
+
+        self.validate_packet_in_buffer(incoming_packet_data_size, framing_index)?;
+
+        // Get packet data, excluding magic bytes
+        let packet_data =
+            self.extract_packet_from_buffer(incoming_packet_data_size, framing_index)?;
+
+        // Attempt to decode the current packet
+        let decoded_packet = protobufs::FromRadio::decode(packet_data.as_slice())?;
+
+        Ok(decoded_packet)
+    }
+
+    fn shift_buffer_to_first_valid_packet(&mut self) -> Result<usize, StreamBufferError> {
         let mut framing_index = self.get_framing_index()?;
 
         // Drop beginning of buffer if the framing byte is found later in the buffer.
@@ -143,19 +161,7 @@ impl StreamBuffer {
             framing_index = self.get_framing_index()?;
         }
 
-        // Note: the framing index should always be 0 at this point, keeping for clarity
-        let incoming_packet_data_size = self.extract_data_size_from_header(framing_index)?;
-
-        self.validate_packet_in_buffer(incoming_packet_data_size, framing_index)?;
-
-        // Get packet data, excluding magic bytes
-        let packet_data =
-            self.extract_packet_from_buffer(incoming_packet_data_size, framing_index)?;
-
-        // Attempt to decode the current packet
-        let decoded_packet = protobufs::FromRadio::decode(packet_data.as_slice())?;
-
-        Ok(decoded_packet)
+        Ok(framing_index)
     }
 
     // All valid packets start with the sequence [0x94 0xc3 size_msb size_lsb], where
@@ -191,7 +197,7 @@ impl StreamBuffer {
         // Check that the framing byte is correct, and fail if not
         if framing_byte != 0xc3 {
             warn!("Framing byte {} not equal to 0xc3", framing_byte);
-            self.get_framing_index()?; // Purge buffer to next packet
+            self.shift_buffer_to_first_valid_packet()?;
             return Err(StreamBufferError::IncorrectFramingByte { framing_byte });
         }
 
