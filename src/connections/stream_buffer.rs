@@ -173,12 +173,12 @@ impl StreamBuffer {
     }
 
     fn extract_data_size_from_header(
-        &self,
+        &mut self,
         framing_index: usize,
     ) -> Result<usize, StreamBufferError> {
         // Get the "framing byte" after the start of the packet header, or fail if not found
         let framing_byte = match self.buffer.get(framing_index + 1) {
-            Some(val) => val,
+            Some(val) => val.to_owned(),
             None => {
                 debug!("Could not find framing byte, waiting for more data");
                 return Err(StreamBufferError::IncompletePacket {
@@ -189,11 +189,10 @@ impl StreamBuffer {
         };
 
         // Check that the framing byte is correct, and fail if not
-        if *framing_byte != 0xc3 {
+        if framing_byte != 0xc3 {
             warn!("Framing byte {} not equal to 0xc3", framing_byte);
-            return Err(StreamBufferError::IncorrectFramingByte {
-                framing_byte: *framing_byte,
-            });
+            self.get_framing_index()?; // Purge buffer to next packet
+            return Err(StreamBufferError::IncorrectFramingByte { framing_byte });
         }
 
         // Get the MSB of the packet header size, or wait to receive all data
