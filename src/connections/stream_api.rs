@@ -1,10 +1,10 @@
 use futures_util::future::join3;
 use log::trace;
 use prost::Message;
-use std::{fmt::Display, marker::PhantomData, sync::Arc};
+use std::{fmt::Display, marker::PhantomData};
 use tokio::{
     io::{AsyncReadExt, AsyncWriteExt},
-    sync::{mpsc::UnboundedSender, Mutex},
+    sync::mpsc::UnboundedSender,
     task::JoinHandle,
 };
 use tokio_util::sync::CancellationToken;
@@ -438,16 +438,11 @@ impl StreamApi {
         let (read_stream, write_stream) = tokio::io::split(stream_handle.stream);
         let cancellation_token = CancellationToken::new();
 
-        let write_stream_mutex = Arc::new(Mutex::new(write_stream));
-
         let read_handle =
             handlers::spawn_read_handler(cancellation_token.clone(), read_stream, read_output_tx);
 
-        let write_handle = handlers::spawn_write_handler(
-            cancellation_token.clone(),
-            write_stream_mutex.clone(),
-            write_input_rx,
-        );
+        let write_handle =
+            handlers::spawn_write_handler(cancellation_token.clone(), write_stream, write_input_rx);
 
         let processing_handle = handlers::spawn_processing_handler(
             cancellation_token.clone(),
@@ -456,7 +451,7 @@ impl StreamApi {
         );
 
         let heartbeat_handle =
-            handlers::spawn_heartbeat_handler(cancellation_token.clone(), write_stream_mutex);
+            handlers::spawn_heartbeat_handler(cancellation_token.clone(), write_input_tx.clone());
 
         // Persist channels and kill switch to struct
 
