@@ -165,16 +165,15 @@ async fn start_processing_handler(
     mut read_output_rx: tokio::sync::mpsc::UnboundedReceiver<IncomingStreamData>,
     decoded_packet_tx: UnboundedSender<protobufs::FromRadio>,
 ) {
-    trace!("Started message processing handler");
+    debug!("Started message processing handler");
 
     let mut buffer = StreamBuffer::new(decoded_packet_tx);
 
     while let Some(message) = read_output_rx.recv().await {
-        trace!("Processing {} bytes from radio", message.data().len());
         buffer.process_incoming_bytes(message);
     }
 
-    trace!("Processing read_output_rx channel closed");
+    debug!("Processing read_output_rx channel closed");
 }
 
 pub fn spawn_heartbeat_handler(
