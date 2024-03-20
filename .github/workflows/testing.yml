@@ -37,4 +37,4 @@ jobs:
 
       - name: Run test suite
         working-directory: ./
-        run: cargo test
+        run: cargo test --features ts-gen

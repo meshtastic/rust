@@ -4,12 +4,36 @@
 extern crate meshtastic;
 
 use std::io::{self, BufRead};
+use std::time::SystemTime;
 
 use meshtastic::api::StreamApi;
 use meshtastic::utils;
 
+/// Set up the logger to output to stdout  
+/// **Note:** the invokation of this function is commented out in main by default.
+fn setup_logger() -> Result<(), fern::InitError> {
+    fern::Dispatch::new()
+        .format(|out, message, record| {
+            out.finish(format_args!(
+                "[{} {} {}] {}",
+                humantime::format_rfc3339_seconds(SystemTime::now()),
+                record.level(),
+                record.target(),
+                message
+            ))
+        })
+        .level(log::LevelFilter::Trace)
+        .chain(std::io::stdout())
+        .apply()?;
+
+    Ok(())
+}
+
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    // Uncomment this to enable logging
+    // setup_logger()?;
+
     let stream_api = StreamApi::new();
 
     let available_ports = utils::stream::available_serial_ports()?;

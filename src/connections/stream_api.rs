@@ -74,6 +74,7 @@ pub struct ConnectedStreamApi<State = state::Configured> {
     read_handle: JoinHandle<Result<(), Error>>,
     write_handle: JoinHandle<Result<(), Error>>,
     processing_handle: JoinHandle<Result<(), Error>>,
+    heartbeat_handle: JoinHandle<Result<(), Error>>,
 
     cancellation_token: CancellationToken,
 
@@ -197,6 +198,8 @@ impl<State> ConnectedStreamApi<State> {
             priority: 0,  // * not transmitted
             rx_rssi: 0,   // * not transmitted
             delayed: 0,   // * not transmitted
+            hop_start: 0, // * set on device
+            via_mqtt: false,
             from: own_node_id.id(),
             to: packet_destination.id(),
             id: generate_rand_id(),
@@ -447,6 +450,9 @@ impl StreamApi {
             decoded_packet_tx,
         );
 
+        let heartbeat_handle =
+            handlers::spawn_heartbeat_handler(cancellation_token.clone(), write_input_tx.clone());
+
         // Persist channels and kill switch to struct
 
         let write_input_tx = write_input_tx;
@@ -461,6 +467,7 @@ impl StreamApi {
                 read_handle,
                 write_handle,
                 processing_handle,
+                heartbeat_handle,
                 cancellation_token,
                 typestate: PhantomData,
             },
@@ -536,6 +543,7 @@ impl ConnectedStreamApi<state::Connected> {
             read_handle: self.read_handle,
             write_handle: self.write_handle,
             processing_handle: self.processing_handle,
+            heartbeat_handle: self.heartbeat_handle,
             cancellation_token: self.cancellation_token,
             typestate: PhantomData,
         })

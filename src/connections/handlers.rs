@@ -1,7 +1,9 @@
 use crate::errors_internal::{Error, InternalChannelError, InternalStreamError};
 use crate::protobufs;
 use crate::types::EncodedToRadioPacketWithHeader;
+use crate::utils::format_data_packet;
 use log::{debug, error, trace};
+use prost::Message;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::spawn;
 use tokio::sync::mpsc::{UnboundedReceiver, UnboundedSender};
@@ -11,6 +13,10 @@ use tokio_util::sync::CancellationToken;
 use crate::connections::stream_buffer::StreamBuffer;
 
 use super::wrappers::encoded_data::IncomingStreamData;
+
+/// Interval for sending heartbeat packets to the radio (in seconds).
+/// Needs to be less than this: https://github.com/meshtastic/firmware/blob/eb372c190ec82366998c867acc609a418130d842/src/SerialConsole.cpp#L8
+pub const CLIENT_HEARTBEAT_INTERVAL: u64 = 5 * 60; // 5 minutes
 
 pub fn spawn_read_handler<R>(
     cancellation_token: CancellationToken,
@@ -159,14 +165,86 @@ async fn start_processing_handler(
     mut read_output_rx: tokio::sync::mpsc::UnboundedReceiver<IncomingStreamData>,
     decoded_packet_tx: UnboundedSender<protobufs::FromRadio>,
 ) {
-    trace!("Started message processing handler");
+    debug!("Started message processing handler");
 
     let mut buffer = StreamBuffer::new(decoded_packet_tx);
 
     while let Some(message) = read_output_rx.recv().await {
-        trace!("Processing {} bytes from radio", message.data().len());
         buffer.process_incoming_bytes(message);
     }
 
-    trace!("Processing read_output_rx channel closed");
+    debug!("Processing read_output_rx channel closed");
+}
+
+pub fn spawn_heartbeat_handler(
+    cancellation_token: CancellationToken,
+    write_input_tx: UnboundedSender<EncodedToRadioPacketWithHeader>,
+) -> JoinHandle<Result<(), Error>> {
+    let handle = start_heartbeat_handler(cancellation_token.clone(), write_input_tx);
+
+    spawn(async move {
+        tokio::select! {
+            _ = cancellation_token.cancelled() => {
+                debug!("Heartbeat handler cancelled");
+                Ok(())
+            }
+            write_result = handle => {
+                if let Err(e) = &write_result {
+                    error!("Heartbeat handler unexpectedly terminated {e:?}");
+                }
+                write_result
+            }
+        }
+    })
+}
+
+async fn start_heartbeat_handler(
+    _cancellation_token: CancellationToken,
+    write_input_tx: UnboundedSender<EncodedToRadioPacketWithHeader>,
+) -> Result<(), Error> {
+    debug!("Started heartbeat handler");
+
+    loop {
+        tokio::time::sleep(std::time::Duration::from_secs(CLIENT_HEARTBEAT_INTERVAL)).await;
+
+        let heartbeat_packet = protobufs::ToRadio {
+            payload_variant: Some(protobufs::to_radio::PayloadVariant::Heartbeat(
+                protobufs::Heartbeat::default(),
+            )),
+        };
+
+        let mut buffer = Vec::new();
+        match heartbeat_packet.encode(&mut buffer) {
+            Ok(_) => (),
+            Err(e) => {
+                error!("Error encoding heartbeat packet: {:?}", e);
+                continue;
+            }
+        };
+
+        let packet_with_header = match format_data_packet(buffer.into()) {
+            Ok(p) => p,
+            Err(e) => {
+                error!("Error formatting heartbeat packet: {:?}", e);
+                continue;
+            }
+        };
+
+        trace!("Sending heartbeat packet");
+
+        if let Err(e) = write_input_tx.send(packet_with_header) {
+            error!("Error writing heartbeat packet to stream: {:?}", e);
+            return Err(Error::InternalStreamError(
+                InternalStreamError::StreamWriteError {
+                    source: Box::new(e),
+                },
+            ));
+        }
+
+        log::info!("Sent heartbeat packet");
+    }
+
+    // debug!("Heartbeat handler finished");
+
+    // Return type should be never (!)
 }
