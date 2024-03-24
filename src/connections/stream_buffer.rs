@@ -304,7 +304,7 @@ impl StreamBuffer {
         if self.buffer.len() < PACKET_HEADER_SIZE + packet_data_size {
             return Err(StreamBufferError::IncompletePacket {
                 buffer_size: self.buffer.len(),
-                packet_size: packet_data_size,
+                packet_size: PACKET_HEADER_SIZE + packet_data_size,
             });
         }
 
