@@ -93,6 +93,7 @@ pub enum InternalChannelError {
 
 #[derive(Error, Debug)]
 #[error("Bluetooth low energy connection error")]
+#[cfg(feature = "bluetooth-le")]
 pub struct BleConnectionError();
 
 mod test {

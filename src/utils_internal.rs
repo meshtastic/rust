@@ -1,9 +1,15 @@
-use crate::errors_internal::{BleConnectionError, Error};
+use crate::errors_internal::Error;
+#[cfg(feature = "bluetooth-le")]
+use crate::errors_internal::BleConnectionError;
+#[cfg(feature = "bluetooth-le")]
 use btleplug::api::{Central, Manager as _, Peripheral as _, ScanFilter};
+#[cfg(feature = "bluetooth-le")]
 use btleplug::platform::{Adapter, Manager, Peripheral};
+#[cfg(feature = "bluetooth-le")]
 use log::error;
 use std::time::Duration;
 use std::time::UNIX_EPOCH;
+#[cfg(feature = "bluetooth-le")]
 use uuid::Uuid;
 
 use rand::{distributions::Standard, prelude::Distribution, Rng};
@@ -198,8 +204,11 @@ pub async fn build_tcp_stream(
     Ok(StreamHandle::from_stream(stream))
 }
 
+
+#[cfg(feature = "bluetooth-le")]
 const MSH_SERVICE: Uuid = Uuid::from_u128(0x6ba1b218_15a8_461f_9fa8_5dcae273eafd);
 
+#[cfg(feature = "bluetooth-le")]
 async fn scan_peripherals(adapter: &Adapter) -> Result<Vec<Peripheral>, btleplug::Error> {
     adapter
         .start_scan(ScanFilter {
@@ -211,6 +220,7 @@ async fn scan_peripherals(adapter: &Adapter) -> Result<Vec<Peripheral>, btleplug
 
 /// Finds a BLE radio matching a given name and running meshtastic.
 /// It searches for the 'MSH_SERVICE' running on the device.
+#[cfg(feature = "bluetooth-le")]
 async fn find_ble_radio(name: String) -> Result<Peripheral, Error> {
     //TODO: support searching both by a name and by a MAC address
     let scan_error_fn = |e: btleplug::Error| Error::StreamBuildError {
