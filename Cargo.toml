@@ -19,6 +19,7 @@ default = ["serde"]
 
 serde = ["dep:serde", "dep:serde_json"]
 ts-gen = ["serde", "dep:specta"]
+bluetooth-le = ["dep:uuid","dep:btleplug"]
 
 [[example]]
 name = "basic_serial"
@@ -52,8 +53,8 @@ specta = { git = "https://github.com/ajmcquilkin/specta.git", rev = "6a8731d", o
 serde = { version = "1.0", features = ["derive"], optional = true }
 serde_json = { version = "1.0", optional = true }
 thiserror = "1.0.48"
-uuid = "1.6.1"
-btleplug = "0.11.5"
+uuid = { version = "1.6.1", optional = true }
+btleplug = { version = "0.11.5", optional = true }
 
 [dev-dependencies]
 fern = { version = "0.6.2", features = ["colored"] }
