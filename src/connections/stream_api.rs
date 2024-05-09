@@ -179,6 +179,10 @@ impl<State> ConnectedStreamApi<State> {
             PacketDestination::Node(id) => id,
         };
 
+        // NOTE(canardleteer): We don't warn on deprecation here, because it
+        //                     remains valid for many active nodes, and
+        //                     remains a part of the generated interface.
+        #[allow(deprecated)]
         let mut mesh_packet = protobufs::MeshPacket {
             payload_variant: Some(protobufs::mesh_packet::PayloadVariant::Decoded(
                 protobufs::Data {
@@ -197,7 +201,7 @@ impl<State> ConnectedStreamApi<State> {
             hop_limit: 0, // * not transmitted
             priority: 0,  // * not transmitted
             rx_rssi: 0,   // * not transmitted
-            delayed: 0,   // * not transmitted
+            delayed: 0,   // * not transmitted [deprecated since protobufs v2.2.19]
             hop_start: 0, // * set on device
             via_mqtt: false,
             from: own_node_id.id(),

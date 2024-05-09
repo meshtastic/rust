@@ -204,11 +204,12 @@ pub async fn build_tcp_stream(
     Ok(StreamHandle::from_stream(stream))
 }
 
-
 #[cfg(feature = "bluetooth-le")]
+#[allow(dead_code)]
 const MSH_SERVICE: Uuid = Uuid::from_u128(0x6ba1b218_15a8_461f_9fa8_5dcae273eafd);
 
 #[cfg(feature = "bluetooth-le")]
+#[allow(dead_code)]
 async fn scan_peripherals(adapter: &Adapter) -> Result<Vec<Peripheral>, btleplug::Error> {
     adapter
         .start_scan(ScanFilter {
@@ -221,6 +222,7 @@ async fn scan_peripherals(adapter: &Adapter) -> Result<Vec<Peripheral>, btleplug
 /// Finds a BLE radio matching a given name and running meshtastic.
 /// It searches for the 'MSH_SERVICE' running on the device.
 #[cfg(feature = "bluetooth-le")]
+#[allow(dead_code)]
 async fn find_ble_radio(name: String) -> Result<Peripheral, Error> {
     //TODO: support searching both by a name and by a MAC address
     let scan_error_fn = |e: btleplug::Error| Error::StreamBuildError {
@@ -231,7 +233,7 @@ async fn find_ble_radio(name: String) -> Result<Peripheral, Error> {
     let adapters = manager.adapters().await.map_err(scan_error_fn)?;
 
     for adapter in &adapters {
-        let peripherals = scan_peripherals(&adapter).await;
+        let peripherals = scan_peripherals(adapter).await;
         match peripherals {
             Err(e) => {
                 error!("Error while scanning for meshtastic peripherals: {e:?}");
