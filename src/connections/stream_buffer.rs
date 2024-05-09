@@ -238,14 +238,14 @@ impl StreamBuffer {
     // We need to also validate that, if the 0x94 is found and not at the end of the
     // buffer, that the next byte is 0xc3
     // Note that the maximum packet size currently stands at 240 bytes, meaning an MSB is not needed
-    fn find_framing_index(buffer: &mut Vec<u8>) -> Result<Option<usize>, StreamBufferError> {
+    fn find_framing_index(buffer: &mut [u8]) -> Result<Option<usize>, StreamBufferError> {
         // Not possible to have a two-byte sequence in a buffer with less than two bytes
         // Vec::windows will also panic if the buffer is empty
         if buffer.len() < 2 {
             return Ok(None);
         }
 
-        let framing_index = buffer.windows(2).position(|b| b == &[0x94, 0xc3]);
+        let framing_index = buffer.windows(2).position(|b| b == [0x94, 0xc3]);
 
         Ok(framing_index)
     }
@@ -293,7 +293,7 @@ impl StreamBuffer {
         // Recall that packet size doesn't include the first four magic bytes
         let incoming_packet_data_size: usize = usize::from(u16::from_le_bytes([*lsb, *msb]));
 
-        return Ok(incoming_packet_data_size);
+        Ok(incoming_packet_data_size)
     }
 
     fn validate_packet_in_buffer(
@@ -314,7 +314,7 @@ impl StreamBuffer {
         // In the event that the last byte is 0x94, we need to account for the possibility of
         // the next byte being 0xc3, which would indicate that the packet is malformed.
         // We can only do this when the buffer has enough data to avoid a slice index panic.
-        if self.buffer.len() >= packet_data_end_index + 1 {
+        if self.buffer.len() > packet_data_end_index {
             packet_data_end_index += 1;
         }
 
