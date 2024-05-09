@@ -27,6 +27,13 @@ jobs:
     - name: rust toolchain
       uses: dtolnay/rust-toolchain@stable
 
+    - name: Initialize Rust Cache
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/target
+        key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
     - name: cargo check
       run: cargo check
 
