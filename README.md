@@ -22,7 +22,13 @@ cargo add meshtastic
 You can clone to your own working directoty:
 
 ```shell
-git clone --recursive https://github.com/meshtastic/rust.git
+git clone https://github.com/meshtastic/rust.git
+```
+
+Recursively clone our Git submodules by running:
+
+```shell
+git submodule update --init
 ```
 
 ## Usage
