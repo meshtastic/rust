@@ -1,6 +1,6 @@
-use crate::errors_internal::Error;
 #[cfg(feature = "bluetooth-le")]
 use crate::errors_internal::BleConnectionError;
+use crate::errors_internal::Error;
 #[cfg(feature = "bluetooth-le")]
 use btleplug::api::{Central, Manager as _, Peripheral as _, ScanFilter};
 #[cfg(feature = "bluetooth-le")]
