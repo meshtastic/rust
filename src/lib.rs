@@ -48,12 +48,12 @@ pub mod errors {
 /// destinations for packets sent to the radio by the library:
 ///
 /// * `PacketDestination::Local` - This destination is used for packets that are intended to be processed locally
-/// by the radio and not to be forwarded to other nodes. An example of this would be local configuration packets.
+///     by the radio and not to be forwarded to other nodes. An example of this would be local configuration packets.
 /// * `PacketDestination::Broadcast` - This destination is used for packets that are intended to be broadcast to all
-/// nodes in the mesh. This is the default enum variant. Text messages are commonly broadcasted to the entire mesh.
+///     nodes in the mesh. This is the default enum variant. Text messages are commonly broadcasted to the entire mesh.
 /// * `PacketDestination::Node(u32)` - This destination is used for packets that are intended to be sent to a specific
-/// node in the mesh. The `u32` value is the node id of the node that the packet should be sent to. This is commonly
-/// used for direct text messages.
+///     node in the mesh. The `u32` value is the node id of the node that the packet should be sent to. This is commonly
+///     used for direct text messages.
 ///
 /// The `PacketRouter` trait defines the behavior of a struct that is able to route mesh packets. This trait is used
 /// to allow for the echoing of mesh packets within the `send_mesh_packet` method of the `ConnectedStreamApi` struct.

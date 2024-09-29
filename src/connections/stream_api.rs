@@ -112,11 +112,11 @@ impl<State> ConnectedStreamApi<State> {
     /// * `destination` - A `PacketDestination` enum that specifies the destination of the packet.
     /// * `channel` - A `u32` that specifies the message channel to send the packet on, in the range [0..7).
     /// * `want_ack` - A `bool` that specifies whether or not the radio should wait for acknowledgement
-    /// from other nodes on the mesh.
+    ///     from other nodes on the mesh.
     /// * `want_response` - A `bool` that specifies whether or not the radio should wait for a response
-    /// from other nodes on the mesh.
+    ///     from other nodes on the mesh.
     /// * `echo_response` - A `bool` that specifies whether or not the radio should echo the packet back
-    /// to the client.
+    ///     to the client.
     /// * `reply_id` - An optional `u32` that specifies the ID of the packet to reply to.
     /// * `emoji` - An optional `u32` that specifies the unicode emoji data to send with the packet.
     ///
@@ -499,7 +499,7 @@ impl ConnectedStreamApi<state::Connected> {
     /// # Arguments
     ///
     /// * `config_id` - A randomly generated configuration ID that will be used
-    /// to check that the configuration process has completed.
+    ///     to check that the configuration process has completed.
     ///
     /// # Returns
     ///
@@ -621,11 +621,11 @@ impl ConnectedStreamApi<state::Configured> {
     /// # Arguments
     ///
     /// * `packet_router` - A generic packet router field that implements the `PacketRouter` trait.
-    /// This router is used in the event a packet needs to be echoed.
+    ///     This router is used in the event a packet needs to be echoed.
     /// * `text` - A `String` containing the text to send.
     /// * `destination` - A `PacketDestination` enum that specifies the destination of the packet.
     /// * `want_ack` - A `bool` that specifies whether or not the radio should wait for acknowledgement
-    /// from other nodes on the mesh.
+    ///     from other nodes on the mesh.
     /// * `channel` - A `u32` that specifies the message channel to send the packet on [0..7).
     ///
     /// # Returns
@@ -693,11 +693,11 @@ impl ConnectedStreamApi<state::Configured> {
     /// # Arguments
     ///
     /// * `packet_router` - A generic packet router field that implements the `PacketRouter` trait.
-    /// This router is used in the event a packet needs to be echoed.
+    ///     This router is used in the event a packet needs to be echoed.
     /// * `waypoint` - An instance of the `Waypoint` struct to send.
     /// * `destination` - A `PacketDestination` enum that specifies the destination of the packet.
     /// * `want_ack` - A `bool` that specifies whether or not the radio should wait for acknowledgement
-    /// from other nodes on the mesh.
+    ///     from other nodes on the mesh.
     /// * `channel` - A `u32` that specifies the message channel to send the packet on [0..7).
     ///
     /// # Returns
@@ -774,11 +774,11 @@ impl ConnectedStreamApi<state::Configured> {
     /// # Arguments
     ///
     /// * `packet_router` - A generic packet router field that implements the `PacketRouter` trait.
-    /// This router is used in the event a packet needs to be echoed.
+    ///     This router is used in the event a packet needs to be echoed.
     /// * `position` - An instance of the `Position` struct to send.
     /// * `destination` - A `PacketDestination` enum that specifies the destination of the packet.
     /// * `want_ack` - A `bool` that specifies whether or not the radio should wait for acknowledgement
-    /// from other nodes on the mesh.
+    ///     from other nodes on the mesh.
     /// * `channel` - A `u32` that specifies the message channel to send the packet on [0..7).
     ///
     /// # Returns
@@ -851,7 +851,7 @@ impl ConnectedStreamApi<state::Configured> {
     /// # Arguments
     ///
     /// * `packet_router` - A generic packet router field that implements the `PacketRouter` trait.
-    /// This router is used in the event a packet needs to be echoed.
+    ///     This router is used in the event a packet needs to be echoed.
     /// * `config` - An instance of the `Config` struct to update the radio with.
     ///
     /// # Returns
@@ -925,7 +925,7 @@ impl ConnectedStreamApi<state::Configured> {
     /// # Arguments
     ///
     /// * `packet_router` - A generic packet router field that implements the `PacketRouter` trait.
-    /// This router is used in the event a packet needs to be echoed.
+    ///     This router is used in the event a packet needs to be echoed.
     /// * `module_config` - An instance of the `ModuleConfig` struct to update the radio with.
     ///
     /// # Returns
@@ -999,7 +999,7 @@ impl ConnectedStreamApi<state::Configured> {
     /// # Arguments
     ///
     /// * `packet_router` - A generic packet router field that implements the `PacketRouter` trait.
-    /// This router is used in the event a packet needs to be echoed.
+    ///     This router is used in the event a packet needs to be echoed.
     /// * `channel_config` - An instance of the `Channel` struct to update the radio with.
     ///
     /// # Returns
@@ -1070,7 +1070,7 @@ impl ConnectedStreamApi<state::Configured> {
     /// # Arguments
     ///
     /// * `packet_router` - A generic packet router field that implements the `PacketRouter` trait.
-    /// This router is used in the event a packet needs to be echoed.
+    ///     This router is used in the event a packet needs to be echoed.
     /// * `user` - An instance of the `User` struct to update the radio user with.
     ///
     /// # Returns
@@ -1271,7 +1271,7 @@ impl ConnectedStreamApi<state::Configured> {
     /// # Arguments
     ///
     /// * `packet_router` - A generic packet router field that implements the `PacketRouter` trait.
-    /// This router is used in the event a packet needs to be echoed.
+    ///     This router is used in the event a packet needs to be echoed.
     /// * `local_config` - An instance of the `LocalConfig` struct to update the radio with.
     ///
     /// # Returns
@@ -1386,7 +1386,7 @@ impl ConnectedStreamApi<state::Configured> {
     /// # Arguments
     ///
     /// * `packet_router` - A generic packet router field that implements the `PacketRouter` trait.
-    /// This router is used in the event a packet needs to be echoed.
+    ///     This router is used in the event a packet needs to be echoed.
     /// * `local_module_config` - An instance of the `LocalModuleConfig` struct to update the radio with.
     ///
     /// # Returns
@@ -1529,7 +1529,7 @@ impl ConnectedStreamApi<state::Configured> {
     /// # Arguments
     ///
     /// * `packet_router` - A generic packet router field that implements the `PacketRouter` trait.
-    /// This router is used in the event a packet needs to be echoed.
+    ///     This router is used in the event a packet needs to be echoed.
     /// * `channel_config` - A list of updates to make to radio channels.
     ///
     /// # Returns
