@@ -19,7 +19,7 @@ You can add this crate to your project using the following command:
 cargo add meshtastic
 ```
 
-You can clone to your own working directoty:
+Alternatively, you can clone this repository to your own working directoty:
 
 ```shell
 git clone https://github.com/meshtastic/rust.git
