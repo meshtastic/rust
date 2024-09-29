@@ -19,6 +19,18 @@ You can add this crate to your project using the following command:
 cargo add meshtastic
 ```
 
+Alternatively, you can clone this repository to your own working directoty:
+
+```shell
+git clone https://github.com/meshtastic/rust.git
+```
+
+Recursively clone our Git submodules by running:
+
+```shell
+git submodule update --init
+```
+
 ## Usage
 
 This crate provides basic TCP and serial connection examples within the `/examples` directory. You can run
