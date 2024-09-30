@@ -55,6 +55,7 @@ fn main() -> std::io::Result<()> {
     #[cfg(feature = "serde")]
     {
         config.type_attribute(".", "#[serde(rename_all = \"camelCase\")]");
+        config.type_attribute(".", "#[allow(clippy::doc_lazy_continuation)]");
     }
 
     config.compile_protos(&protos, &[protobufs_dir]).unwrap();

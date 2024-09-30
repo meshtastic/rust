@@ -1,0 +1,44 @@
+on: [push, pull_request]
+
+name: "Code Hygiene Suite"
+
+env:
+    CARGO_REGISTRIES_CRATES_IO_PROTOCOL: sparse
+
+jobs:
+  hygiene:
+    strategy:
+      matrix:
+        platform: [macos-latest, ubuntu-20.04, windows-latest]
+
+    runs-on: ${{ matrix.platform }}
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        submodules: true
+
+    - name: Install dependencies (Ubuntu only)
+      if: matrix.platform == 'ubuntu-20.04'
+      run: |
+          sudo apt-get update
+          sudo apt-get install -y libdbus-1-dev pkg-config
+
+    - name: rust toolchain
+      uses: dtolnay/rust-toolchain@stable
+
+    - name: Initialize Rust Cache
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/target
+        key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
+    - name: cargo check
+      run: cargo check
+
+    - name: cargo fmt
+      run: cargo fmt --all -- --check
+
+    - name: cargo clippy
+      run: cargo clippy -- -D warnings

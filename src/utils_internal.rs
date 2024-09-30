@@ -1,6 +1,6 @@
-use crate::errors_internal::Error;
 #[cfg(feature = "bluetooth-le")]
 use crate::errors_internal::BleConnectionError;
+use crate::errors_internal::Error;
 #[cfg(feature = "bluetooth-le")]
 use btleplug::api::{Central, Manager as _, Peripheral as _, ScanFilter};
 #[cfg(feature = "bluetooth-le")]
@@ -79,12 +79,12 @@ pub fn available_serial_ports() -> Result<Vec<String>, tokio_serial::Error> {
 /// # Arguments
 ///
 /// * `port_name` - The system-specific name of the serial port to open. Unix ports
-/// will be of the form /dev/ttyUSBx, while Windows ports will be of the form COMx.
+///     will be of the form /dev/ttyUSBx, while Windows ports will be of the form COMx.
 /// * `baud_rate` - The baud rate of the serial port. Defaults to `115_200` if not passed.
 /// * `dtr` - Asserts the "Data Terminal Ready" signal for the serial port if `true`.
-/// Defaults to `true` if not passed.
+///     Defaults to `true` if not passed.
 /// * `rts` - Asserts the "Request To Send" signal for the serial port if `true`.
-/// Defaults to `false` if not passed.
+///     Defaults to `false` if not passed.
 ///
 /// # Returns
 ///
@@ -204,11 +204,12 @@ pub async fn build_tcp_stream(
     Ok(StreamHandle::from_stream(stream))
 }
 
-
 #[cfg(feature = "bluetooth-le")]
+#[allow(dead_code)]
 const MSH_SERVICE: Uuid = Uuid::from_u128(0x6ba1b218_15a8_461f_9fa8_5dcae273eafd);
 
 #[cfg(feature = "bluetooth-le")]
+#[allow(dead_code)]
 async fn scan_peripherals(adapter: &Adapter) -> Result<Vec<Peripheral>, btleplug::Error> {
     adapter
         .start_scan(ScanFilter {
@@ -221,6 +222,7 @@ async fn scan_peripherals(adapter: &Adapter) -> Result<Vec<Peripheral>, btleplug
 /// Finds a BLE radio matching a given name and running meshtastic.
 /// It searches for the 'MSH_SERVICE' running on the device.
 #[cfg(feature = "bluetooth-le")]
+#[allow(dead_code)]
 async fn find_ble_radio(name: String) -> Result<Peripheral, Error> {
     //TODO: support searching both by a name and by a MAC address
     let scan_error_fn = |e: btleplug::Error| Error::StreamBuildError {
@@ -231,7 +233,7 @@ async fn find_ble_radio(name: String) -> Result<Peripheral, Error> {
     let adapters = manager.adapters().await.map_err(scan_error_fn)?;
 
     for adapter in &adapters {
-        let peripherals = scan_peripherals(&adapter).await;
+        let peripherals = scan_peripherals(adapter).await;
         match peripherals {
             Err(e) => {
                 error!("Error while scanning for meshtastic peripherals: {e:?}");
