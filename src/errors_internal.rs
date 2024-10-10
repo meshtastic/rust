@@ -70,7 +70,7 @@ pub enum InternalStreamError {
 
     /// An error indicating the stream has reached its "end of file" and will likely no longer be able to produce bytes.
     #[error("Stream has reached EOF")]
-    Eof
+    Eof,
 }
 
 /// An enum that defines the possible internal errors that can occur within the library when handling data channels.

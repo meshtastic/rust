@@ -59,10 +59,8 @@ where
         match read_stream.read(&mut buffer).await {
             Ok(0) => {
                 warn!("read_stream has reached EOF");
-                return Err(Error::InternalStreamError(
-                    InternalStreamError::Eof
-                ))
-            },
+                return Err(Error::InternalStreamError(InternalStreamError::Eof));
+            }
             Ok(n) => {
                 trace!("Read {} bytes from stream", n);
                 let data: IncomingStreamData = buffer[..n].to_vec().into();
