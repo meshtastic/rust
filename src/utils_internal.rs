@@ -109,7 +109,7 @@ pub fn build_serial_stream(
     rts: Option<bool>,
 ) -> Result<StreamHandle<SerialStream>, Error> {
     let builder = tokio_serial::new(port_name.clone(), baud_rate.unwrap_or(DEFAULT_SERIAL_BAUD))
-        .flow_control(tokio_serial::FlowControl::Software)
+        .flow_control(tokio_serial::FlowControl::None)
         .timeout(Duration::from_millis(10));
 
     let mut serial_stream =
