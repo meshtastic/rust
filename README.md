@@ -1,5 +1,11 @@
 # Meshtastic.rs
 
+> [!IMPORTANT] 
+> **📢 Meshtastic Rust needs a new platform owner / maintainer 📢**
+>
+> More details are available in [Issue #25](https://github.com/meshtastic/rust/issues/25).
+
+
 ## Overview
 
 Meshtastic.rs is a crate that allows you to interact with Meshtastic devices in Rust. This crate is designed
