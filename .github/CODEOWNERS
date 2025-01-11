@@ -1,4 +1,4 @@
 # CODEOWNERS assigns reviewers to pull requests based on file paths - in this example,
 # you can specify multiple owners for a path using: path/ @user1 @user2
 # e.g. any changes to .github/ directory will request review from @geoffreygarrett
-.github/ @geoffreygarrett
+# .github/ @geoffreygarrett # No write access yet, so this errors in GH
