@@ -72,14 +72,9 @@ pub mod packet {
 /// This module contains structs and enums that are generated from the protocol buffer (protobuf)
 /// definitions of the `meshtastic/protobufs` Git submodule. These structs and enums
 /// are not edited directly, but are instead generated at build time.
-#[allow(non_snake_case)]
 pub mod protobufs {
-
-    #[cfg(feature = "gen")]
-    include!(concat!(env!("OUT_DIR"), "/meshtastic.rs"));
-
-    #[cfg(not(feature = "gen"))]
-    include!("generated-protobufs/meshtastic.rs");
+    #![allow(non_snake_case)]
+    include!("generated/meshtastic.rs");
 }
 
 /// This module re-exports the `specta` crate, which is used to generate TypeScript
