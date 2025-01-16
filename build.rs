@@ -68,7 +68,7 @@ fn generate_protobufs() -> std::io::Result<()> {
     config.compile_protos(&protos, &[protobufs_dir]).unwrap();
 
     let out_dir = std::env::var("OUT_DIR").unwrap();
-    let gen_dir = "src/generated-protobufs/";
+    let gen_dir = "src/generated/";
     walkdir::WalkDir::new(out_dir)
         .into_iter()
         .map(|e| e.unwrap())
