@@ -16,6 +16,7 @@ doctest = false
 
 [features]
 default = ["serde"]
+gen = ["dep:prost-build", "dep:protoc-bin-vendored", "dep:walkdir"]
 
 serde = ["dep:serde", "dep:serde_json"]
 ts-gen = ["serde", "dep:specta"]
@@ -37,9 +38,9 @@ required-features = ["ts-gen"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [build-dependencies]
-prost-build = "0.11.1"
-protoc-bin-vendored = "3.0.0"
-walkdir = "2.3.2"
+prost-build = { version = "0.11.1", optional = true }
+protoc-bin-vendored = { version = "3.0.0", optional = true }
+walkdir = { version = "2.3.2", optional = true }
 
 [dependencies]
 futures-util = "0.3.28"
