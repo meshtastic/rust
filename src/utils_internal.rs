@@ -420,6 +420,6 @@ mod tests {
         let data = vec![0x00; 0x10000];
         let serial_data = format_data_packet(data.into());
 
-        assert_eq!(serial_data.is_err(), true);
+        assert!(serial_data.is_err());
     }
 }
