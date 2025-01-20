@@ -1,12 +1,14 @@
 use btleplug::api::{
-    Central, CentralEvent, Characteristic, Manager as _, Peripheral as _, ScanFilter,
+    BDAddr, Central, CentralEvent, Characteristic, Manager as _, Peripheral as _, ScanFilter,
     ValueNotification, WriteType,
 };
 use btleplug::platform::{Adapter, Manager, Peripheral};
 use futures::stream::StreamExt;
 use futures_util::stream::BoxStream;
 use log::error;
+use std::fmt::Display;
 use std::future;
+use std::str::FromStr;
 use uuid::Uuid;
 
 use crate::errors_internal::{BleConnectionError, Error, InternalStreamError};
@@ -36,13 +38,37 @@ pub enum RadioMessage {
     Packet(EncodedToRadioPacketWithHeader),
 }
 
+pub enum BleId {
+    Name(String),
+    MacAddress(BDAddr),
+}
+
+impl BleId {
+    pub fn from_mac_address(mac: &str) -> Result<BleId, Error> {
+        let bdaddr = BDAddr::from_str(mac).map_err(|e| Error::InvalidParameter {
+            source: Box::new(e),
+            description: "Error while parsing a MAC address".to_owned(),
+        })?;
+        Ok(BleId::MacAddress(bdaddr))
+    }
+}
+
+impl Display for BleId {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            BleId::Name(name) => write!(f, "name={name}"),
+            BleId::MacAddress(mac) => write!(f, "MAC={mac}"),
+        }
+    }
+}
+
 #[allow(dead_code)]
 impl BleHandler {
-    pub async fn new(name: String) -> Result<Self, Error> {
-        let (radio, adapter) = Self::find_ble_radio(&name).await?;
+    pub async fn new(ble_id: &BleId) -> Result<Self, Error> {
+        let (radio, adapter) = Self::find_ble_radio(ble_id).await?;
         radio.connect().await.map_err(|e| Error::StreamBuildError {
             source: Box::new(e),
-            description: format!("Failed to connect to the device {name}"),
+            description: format!("Failed to connect to the device {ble_id}"),
         })?;
         let [toradio_char, fromnum_char, fromradio_char] =
             Self::find_characteristics(&radio).await?;
@@ -68,7 +94,7 @@ impl BleHandler {
     /// It searches for the 'MSH_SERVICE' running on the device.
     ///
     /// It also returns the associated adapter that can reach this radio.
-    async fn find_ble_radio(name: &str) -> Result<(Peripheral, Adapter), Error> {
+    async fn find_ble_radio(ble_id: &BleId) -> Result<(Peripheral, Adapter), Error> {
         //TODO: support searching both by a name and by a MAC address
         let scan_error_fn = |e: btleplug::Error| Error::StreamBuildError {
             source: Box::new(e),
@@ -86,10 +112,15 @@ impl BleHandler {
                     continue;
                 }
                 Ok(peripherals) => {
-                    let needle = Some(name.to_owned());
                     for peripheral in peripherals {
                         if let Ok(Some(peripheral_properties)) = peripheral.properties().await {
-                            if peripheral_properties.local_name == needle {
+                            let matches = match ble_id {
+                                BleId::Name(name) => {
+                                    peripheral_properties.local_name.as_ref() == Some(name)
+                                }
+                                BleId::MacAddress(mac) => peripheral_properties.address == *mac,
+                            };
+                            if matches {
                                 return Ok((peripheral, adapter.clone()));
                             }
                         }
@@ -100,8 +131,8 @@ impl BleHandler {
         Err(Error::StreamBuildError {
             source: Box::new(BleConnectionError()),
             description: format!(
-                "Failed to find {name}, or meshtastic is not running on the device"
-            ) + ", or it's already connected.",
+                "Failed to find {ble_id}, or meshtastic is not running on the device"
+            ) + ", or it's already connected to a client.",
         })
     }
 
@@ -160,7 +191,7 @@ impl BleHandler {
                 if data.is_empty() {
                     Ok(RadioMessage::Eof)
                 } else {
-                    format_data_packet(data.into()).map(|packet| RadioMessage::Packet(packet))
+                    format_data_packet(data.into()).map(RadioMessage::Packet)
                 }
             })
     }

@@ -43,6 +43,12 @@ pub enum Error {
         packet: EncodedToRadioPacketWithHeader,
     },
 
+    #[error("Invalid function parameter: {source:?}")]
+    InvalidParameter {
+        source: Box<dyn std::error::Error + Send + Sync + 'static>,
+        description: String,
+    },
+
     /// An error indicating that the library failed when performing an operation on an internal data stream.
     #[error(transparent)]
     InternalStreamError(#[from] InternalStreamError),
