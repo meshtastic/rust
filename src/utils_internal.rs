@@ -201,12 +201,14 @@ pub async fn build_tcp_stream(
 }
 
 #[cfg(feature = "bluetooth-le")]
-pub async fn build_ble_stream(name: String) -> Result<StreamHandle<DuplexStream>, Error> {
+pub async fn build_ble_stream(
+    ble_id: &crate::connections::ble_handler::BleId,
+) -> Result<StreamHandle<DuplexStream>, Error> {
     use crate::{
         connections::ble_handler::{AdapterEvent, RadioMessage},
         errors_internal::InternalStreamError,
     };
-    let ble_handler = BleHandler::new(name).await?;
+    let ble_handler = BleHandler::new(ble_id).await?;
     // `client` will be returned to the user, server is the opposite end of the channel and it's
     // directly connected to a `BleHandler`.
     let (client, mut server) = tokio::io::duplex(1024);
