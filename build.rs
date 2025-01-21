@@ -41,6 +41,8 @@ fn generate_protobufs() -> std::io::Result<()> {
         protos.push(path.to_owned());
     }
 
+    protos.sort_by(|a, b| a.cmp(b));
+
     let mut config = prost_build::Config::new();
 
     let mut derive_string = String::from("#[derive(");
