@@ -200,6 +200,39 @@ pub async fn build_tcp_stream(
     Ok(StreamHandle::from_stream(stream))
 }
 
+/// A helper method that uses the `btleplug` and `tokio` crates to build a BLE stream
+/// that is compatible with the `StreamApi` API. This requires that the stream
+/// implements `AsyncReadExt + AsyncWriteExt` traits.
+///
+/// This method is intended to be used to create a `DuplexStream` instance, which is
+/// then passed into the `StreamApi::connect` method.
+///
+/// # Arguments
+///
+/// * `ble_id` - Name or MAC address of a BLE device
+///
+/// # Returns
+///
+/// Returns a result that resolves to a `tokio::io::DuplexStream` instance, or
+/// an error if the stream could not be created.
+///
+/// # Examples
+///
+/// ```
+/// // Connect to a radio, identified by its MAC address
+/// let duplex_stream = utils::build_ble_stream(BleId::from_mac_address("E3:44:4E:18:F7:A4").await?;
+/// let decoded_listener = stream_api.connect(duplex_stream).await;
+/// ```
+///
+/// # Errors
+///
+/// Will return an instance of `Error` in the event that the radio refuses the connection, it
+/// cannot be found or if the specified address is invalid.
+///
+/// # Panics
+///
+/// None
+///
 #[cfg(feature = "bluetooth-le")]
 pub async fn build_ble_stream(
     ble_id: &crate::connections::ble_handler::BleId,
