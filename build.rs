@@ -1,9 +1,8 @@
 fn main() -> std::io::Result<()> {
     #[cfg(feature = "gen")]
-    {
-        let _ = generate_protobufs();
-    }
-    Ok(())
+    { generate_protobufs() }
+    #[cfg(not(feature = "gen"))]
+    { Ok(()) }
 }
 
 #[cfg(feature = "gen")]
