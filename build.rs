@@ -74,7 +74,5 @@ fn generate_protobufs() -> std::io::Result<()> {
     }
 
     config.out_dir(gen_dir);
-    config.compile_protos(&protos, &[protobufs_dir]).unwrap();
-
-    Ok(())
+    config.compile_protos(&protos, &[protobufs_dir])
 }
