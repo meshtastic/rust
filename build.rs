@@ -1,7 +1,7 @@
 fn main() -> std::io::Result<()> {
     #[cfg(feature = "gen")]
     {
-        generate_protobufs();
+        generate_protobufs()
     }
     #[cfg(not(feature = "gen"))]
     {
@@ -12,7 +12,10 @@ fn main() -> std::io::Result<()> {
 #[cfg(feature = "gen")]
 fn generate_protobufs() -> std::io::Result<()> {
     let protobufs_dir = "src/protobufs/";
+    let gen_dir = "src/generated/";
+
     println!("cargo:rerun-if-changed={}", protobufs_dir);
+    println!("cargo:rerun-if-changed={}", gen_dir);
 
     // Allows protobuf compilation without installing the `protoc` binary
     match protoc_bin_vendored::protoc_bin_path() {
@@ -70,7 +73,6 @@ fn generate_protobufs() -> std::io::Result<()> {
         config.type_attribute(".", "#[allow(clippy::doc_lazy_continuation)]");
     }
 
-    let gen_dir = "src/generated/";
     config.out_dir(gen_dir);
     config.compile_protos(&protos, &[protobufs_dir]).unwrap();
 
