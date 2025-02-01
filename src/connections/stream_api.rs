@@ -261,11 +261,9 @@ impl<State> ConnectedStreamApi<State> {
     ) -> Result<(), Error> {
         let packet = protobufs::ToRadio { payload_variant };
 
-        let mut packet_buf: Vec<u8> = vec![];
-        packet.encode::<Vec<u8>>(&mut packet_buf)?;
-        self.send_raw(packet_buf.into()).await?;
-
-        Ok(())
+        let mut packet_buf = vec![];
+        packet.encode(&mut packet_buf)?;
+        self.send_raw(packet_buf.into()).await
     }
 
     /// A helper method to send a raw `ToRadio` packet to the radio based on an encoded `ToRadio` packet.
@@ -1195,11 +1193,9 @@ impl ConnectedStreamApi<state::Configured> {
             )),
         };
 
-        let mut packet_buf: Vec<u8> = vec![];
-        to_radio.encode::<Vec<u8>>(&mut packet_buf)?;
-        self.send_raw(packet_buf.into()).await?;
-
-        Ok(())
+        let mut packet_buf = vec![];
+        to_radio.encode(&mut packet_buf)?;
+        self.send_raw(packet_buf.into()).await
     }
 
     /// A method to tell the radio to complete a bulk configuration update.
@@ -1246,7 +1242,7 @@ impl ConnectedStreamApi<state::Configured> {
     /// # Panics
     ///
     /// None
-    ///    
+    ///
     pub async fn commit_config_transaction(&mut self) -> Result<(), Error> {
         let to_radio = protobufs::AdminMessage {
             payload_variant: Some(
@@ -1254,11 +1250,9 @@ impl ConnectedStreamApi<state::Configured> {
             ),
         };
 
-        let mut packet_buf: Vec<u8> = vec![];
-        to_radio.encode::<Vec<u8>>(&mut packet_buf)?;
-        self.send_raw(packet_buf.into()).await?;
-
-        Ok(())
+        let mut packet_buf = vec![];
+        to_radio.encode(&mut packet_buf)?;
+        self.send_raw(packet_buf.into()).await
     }
 
     /// A helper method to update multiple configuration fields at once.
