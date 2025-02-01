@@ -2,7 +2,7 @@ use crate::errors_internal::Error;
 use std::time::Duration;
 use std::time::UNIX_EPOCH;
 
-use rand::{distributions::Standard, prelude::Distribution, Rng};
+use rand::{distr::StandardUniform, prelude::Distribution, Rng};
 use tokio_serial::{available_ports, SerialPort, SerialStream};
 
 use crate::connections::stream_api::StreamHandle;
@@ -224,10 +224,10 @@ pub async fn build_tcp_stream(
 ///
 pub fn generate_rand_id<T>() -> T
 where
-    Standard: Distribution<T>,
+    StandardUniform: Distribution<T>,
 {
-    let mut rng = rand::thread_rng();
-    rng.gen::<T>()
+    let mut rng = rand::rng();
+    rng.random()
 }
 
 /// A helper function that takes a vector of bytes (u8) representing an encoded packet, and
