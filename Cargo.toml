@@ -19,7 +19,7 @@ default = ["serde"]
 gen = ["dep:prost-build", "dep:protoc-bin-vendored", "dep:walkdir"]
 
 serde = ["dep:serde", "dep:serde_json"]
-ts-gen = ["serde", "dep:specta"]
+ts-gen = ["gen", "serde", "dep:specta"]
 bluetooth-le = ["dep:uuid","dep:btleplug"]
 
 [[example]]
