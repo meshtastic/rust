@@ -87,6 +87,11 @@ pub struct ModuleSettings {
     /// Bits of precision for the location sent in position packets.
     #[prost(uint32, tag = "1")]
     pub position_precision: u32,
+    ///
+    /// Controls whether or not the phone / clients should mute the current channel
+    /// Useful for noisy public channels you don't necessarily want to disable
+    #[prost(bool, tag = "2")]
+    pub is_client_muted: bool,
 }
 ///
 /// A pair of a channel number, mode and the (sharable) settings for that channel
@@ -240,6 +245,10 @@ pub mod config {
         /// POSIX Timezone definition string from <https://github.com/nayarsystems/posix_tz_db/blob/master/zones.csv.>
         #[prost(string, tag = "11")]
         pub tzdef: ::prost::alloc::string::String,
+        ///
+        /// If true, disable the default blinking LED (LED_PIN) behavior on the device
+        #[prost(bool, tag = "12")]
+        pub led_heartbeat_disabled: bool,
     }
     /// Nested message and enum types in `DeviceConfig`.
     pub mod device_config {
@@ -274,8 +283,6 @@ pub mod config {
             ///    The wifi radio and the oled screen will be put to sleep.
             ///    This mode may still potentially have higher power usage due to it's preference in message rebroadcasting on the mesh.
             Router = 2,
-            ///
-            /// Description: Combination of both ROUTER and CLIENT. Not for mobile devices.
             RouterClient = 3,
             ///
             /// Description: Infrastructure node for extending network coverage by relaying messages with minimal overhead. Not visible in Nodes list.
@@ -687,6 +694,11 @@ pub mod config {
         /// I2C address of INA_2XX to use for reading device battery voltage
         #[prost(uint32, tag = "9")]
         pub device_battery_ina_address: u32,
+        ///
+        /// If non-zero, we want powermon log outputs.  With the particular (bitfield) sources enabled.
+        /// Note: we picked an ID of 32 so that lower more efficient IDs can be used for more frequently used options.
+        #[prost(uint64, tag = "32")]
+        pub powermon_enables: u64,
     }
     ///
     /// Network Config
@@ -847,6 +859,10 @@ pub mod config {
         /// Should we wake the screen up on accelerometer detected motion or tap
         #[prost(bool, tag = "10")]
         pub wake_on_tap_or_motion: bool,
+        ///
+        /// Indicates how to rotate or invert the compass output to accurate display on the display.
+        #[prost(enumeration = "display_config::CompassOrientation", tag = "11")]
+        pub compass_orientation: i32,
     }
     /// Nested message and enum types in `DisplayConfig`.
     pub mod display_config {
@@ -1075,6 +1091,79 @@ pub mod config {
                 }
             }
         }
+        #[derive(serde::Serialize, serde::Deserialize)]
+        #[serde(rename_all = "camelCase")]
+        #[allow(clippy::doc_lazy_continuation)]
+        #[derive(
+            Clone,
+            Copy,
+            Debug,
+            PartialEq,
+            Eq,
+            Hash,
+            PartialOrd,
+            Ord,
+            ::prost::Enumeration
+        )]
+        #[repr(i32)]
+        pub enum CompassOrientation {
+            ///
+            /// The compass and the display are in the same orientation.
+            Degrees0 = 0,
+            ///
+            /// Rotate the compass by 90 degrees.
+            Degrees90 = 1,
+            ///
+            /// Rotate the compass by 180 degrees.
+            Degrees180 = 2,
+            ///
+            /// Rotate the compass by 270 degrees.
+            Degrees270 = 3,
+            ///
+            /// Don't rotate the compass, but invert the result.
+            Degrees0Inverted = 4,
+            ///
+            /// Rotate the compass by 90 degrees and invert.
+            Degrees90Inverted = 5,
+            ///
+            /// Rotate the compass by 180 degrees and invert.
+            Degrees180Inverted = 6,
+            ///
+            /// Rotate the compass by 270 degrees and invert.
+            Degrees270Inverted = 7,
+        }
+        impl CompassOrientation {
+            /// String value of the enum field names used in the ProtoBuf definition.
+            ///
+            /// The values are not transformed in any way and thus are considered stable
+            /// (if the ProtoBuf definition does not change) and safe for programmatic use.
+            pub fn as_str_name(&self) -> &'static str {
+                match self {
+                    Self::Degrees0 => "DEGREES_0",
+                    Self::Degrees90 => "DEGREES_90",
+                    Self::Degrees180 => "DEGREES_180",
+                    Self::Degrees270 => "DEGREES_270",
+                    Self::Degrees0Inverted => "DEGREES_0_INVERTED",
+                    Self::Degrees90Inverted => "DEGREES_90_INVERTED",
+                    Self::Degrees180Inverted => "DEGREES_180_INVERTED",
+                    Self::Degrees270Inverted => "DEGREES_270_INVERTED",
+                }
+            }
+            /// Creates an enum from field names used in the ProtoBuf definition.
+            pub fn from_str_name(value: &str) -> ::core::option::Option<Self> {
+                match value {
+                    "DEGREES_0" => Some(Self::Degrees0),
+                    "DEGREES_90" => Some(Self::Degrees90),
+                    "DEGREES_180" => Some(Self::Degrees180),
+                    "DEGREES_270" => Some(Self::Degrees270),
+                    "DEGREES_0_INVERTED" => Some(Self::Degrees0Inverted),
+                    "DEGREES_90_INVERTED" => Some(Self::Degrees90Inverted),
+                    "DEGREES_180_INVERTED" => Some(Self::Degrees180Inverted),
+                    "DEGREES_270_INVERTED" => Some(Self::Degrees270Inverted),
+                    _ => None,
+                }
+            }
+        }
     }
     ///
     /// Lora Config
@@ -1168,6 +1257,10 @@ pub mod config {
         /// enable HAM mode and turn off encryption.
         #[prost(float, tag = "14")]
         pub override_frequency: f32,
+        ///
+        /// If true, disable the build-in PA FAN using pin define in RF95_FAN_EN.
+        #[prost(bool, tag = "15")]
+        pub pa_fan_disabled: bool,
         ///
         /// For testing it is useful sometimes to force a node to never listen to
         /// particular other nodes (simulating radio out of range). All nodenums listed
@@ -1403,6 +1496,10 @@ pub mod config {
         /// Specified PIN for PairingMode.FixedPin
         #[prost(uint32, tag = "3")]
         pub fixed_pin: u32,
+        ///
+        /// Enables device (serial style logs) over Bluetooth
+        #[prost(bool, tag = "4")]
+        pub device_logging_enabled: bool,
     }
     /// Nested message and enum types in `BluetoothConfig`.
     pub mod bluetooth_config {
@@ -1885,6 +1982,14 @@ pub mod module_config {
         pub enabled: bool,
         #[prost(uint32, tag = "2")]
         pub paxcounter_update_interval: u32,
+        ///
+        /// WiFi RSSI threshold. Defaults to -80
+        #[prost(int32, tag = "3")]
+        pub wifi_threshold: i32,
+        ///
+        /// BLE RSSI threshold. Defaults to -80
+        #[prost(int32, tag = "4")]
+        pub ble_threshold: i32,
     }
     ///
     /// Serial Config
@@ -2038,6 +2143,8 @@ pub mod module_config {
             Nmea = 4,
             /// NMEA messages specifically tailored for CalTopo
             Caltopo = 5,
+            /// Ecowitt WS85 weather station
+            Ws85 = 6,
         }
         impl SerialMode {
             /// String value of the enum field names used in the ProtoBuf definition.
@@ -2052,6 +2159,7 @@ pub mod module_config {
                     Self::Textmsg => "TEXTMSG",
                     Self::Nmea => "NMEA",
                     Self::Caltopo => "CALTOPO",
+                    Self::Ws85 => "WS85",
                 }
             }
             /// Creates an enum from field names used in the ProtoBuf definition.
@@ -2063,6 +2171,7 @@ pub mod module_config {
                     "TEXTMSG" => Some(Self::Textmsg),
                     "NMEA" => Some(Self::Nmea),
                     "CALTOPO" => Some(Self::Caltopo),
+                    "WS85" => Some(Self::Ws85),
                     _ => None,
                 }
             }
@@ -2174,6 +2283,10 @@ pub mod module_config {
         /// TODO: REPLACE
         #[prost(uint32, tag = "5")]
         pub history_return_window: u32,
+        ///
+        /// Set to true to let this node act as a server that stores received messages and resends them upon request.
+        #[prost(bool, tag = "6")]
+        pub is_server: bool,
     }
     ///
     /// Preferences for the RangeTestModule
@@ -2674,6 +2787,9 @@ pub enum PortNum {
     /// Provides unencrypted information about a node for consumption by a map via MQTT
     MapReportApp = 73,
     ///
+    /// PowerStress based monitoring support (for automated power consumption testing)
+    PowerstressApp = 74,
+    ///
     /// Private applications should use portnums >= 256.
     /// To simplify initial development and testing you can use "PRIVATE_APP"
     /// in your code without needing to rebuild protobuf files (via [regen-protos.sh](<https://github.com/meshtastic/firmware/blob/master/bin/regen-protos.sh>))
@@ -2717,6 +2833,7 @@ impl PortNum {
             Self::NeighborinfoApp => "NEIGHBORINFO_APP",
             Self::AtakPlugin => "ATAK_PLUGIN",
             Self::MapReportApp => "MAP_REPORT_APP",
+            Self::PowerstressApp => "POWERSTRESS_APP",
             Self::PrivateApp => "PRIVATE_APP",
             Self::AtakForwarder => "ATAK_FORWARDER",
             Self::Max => "MAX",
@@ -2749,6 +2866,7 @@ impl PortNum {
             "NEIGHBORINFO_APP" => Some(Self::NeighborinfoApp),
             "ATAK_PLUGIN" => Some(Self::AtakPlugin),
             "MAP_REPORT_APP" => Some(Self::MapReportApp),
+            "POWERSTRESS_APP" => Some(Self::PowerstressApp),
             "PRIVATE_APP" => Some(Self::PrivateApp),
             "ATAK_FORWARDER" => Some(Self::AtakForwarder),
             "MAX" => Some(Self::Max),
@@ -2820,6 +2938,47 @@ pub struct EnvironmentMetrics {
     /// Belongs to Air Quality but is not particle but VOC measurement. Other VOC values can also be put in here.
     #[prost(uint32, tag = "7")]
     pub iaq: u32,
+    ///
+    /// RCWL9620 Doppler Radar Distance Sensor, used for water level detection. Float value in mm.
+    #[prost(float, tag = "8")]
+    pub distance: f32,
+    ///
+    /// VEML7700 high accuracy ambient light(Lux) digital 16-bit resolution sensor.
+    #[prost(float, tag = "9")]
+    pub lux: f32,
+    ///
+    /// VEML7700 high accuracy white light(irradiance) not calibrated digital 16-bit resolution sensor.
+    #[prost(float, tag = "10")]
+    pub white_lux: f32,
+    ///
+    /// Infrared lux
+    #[prost(float, tag = "11")]
+    pub ir_lux: f32,
+    ///
+    /// Ultraviolet lux
+    #[prost(float, tag = "12")]
+    pub uv_lux: f32,
+    ///
+    /// Wind direction in degrees
+    /// 0 degrees = North, 90 = East, etc...
+    #[prost(uint32, tag = "13")]
+    pub wind_direction: u32,
+    ///
+    /// Wind speed in m/s
+    #[prost(float, tag = "14")]
+    pub wind_speed: f32,
+    ///
+    /// Weight in KG
+    #[prost(float, tag = "15")]
+    pub weight: f32,
+    ///
+    /// Wind gust in m/s
+    #[prost(float, tag = "16")]
+    pub wind_gust: f32,
+    ///
+    /// Wind lull in m/s
+    #[prost(float, tag = "17")]
+    pub wind_lull: f32,
 }
 ///
 /// Power Metrics (voltage / current / etc)
@@ -2949,6 +3108,22 @@ pub mod telemetry {
     }
 }
 ///
+/// NAU7802 Telemetry configuration, for saving to flash
+#[derive(serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[allow(clippy::doc_lazy_continuation)]
+#[derive(Clone, Copy, PartialEq, ::prost::Message)]
+pub struct Nau7802Config {
+    ///
+    /// The offset setting for the NAU7802
+    #[prost(int32, tag = "1")]
+    pub zero_offset: i32,
+    ///
+    /// The calibration factor for the NAU7802
+    #[prost(float, tag = "2")]
+    pub calibration_factor: f32,
+}
+///
 /// Supported I2C Sensors for telemetry in Meshtastic
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -3004,6 +3179,45 @@ pub enum TelemetrySensorType {
     ///
     /// BMP085/BMP180 High accuracy temperature and pressure (older Version of BMP280)
     Bmp085 = 15,
+    ///
+    /// RCWL-9620 Doppler Radar Distance Sensor, used for water level detection
+    Rcwl9620 = 16,
+    ///
+    /// Sensirion High accuracy temperature and humidity
+    Sht4x = 17,
+    ///
+    /// VEML7700 high accuracy ambient light(Lux) digital 16-bit resolution sensor.
+    Veml7700 = 18,
+    ///
+    /// MLX90632 non-contact IR temperature sensor.
+    Mlx90632 = 19,
+    ///
+    /// TI OPT3001 Ambient Light Sensor
+    Opt3001 = 20,
+    ///
+    /// Lite On LTR-390UV-01 UV Light Sensor
+    Ltr390uv = 21,
+    ///
+    /// AMS TSL25911FN RGB Light Sensor
+    Tsl25911fn = 22,
+    ///
+    /// AHT10 Integrated temperature and humidity sensor
+    Aht10 = 23,
+    ///
+    /// DFRobot Lark Weather station (temperature, humidity, pressure, wind speed and direction)
+    DfrobotLark = 24,
+    ///
+    /// NAU7802 Scale Chip or compatible
+    Nau7802 = 25,
+    ///
+    /// BMP3XX High accuracy temperature and pressure
+    Bmp3xx = 26,
+    ///
+    /// ICM-20948 9-Axis digital motion processor
+    Icm20948 = 27,
+    ///
+    /// MAX17048 1S lipo battery sensor (voltage, state of charge, time to go)
+    Max17048 = 28,
 }
 impl TelemetrySensorType {
     /// String value of the enum field names used in the ProtoBuf definition.
@@ -3028,6 +3242,19 @@ impl TelemetrySensorType {
             Self::Pmsa003i => "PMSA003I",
             Self::Ina3221 => "INA3221",
             Self::Bmp085 => "BMP085",
+            Self::Rcwl9620 => "RCWL9620",
+            Self::Sht4x => "SHT4X",
+            Self::Veml7700 => "VEML7700",
+            Self::Mlx90632 => "MLX90632",
+            Self::Opt3001 => "OPT3001",
+            Self::Ltr390uv => "LTR390UV",
+            Self::Tsl25911fn => "TSL25911FN",
+            Self::Aht10 => "AHT10",
+            Self::DfrobotLark => "DFROBOT_LARK",
+            Self::Nau7802 => "NAU7802",
+            Self::Bmp3xx => "BMP3XX",
+            Self::Icm20948 => "ICM20948",
+            Self::Max17048 => "MAX17048",
         }
     }
     /// Creates an enum from field names used in the ProtoBuf definition.
@@ -3049,6 +3276,19 @@ impl TelemetrySensorType {
             "PMSA003I" => Some(Self::Pmsa003i),
             "INA3221" => Some(Self::Ina3221),
             "BMP085" => Some(Self::Bmp085),
+            "RCWL9620" => Some(Self::Rcwl9620),
+            "SHT4X" => Some(Self::Sht4x),
+            "VEML7700" => Some(Self::Veml7700),
+            "MLX90632" => Some(Self::Mlx90632),
+            "OPT3001" => Some(Self::Opt3001),
+            "LTR390UV" => Some(Self::Ltr390uv),
+            "TSL25911FN" => Some(Self::Tsl25911fn),
+            "AHT10" => Some(Self::Aht10),
+            "DFROBOT_LARK" => Some(Self::DfrobotLark),
+            "NAU7802" => Some(Self::Nau7802),
+            "BMP3XX" => Some(Self::Bmp3xx),
+            "ICM20948" => Some(Self::Icm20948),
+            "MAX17048" => Some(Self::Max17048),
             _ => None,
         }
     }
@@ -4192,7 +4432,7 @@ pub struct FromRadio {
     /// Log levels, chosen to match python logging conventions.
     #[prost(
         oneof = "from_radio::PayloadVariant",
-        tags = "2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14"
+        tags = "2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15"
     )]
     pub payload_variant: ::core::option::Option<from_radio::PayloadVariant>,
 }
@@ -4265,7 +4505,27 @@ pub mod from_radio {
         /// MQTT Client Proxy Message (device sending to client / phone for publishing to MQTT)
         #[prost(message, tag = "14")]
         MqttClientProxyMessage(super::MqttClientProxyMessage),
+        ///
+        /// File system manifest messages
+        #[prost(message, tag = "15")]
+        FileInfo(super::FileInfo),
     }
+}
+///
+/// Individual File info for the device
+#[derive(serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[allow(clippy::doc_lazy_continuation)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct FileInfo {
+    ///
+    /// The fully qualified path of the file
+    #[prost(string, tag = "1")]
+    pub file_name: ::prost::alloc::string::String,
+    ///
+    /// The size of the file in bytes
+    #[prost(uint32, tag = "2")]
+    pub size_bytes: u32,
 }
 ///
 /// Packets/commands to the radio will be written (reliably) to the toRadio characteristic.
@@ -4460,6 +4720,75 @@ pub struct NodeRemoteHardwarePin {
     #[prost(message, optional, tag = "2")]
     pub pin: ::core::option::Option<RemoteHardwarePin>,
 }
+#[derive(serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[allow(clippy::doc_lazy_continuation)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ChunkedPayload {
+    ///
+    /// The ID of the entire payload
+    #[prost(uint32, tag = "1")]
+    pub payload_id: u32,
+    ///
+    /// The total number of chunks in the payload
+    #[prost(uint32, tag = "2")]
+    pub chunk_count: u32,
+    ///
+    /// The current chunk index in the total
+    #[prost(uint32, tag = "3")]
+    pub chunk_index: u32,
+    ///
+    /// The binary data of the current chunk
+    #[prost(bytes = "vec", tag = "4")]
+    pub payload_chunk: ::prost::alloc::vec::Vec<u8>,
+}
+///
+/// Wrapper message for broken repeated oneof support
+#[derive(serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[allow(clippy::doc_lazy_continuation)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ResendChunks {
+    #[prost(uint32, repeated, tag = "1")]
+    pub chunks: ::prost::alloc::vec::Vec<u32>,
+}
+///
+/// Responses to a ChunkedPayload request
+#[derive(serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[allow(clippy::doc_lazy_continuation)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ChunkedPayloadResponse {
+    ///
+    /// The ID of the entire payload
+    #[prost(uint32, tag = "1")]
+    pub payload_id: u32,
+    #[prost(oneof = "chunked_payload_response::PayloadVariant", tags = "2, 3, 4")]
+    pub payload_variant: ::core::option::Option<
+        chunked_payload_response::PayloadVariant,
+    >,
+}
+/// Nested message and enum types in `ChunkedPayloadResponse`.
+pub mod chunked_payload_response {
+    #[derive(serde::Serialize, serde::Deserialize)]
+    #[serde(rename_all = "camelCase")]
+    #[allow(clippy::doc_lazy_continuation)]
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum PayloadVariant {
+        ///
+        /// Request to transfer chunked payload
+        #[prost(bool, tag = "2")]
+        RequestTransfer(bool),
+        ///
+        /// Accept the transfer chunked payload
+        #[prost(bool, tag = "3")]
+        AcceptTransfer(bool),
+        ///
+        /// Request missing indexes in the chunked payload
+        #[prost(message, tag = "4")]
+        ResendChunks(super::ResendChunks),
+    }
+}
 ///
 /// Note: these enum names must EXACTLY match the string used in the device
 /// bin/build-all.sh script.
@@ -4533,6 +4862,18 @@ pub enum HardwareModel {
     ///
     /// LoRAType device: <https://loratype.org/>
     LoraType = 19,
+    ///
+    /// wiphone <https://www.wiphone.io/>
+    Wiphone = 20,
+    ///
+    /// WIO Tracker WM1110 family from Seeed Studio. Includes wio-1110-tracker and wio-1110-sdk
+    WioWm1110 = 21,
+    ///
+    /// RAK2560 Solar base station based on RAK4630
+    Rak2560 = 22,
+    ///
+    /// Heltec HRU-3601: <https://heltec.org/project/hru-3601/>
+    HeltecHru3601 = 23,
     ///
     /// B&Q Consulting Station Edition G1: <https://uniteng.com/wiki/doku.php?id=meshtastic:station>
     StationG1 = 25,
@@ -4656,6 +4997,50 @@ pub enum HardwareModel {
     /// CDEBYTE EoRa-S3 board using their own MM modules, clone of LILYGO T3S3
     CdebyteEoraS3 = 61,
     ///
+    /// TWC_MESH_V4
+    /// Adafruit NRF52840 feather express with SX1262, SSD1306 OLED and NEO6M GPS
+    TwcMeshV4 = 62,
+    ///
+    /// NRF52_PROMICRO_DIY
+    /// Promicro NRF52840 with SX1262/LLCC68, SSD1306 OLED and NEO6M GPS
+    Nrf52PromicroDiy = 63,
+    ///
+    /// RadioMaster 900 Bandit Nano, <https://www.radiomasterrc.com/products/bandit-nano-expresslrs-rf-module>
+    /// ESP32-D0WDQ6 With SX1276/SKY66122, SSD1306 OLED and No GPS
+    Radiomaster900BanditNano = 64,
+    ///
+    /// Heltec Capsule Sensor V3 with ESP32-S3 CPU, Portable LoRa device that can replace GNSS modules or sensors
+    HeltecCapsuleSensorV3 = 65,
+    ///
+    /// Heltec Vision Master T190 with ESP32-S3 CPU, and a 1.90 inch TFT display
+    HeltecVisionMasterT190 = 66,
+    ///
+    /// Heltec Vision Master E213 with ESP32-S3 CPU, and a 2.13 inch E-Ink display
+    HeltecVisionMasterE213 = 67,
+    ///
+    /// Heltec Vision Master E290 with ESP32-S3 CPU, and a 2.9 inch E-Ink display
+    HeltecVisionMasterE290 = 68,
+    ///
+    /// Heltec Mesh Node T114 board with nRF52840 CPU, and a 1.14 inch TFT display, Ultimate low-power design,
+    /// specifically adapted for the Meshtatic project
+    HeltecMeshNodeT114 = 69,
+    ///
+    /// Sensecap Indicator from Seeed Studio. ESP32-S3 device with TFT and RP2040 coprocessor
+    SensecapIndicator = 70,
+    ///
+    /// Seeed studio T1000-E tracker card. NRF52840 w/ LR1110 radio, GPS, button, buzzer, and sensors.
+    TrackerT1000E = 71,
+    ///
+    /// RAK3172 STM32WLE5 Module (<https://store.rakwireless.com/products/wisduo-lpwan-module-rak3172>)
+    Rak3172 = 72,
+    ///
+    /// Seeed Studio Wio-E5 (either mini or Dev kit) using STM32WL chip.
+    WioE5 = 73,
+    ///
+    /// RadioMaster 900 Bandit, <https://www.radiomasterrc.com/products/bandit-expresslrs-rf-module>
+    /// SSD1306 OLED and No GPS
+    Radiomaster900Bandit = 74,
+    ///
     /// ------------------------------------------------------------------------------------------------------------------------------------------
     /// Reserved ID For developing private Ports. These will show up in live traffic sparsely, so we can use a high number. Keep it within 8 bits.
     /// ------------------------------------------------------------------------------------------------------------------------------------------
@@ -4688,6 +5073,10 @@ impl HardwareModel {
             Self::NanoG1Explorer => "NANO_G1_EXPLORER",
             Self::NanoG2Ultra => "NANO_G2_ULTRA",
             Self::LoraType => "LORA_TYPE",
+            Self::Wiphone => "WIPHONE",
+            Self::WioWm1110 => "WIO_WM1110",
+            Self::Rak2560 => "RAK2560",
+            Self::HeltecHru3601 => "HELTEC_HRU_3601",
             Self::StationG1 => "STATION_G1",
             Self::Rak11310 => "RAK11310",
             Self::SenseloraRp2040 => "SENSELORA_RP2040",
@@ -4725,6 +5114,19 @@ impl HardwareModel {
             Self::Unphone => "UNPHONE",
             Self::TdLorac => "TD_LORAC",
             Self::CdebyteEoraS3 => "CDEBYTE_EORA_S3",
+            Self::TwcMeshV4 => "TWC_MESH_V4",
+            Self::Nrf52PromicroDiy => "NRF52_PROMICRO_DIY",
+            Self::Radiomaster900BanditNano => "RADIOMASTER_900_BANDIT_NANO",
+            Self::HeltecCapsuleSensorV3 => "HELTEC_CAPSULE_SENSOR_V3",
+            Self::HeltecVisionMasterT190 => "HELTEC_VISION_MASTER_T190",
+            Self::HeltecVisionMasterE213 => "HELTEC_VISION_MASTER_E213",
+            Self::HeltecVisionMasterE290 => "HELTEC_VISION_MASTER_E290",
+            Self::HeltecMeshNodeT114 => "HELTEC_MESH_NODE_T114",
+            Self::SensecapIndicator => "SENSECAP_INDICATOR",
+            Self::TrackerT1000E => "TRACKER_T1000_E",
+            Self::Rak3172 => "RAK3172",
+            Self::WioE5 => "WIO_E5",
+            Self::Radiomaster900Bandit => "RADIOMASTER_900_BANDIT",
             Self::PrivateHw => "PRIVATE_HW",
         }
     }
@@ -4751,6 +5153,10 @@ impl HardwareModel {
             "NANO_G1_EXPLORER" => Some(Self::NanoG1Explorer),
             "NANO_G2_ULTRA" => Some(Self::NanoG2Ultra),
             "LORA_TYPE" => Some(Self::LoraType),
+            "WIPHONE" => Some(Self::Wiphone),
+            "WIO_WM1110" => Some(Self::WioWm1110),
+            "RAK2560" => Some(Self::Rak2560),
+            "HELTEC_HRU_3601" => Some(Self::HeltecHru3601),
             "STATION_G1" => Some(Self::StationG1),
             "RAK11310" => Some(Self::Rak11310),
             "SENSELORA_RP2040" => Some(Self::SenseloraRp2040),
@@ -4788,6 +5194,19 @@ impl HardwareModel {
             "UNPHONE" => Some(Self::Unphone),
             "TD_LORAC" => Some(Self::TdLorac),
             "CDEBYTE_EORA_S3" => Some(Self::CdebyteEoraS3),
+            "TWC_MESH_V4" => Some(Self::TwcMeshV4),
+            "NRF52_PROMICRO_DIY" => Some(Self::Nrf52PromicroDiy),
+            "RADIOMASTER_900_BANDIT_NANO" => Some(Self::Radiomaster900BanditNano),
+            "HELTEC_CAPSULE_SENSOR_V3" => Some(Self::HeltecCapsuleSensorV3),
+            "HELTEC_VISION_MASTER_T190" => Some(Self::HeltecVisionMasterT190),
+            "HELTEC_VISION_MASTER_E213" => Some(Self::HeltecVisionMasterE213),
+            "HELTEC_VISION_MASTER_E290" => Some(Self::HeltecVisionMasterE290),
+            "HELTEC_MESH_NODE_T114" => Some(Self::HeltecMeshNodeT114),
+            "SENSECAP_INDICATOR" => Some(Self::SensecapIndicator),
+            "TRACKER_T1000_E" => Some(Self::TrackerT1000E),
+            "RAK3172" => Some(Self::Rak3172),
+            "WIO_E5" => Some(Self::WioE5),
+            "RADIOMASTER_900_BANDIT" => Some(Self::Radiomaster900Bandit),
             "PRIVATE_HW" => Some(Self::PrivateHw),
             _ => None,
         }
@@ -4880,6 +5299,15 @@ pub enum CriticalErrorCode {
     /// A (likely software but possibly hardware) failure was detected while trying to send packets.
     /// If this occurs on your board, please post in the forum so that we can ask you to collect some information to allow fixing this bug
     RadioSpiBug = 11,
+    ///
+    /// Corruption was detected on the flash filesystem but we were able to repair things.
+    /// If you see this failure in the field please post in the forum because we are interested in seeing if this is occurring in the field.
+    FlashCorruptionRecoverable = 12,
+    ///
+    /// Corruption was detected on the flash filesystem but we were unable to repair things.
+    /// NOTE: Your node will probably need to be reconfigured the next time it reboots (it will lose the region code etc...)
+    /// If you see this failure in the field please post in the forum because we are interested in seeing if this is occurring in the field.
+    FlashCorruptionUnrecoverable = 13,
 }
 impl CriticalErrorCode {
     /// String value of the enum field names used in the ProtoBuf definition.
@@ -4900,6 +5328,8 @@ impl CriticalErrorCode {
             Self::Brownout => "BROWNOUT",
             Self::Sx1262Failure => "SX1262_FAILURE",
             Self::RadioSpiBug => "RADIO_SPI_BUG",
+            Self::FlashCorruptionRecoverable => "FLASH_CORRUPTION_RECOVERABLE",
+            Self::FlashCorruptionUnrecoverable => "FLASH_CORRUPTION_UNRECOVERABLE",
         }
     }
     /// Creates an enum from field names used in the ProtoBuf definition.
@@ -4917,6 +5347,8 @@ impl CriticalErrorCode {
             "BROWNOUT" => Some(Self::Brownout),
             "SX1262_FAILURE" => Some(Self::Sx1262Failure),
             "RADIO_SPI_BUG" => Some(Self::RadioSpiBug),
+            "FLASH_CORRUPTION_RECOVERABLE" => Some(Self::FlashCorruptionRecoverable),
+            "FLASH_CORRUPTION_UNRECOVERABLE" => Some(Self::FlashCorruptionUnrecoverable),
             _ => None,
         }
     }
@@ -4934,7 +5366,7 @@ pub struct AdminMessage {
     /// TODO: REPLACE
     #[prost(
         oneof = "admin_message::PayloadVariant",
-        tags = "1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 64, 65, 95, 96, 97, 98, 99, 100"
+        tags = "1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 64, 65, 94, 95, 96, 97, 98, 99, 100"
     )]
     pub payload_variant: ::core::option::Option<admin_message::PayloadVariant>,
 }
@@ -5204,6 +5636,10 @@ pub mod admin_message {
         #[prost(string, tag = "22")]
         DeleteFileRequest(::prost::alloc::string::String),
         ///
+        /// Set zero and offset for scale chips
+        #[prost(uint32, tag = "23")]
+        SetScale(u32),
+        ///
         /// Set the owner for this node
         #[prost(message, tag = "32")]
         SetOwner(super::User),
@@ -5261,6 +5697,10 @@ pub mod admin_message {
         #[prost(bool, tag = "65")]
         CommitEditSettings(bool),
         ///
+        /// Tell the node to factory reset config everything; all device state and configuration will be returned to factory defaults and BLE bonds will be cleared.
+        #[prost(int32, tag = "94")]
+        FactoryResetDevice(i32),
+        ///
         /// Tell the node to reboot into the OTA Firmware in this many seconds (or <0 to cancel reboot)
         /// Only Implemented for ESP32 Devices. This needs to be issued to send a new main firmware via bluetooth.
         #[prost(int32, tag = "95")]
@@ -5279,9 +5719,9 @@ pub mod admin_message {
         #[prost(int32, tag = "98")]
         ShutdownSeconds(i32),
         ///
-        /// Tell the node to factory reset, all device settings will be returned to factory defaults.
+        /// Tell the node to factory reset config; all device state and configuration will be returned to factory defaults; BLE bonds will be preserved.
         #[prost(int32, tag = "99")]
-        FactoryReset(i32),
+        FactoryResetConfig(i32),
         ///
         /// Tell the node to reset the nodedb.
         #[prost(int32, tag = "100")]
@@ -5408,6 +5848,10 @@ pub struct GeoChat {
     /// Uid recipient of the message
     #[prost(string, optional, tag = "2")]
     pub to: ::core::option::Option<::prost::alloc::string::String>,
+    ///
+    /// Callsign of the recipient for the message
+    #[prost(string, optional, tag = "3")]
+    pub to_callsign: ::core::option::Option<::prost::alloc::string::String>,
 }
 ///
 /// ATAK Group
@@ -6150,6 +6594,237 @@ pub struct Paxcount {
     /// Uptime in seconds
     #[prost(uint32, tag = "3")]
     pub uptime: u32,
+}
+/// Note: There are no 'PowerMon' messages normally in use (PowerMons are sent only as structured logs - slogs).
+/// But we wrap our State enum in this message to effectively nest a namespace (without our linter yelling at us)
+#[derive(serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[allow(clippy::doc_lazy_continuation)]
+#[derive(Clone, Copy, PartialEq, ::prost::Message)]
+pub struct PowerMon {}
+/// Nested message and enum types in `PowerMon`.
+pub mod power_mon {
+    /// Any significant power changing event in meshtastic should be tagged with a powermon state transition.
+    /// If you are making new meshtastic features feel free to add new entries at the end of this definition.
+    #[derive(serde::Serialize, serde::Deserialize)]
+    #[serde(rename_all = "camelCase")]
+    #[allow(clippy::doc_lazy_continuation)]
+    #[derive(
+        Clone,
+        Copy,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash,
+        PartialOrd,
+        Ord,
+        ::prost::Enumeration
+    )]
+    #[repr(i32)]
+    pub enum State {
+        None = 0,
+        CpuDeepSleep = 1,
+        CpuLightSleep = 2,
+        ///
+        /// The external Vext1 power is on.  Many boards have auxillary power rails that the CPU turns on only
+        /// occasionally.  In cases where that rail has multiple devices on it we usually want to have logging on
+        /// the state of that rail as an independent record.
+        /// For instance on the Heltec Tracker 1.1 board, this rail is the power source for the GPS and screen.
+        ///
+        /// The log messages will be short and complete (see PowerMon.Event in the protobufs for details).
+        /// something like "S:PM:C,0x00001234,REASON" where the hex number is the bitmask of all current states.
+        /// (We use a bitmask for states so that if a log message gets lost it won't be fatal)
+        Vext1On = 4,
+        LoraRxOn = 8,
+        LoraTxOn = 16,
+        LoraRxActive = 32,
+        BtOn = 64,
+        LedOn = 128,
+        ScreenOn = 256,
+        ScreenDrawing = 512,
+        WifiOn = 1024,
+        ///
+        /// GPS is actively trying to find our location
+        /// See GPSPowerState for more details
+        GpsActive = 2048,
+    }
+    impl State {
+        /// String value of the enum field names used in the ProtoBuf definition.
+        ///
+        /// The values are not transformed in any way and thus are considered stable
+        /// (if the ProtoBuf definition does not change) and safe for programmatic use.
+        pub fn as_str_name(&self) -> &'static str {
+            match self {
+                Self::None => "None",
+                Self::CpuDeepSleep => "CPU_DeepSleep",
+                Self::CpuLightSleep => "CPU_LightSleep",
+                Self::Vext1On => "Vext1_On",
+                Self::LoraRxOn => "Lora_RXOn",
+                Self::LoraTxOn => "Lora_TXOn",
+                Self::LoraRxActive => "Lora_RXActive",
+                Self::BtOn => "BT_On",
+                Self::LedOn => "LED_On",
+                Self::ScreenOn => "Screen_On",
+                Self::ScreenDrawing => "Screen_Drawing",
+                Self::WifiOn => "Wifi_On",
+                Self::GpsActive => "GPS_Active",
+            }
+        }
+        /// Creates an enum from field names used in the ProtoBuf definition.
+        pub fn from_str_name(value: &str) -> ::core::option::Option<Self> {
+            match value {
+                "None" => Some(Self::None),
+                "CPU_DeepSleep" => Some(Self::CpuDeepSleep),
+                "CPU_LightSleep" => Some(Self::CpuLightSleep),
+                "Vext1_On" => Some(Self::Vext1On),
+                "Lora_RXOn" => Some(Self::LoraRxOn),
+                "Lora_TXOn" => Some(Self::LoraTxOn),
+                "Lora_RXActive" => Some(Self::LoraRxActive),
+                "BT_On" => Some(Self::BtOn),
+                "LED_On" => Some(Self::LedOn),
+                "Screen_On" => Some(Self::ScreenOn),
+                "Screen_Drawing" => Some(Self::ScreenDrawing),
+                "Wifi_On" => Some(Self::WifiOn),
+                "GPS_Active" => Some(Self::GpsActive),
+                _ => None,
+            }
+        }
+    }
+}
+///
+/// PowerStress testing support via the C++ PowerStress module
+#[derive(serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[allow(clippy::doc_lazy_continuation)]
+#[derive(Clone, Copy, PartialEq, ::prost::Message)]
+pub struct PowerStressMessage {
+    ///
+    /// What type of HardwareMessage is this?
+    #[prost(enumeration = "power_stress_message::Opcode", tag = "1")]
+    pub cmd: i32,
+    #[prost(float, tag = "2")]
+    pub num_seconds: f32,
+}
+/// Nested message and enum types in `PowerStressMessage`.
+pub mod power_stress_message {
+    ///
+    /// What operation would we like the UUT to perform.
+    /// note: senders should probably set want_response in their request packets, so that they can know when the state
+    /// machine has started processing their request
+    #[derive(serde::Serialize, serde::Deserialize)]
+    #[serde(rename_all = "camelCase")]
+    #[allow(clippy::doc_lazy_continuation)]
+    #[derive(
+        Clone,
+        Copy,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash,
+        PartialOrd,
+        Ord,
+        ::prost::Enumeration
+    )]
+    #[repr(i32)]
+    pub enum Opcode {
+        ///
+        /// Unset/unused
+        Unset = 0,
+        /// Print board version slog and send an ack that we are alive and ready to process commands
+        PrintInfo = 1,
+        /// Try to turn off all automatic processing of packets, screen, sleeping, etc (to make it easier to measure in isolation)
+        ForceQuiet = 2,
+        /// Stop powerstress processing - probably by just rebooting the board
+        EndQuiet = 3,
+        /// Turn the screen on
+        ScreenOn = 16,
+        /// Turn the screen off
+        ScreenOff = 17,
+        /// Let the CPU run but we assume mostly idling for num_seconds
+        CpuIdle = 32,
+        /// Force deep sleep for FIXME seconds
+        CpuDeepsleep = 33,
+        /// Spin the CPU as fast as possible for num_seconds
+        CpuFullon = 34,
+        /// Turn the LED on for num_seconds (and leave it on - for baseline power measurement purposes)
+        LedOn = 48,
+        /// Force the LED off for num_seconds
+        LedOff = 49,
+        /// Completely turn off the LORA radio for num_seconds
+        LoraOff = 64,
+        /// Send Lora packets for num_seconds
+        LoraTx = 65,
+        /// Receive Lora packets for num_seconds (node will be mostly just listening, unless an external agent is helping stress this by sending packets on the current channel)
+        LoraRx = 66,
+        /// Turn off the BT radio for num_seconds
+        BtOff = 80,
+        /// Turn on the BT radio for num_seconds
+        BtOn = 81,
+        /// Turn off the WIFI radio for num_seconds
+        WifiOff = 96,
+        /// Turn on the WIFI radio for num_seconds
+        WifiOn = 97,
+        /// Turn off the GPS radio for num_seconds
+        GpsOff = 112,
+        /// Turn on the GPS radio for num_seconds
+        GpsOn = 113,
+    }
+    impl Opcode {
+        /// String value of the enum field names used in the ProtoBuf definition.
+        ///
+        /// The values are not transformed in any way and thus are considered stable
+        /// (if the ProtoBuf definition does not change) and safe for programmatic use.
+        pub fn as_str_name(&self) -> &'static str {
+            match self {
+                Self::Unset => "UNSET",
+                Self::PrintInfo => "PRINT_INFO",
+                Self::ForceQuiet => "FORCE_QUIET",
+                Self::EndQuiet => "END_QUIET",
+                Self::ScreenOn => "SCREEN_ON",
+                Self::ScreenOff => "SCREEN_OFF",
+                Self::CpuIdle => "CPU_IDLE",
+                Self::CpuDeepsleep => "CPU_DEEPSLEEP",
+                Self::CpuFullon => "CPU_FULLON",
+                Self::LedOn => "LED_ON",
+                Self::LedOff => "LED_OFF",
+                Self::LoraOff => "LORA_OFF",
+                Self::LoraTx => "LORA_TX",
+                Self::LoraRx => "LORA_RX",
+                Self::BtOff => "BT_OFF",
+                Self::BtOn => "BT_ON",
+                Self::WifiOff => "WIFI_OFF",
+                Self::WifiOn => "WIFI_ON",
+                Self::GpsOff => "GPS_OFF",
+                Self::GpsOn => "GPS_ON",
+            }
+        }
+        /// Creates an enum from field names used in the ProtoBuf definition.
+        pub fn from_str_name(value: &str) -> ::core::option::Option<Self> {
+            match value {
+                "UNSET" => Some(Self::Unset),
+                "PRINT_INFO" => Some(Self::PrintInfo),
+                "FORCE_QUIET" => Some(Self::ForceQuiet),
+                "END_QUIET" => Some(Self::EndQuiet),
+                "SCREEN_ON" => Some(Self::ScreenOn),
+                "SCREEN_OFF" => Some(Self::ScreenOff),
+                "CPU_IDLE" => Some(Self::CpuIdle),
+                "CPU_DEEPSLEEP" => Some(Self::CpuDeepsleep),
+                "CPU_FULLON" => Some(Self::CpuFullon),
+                "LED_ON" => Some(Self::LedOn),
+                "LED_OFF" => Some(Self::LedOff),
+                "LORA_OFF" => Some(Self::LoraOff),
+                "LORA_TX" => Some(Self::LoraTx),
+                "LORA_RX" => Some(Self::LoraRx),
+                "BT_OFF" => Some(Self::BtOff),
+                "BT_ON" => Some(Self::BtOn),
+                "WIFI_OFF" => Some(Self::WifiOff),
+                "WIFI_ON" => Some(Self::WifiOn),
+                "GPS_OFF" => Some(Self::GpsOff),
+                "GPS_ON" => Some(Self::GpsOn),
+                _ => None,
+            }
+        }
+    }
 }
 ///
 /// An example app to show off the module system. This message is used for
