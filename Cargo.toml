@@ -40,24 +40,24 @@ required-features = ["ts-gen"]
 [build-dependencies]
 prost-build = { version = "0.13.4", optional = true }
 protoc-bin-vendored = { version = "3.1.0", optional = true }
-walkdir = { version = "2.3.2", optional = true }
+walkdir = { version = "2.5.0", optional = true }
 
 [dependencies]
-futures-util = "0.3.28"
+futures-util = "0.3.31"
 rand = "0.9.0"
-tokio = { version = "1.32.0", features = ["full"] }
-tokio-serial = "5.4.4"
-tokio-util = "0.7.8"
+tokio = { version = "1.43.0", features = ["full"] }
+tokio-serial = "5.4.5"
+tokio-util = "0.7.13"
 prost = "0.13.4"
-log = "0.4.20"
+log = "0.4.25"
 
 specta = { git = "https://github.com/ajmcquilkin/specta.git", rev = "6a8731d", optional = true, features = ["chrono"], version = "=1.0.3" }
 serde = { version = "1.0", features = ["derive"], optional = true }
 serde_json = { version = "1.0", optional = true }
-thiserror = "1.0.48"
-uuid = { version = "1.6.1", optional = true }
-btleplug = { version = "0.11.5", optional = true }
+thiserror = "2.0.11"
+uuid = { version = "1.12.1", optional = true }
+btleplug = { version = "0.11.7", optional = true }
 
 [dev-dependencies]
-fern = { version = "0.6.2", features = ["colored"] }
+fern = { version = "0.7.1", features = ["colored"] }
 humantime = "2.1.0"
