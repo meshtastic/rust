@@ -1,16 +1,8 @@
-fn main() -> std::io::Result<()> {
-    #[cfg(feature = "gen")]
-    {
-        generate_protobufs()
-    }
-    #[cfg(not(feature = "gen"))]
-    {
-        Ok(())
-    }
-}
+#[cfg(not(feature = "gen"))]
+fn main() {}
 
 #[cfg(feature = "gen")]
-fn generate_protobufs() -> std::io::Result<()> {
+fn main() -> std::io::Result<()> {
     let protobufs_dir = "src/protobufs/";
     let gen_dir = "src/generated/";
 
