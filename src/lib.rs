@@ -127,6 +127,8 @@ pub mod utils {
     /// can also be used to list all available serial ports on the host machine.
     pub mod stream {
         pub use crate::utils_internal::available_serial_ports;
+        #[cfg(feature = "bluetooth-le")]
+        pub use crate::utils_internal::build_ble_stream;
         pub use crate::utils_internal::build_serial_stream;
         pub use crate::utils_internal::build_tcp_stream;
     }
