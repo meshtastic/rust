@@ -1,41 +1,28 @@
-name: "Testing Suite"
+name: "Testing"
 on: [push, pull_request]
 
 jobs:
-  unit-test:
-    permissions:
-      contents: write
+  test:
     strategy:
       matrix:
-        platform: [macos-latest, ubuntu-20.04, windows-latest]
-
-    runs-on: ${{ matrix.platform }}
+        os: [macos-latest, ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
         with:
           submodules: true
-
-      - name: Initialize Rust Cache
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/target
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v2
-        with:
-          version: 8
-
-      - name: Install Rust stable
-        uses: dtolnay/rust-toolchain@stable
-
+      - name: Init cache
+        uses: Swatinem/rust-cache@v2
       - name: Install dependencies (Ubuntu only)
-        if: matrix.platform == 'ubuntu-20.04'
+        if: matrix.os == 'ubuntu-latest'
         run: |
-          sudo apt-get update
-          sudo apt-get install -y libdbus-1-dev pkg-config
-
-      - name: Run test suite
-        working-directory: ./
-        run: cargo test --features ts-gen
+          sudo apt-get install -y libdbus-1-dev
+      - name: cargo check
+        run: cargo check
+      - name: cargo fmt
+        run: cargo fmt --all -- --check
+      - name: cargo clippy
+        run: cargo clippy -- -D warnings
+      - name: cargo test
+        run: cargo test --all-features
