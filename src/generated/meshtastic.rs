@@ -18,6 +18,7 @@
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[allow(clippy::doc_lazy_continuation)]
+#[allow(clippy::empty_docs)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ChannelSettings {
     ///
@@ -81,6 +82,7 @@ pub struct ChannelSettings {
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[allow(clippy::doc_lazy_continuation)]
+#[allow(clippy::empty_docs)]
 #[derive(Clone, Copy, PartialEq, ::prost::Message)]
 pub struct ModuleSettings {
     ///
@@ -98,6 +100,7 @@ pub struct ModuleSettings {
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[allow(clippy::doc_lazy_continuation)]
+#[allow(clippy::empty_docs)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Channel {
     ///
@@ -130,6 +133,7 @@ pub mod channel {
     #[derive(serde::Serialize, serde::Deserialize)]
     #[serde(rename_all = "camelCase")]
     #[allow(clippy::doc_lazy_continuation)]
+    #[allow(clippy::empty_docs)]
     #[derive(
         Clone,
         Copy,
@@ -180,11 +184,284 @@ pub mod channel {
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[allow(clippy::doc_lazy_continuation)]
+#[allow(clippy::empty_docs)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct DeviceUiConfig {
+    ///
+    /// A version integer used to invalidate saved files when we make incompatible changes.
+    #[prost(uint32, tag = "1")]
+    pub version: u32,
+    ///
+    /// TFT display brightness 1..255
+    #[prost(uint32, tag = "2")]
+    pub screen_brightness: u32,
+    ///
+    /// Screen timeout 0..900
+    #[prost(uint32, tag = "3")]
+    pub screen_timeout: u32,
+    ///
+    /// Screen/Settings lock enabled
+    #[prost(bool, tag = "4")]
+    pub screen_lock: bool,
+    #[prost(bool, tag = "5")]
+    pub settings_lock: bool,
+    #[prost(uint32, tag = "6")]
+    pub pin_code: u32,
+    ///
+    /// Color theme
+    #[prost(enumeration = "Theme", tag = "7")]
+    pub theme: i32,
+    ///
+    /// Audible message, banner and ring tone
+    #[prost(bool, tag = "8")]
+    pub alert_enabled: bool,
+    #[prost(bool, tag = "9")]
+    pub banner_enabled: bool,
+    #[prost(uint32, tag = "10")]
+    pub ring_tone_id: u32,
+    ///
+    /// Localization
+    #[prost(enumeration = "Language", tag = "11")]
+    pub language: i32,
+    ///
+    /// Node list filter
+    #[prost(message, optional, tag = "12")]
+    pub node_filter: ::core::option::Option<NodeFilter>,
+    ///
+    /// Node list highlightening
+    #[prost(message, optional, tag = "13")]
+    pub node_highlight: ::core::option::Option<NodeHighlight>,
+    ///
+    /// 8 integers for screen calibration data
+    #[prost(bytes = "vec", tag = "14")]
+    pub calibration_data: ::prost::alloc::vec::Vec<u8>,
+}
+#[derive(serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[allow(clippy::doc_lazy_continuation)]
+#[allow(clippy::empty_docs)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct NodeFilter {
+    ///
+    /// Filter unknown nodes
+    #[prost(bool, tag = "1")]
+    pub unknown_switch: bool,
+    ///
+    /// Filter offline nodes
+    #[prost(bool, tag = "2")]
+    pub offline_switch: bool,
+    ///
+    /// Filter nodes w/o public key
+    #[prost(bool, tag = "3")]
+    pub public_key_switch: bool,
+    ///
+    /// Filter based on hops away
+    #[prost(int32, tag = "4")]
+    pub hops_away: i32,
+    ///
+    /// Filter nodes w/o position
+    #[prost(bool, tag = "5")]
+    pub position_switch: bool,
+    ///
+    /// Filter nodes by matching name string
+    #[prost(string, tag = "6")]
+    pub node_name: ::prost::alloc::string::String,
+    ///
+    /// Filter based on channel
+    #[prost(int32, tag = "7")]
+    pub channel: i32,
+}
+#[derive(serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[allow(clippy::doc_lazy_continuation)]
+#[allow(clippy::empty_docs)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct NodeHighlight {
+    ///
+    /// Hightlight nodes w/ active chat
+    #[prost(bool, tag = "1")]
+    pub chat_switch: bool,
+    ///
+    /// Highlight nodes w/ position
+    #[prost(bool, tag = "2")]
+    pub position_switch: bool,
+    ///
+    /// Highlight nodes w/ telemetry data
+    #[prost(bool, tag = "3")]
+    pub telemetry_switch: bool,
+    ///
+    /// Highlight nodes w/ iaq data
+    #[prost(bool, tag = "4")]
+    pub iaq_switch: bool,
+    ///
+    /// Highlight nodes by matching name string
+    #[prost(string, tag = "5")]
+    pub node_name: ::prost::alloc::string::String,
+}
+#[derive(serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[allow(clippy::doc_lazy_continuation)]
+#[allow(clippy::empty_docs)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+#[repr(i32)]
+pub enum Theme {
+    ///
+    /// Dark
+    Dark = 0,
+    ///
+    /// Light
+    Light = 1,
+    ///
+    /// Red
+    Red = 2,
+}
+impl Theme {
+    /// String value of the enum field names used in the ProtoBuf definition.
+    ///
+    /// The values are not transformed in any way and thus are considered stable
+    /// (if the ProtoBuf definition does not change) and safe for programmatic use.
+    pub fn as_str_name(&self) -> &'static str {
+        match self {
+            Self::Dark => "DARK",
+            Self::Light => "LIGHT",
+            Self::Red => "RED",
+        }
+    }
+    /// Creates an enum from field names used in the ProtoBuf definition.
+    pub fn from_str_name(value: &str) -> ::core::option::Option<Self> {
+        match value {
+            "DARK" => Some(Self::Dark),
+            "LIGHT" => Some(Self::Light),
+            "RED" => Some(Self::Red),
+            _ => None,
+        }
+    }
+}
+///
+/// Localization
+#[derive(serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[allow(clippy::doc_lazy_continuation)]
+#[allow(clippy::empty_docs)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+#[repr(i32)]
+pub enum Language {
+    ///
+    /// English
+    English = 0,
+    ///
+    /// French
+    French = 1,
+    ///
+    /// German
+    German = 2,
+    ///
+    /// Italian
+    Italian = 3,
+    ///
+    /// Portuguese
+    Portuguese = 4,
+    ///
+    /// Spanish
+    Spanish = 5,
+    ///
+    /// Swedish
+    Swedish = 6,
+    ///
+    /// Finnish
+    Finnish = 7,
+    ///
+    /// Polish
+    Polish = 8,
+    ///
+    /// Turkish
+    Turkish = 9,
+    ///
+    /// Serbian
+    Serbian = 10,
+    ///
+    /// Russian
+    Russian = 11,
+    ///
+    /// Dutch
+    Dutch = 12,
+    ///
+    /// Greek
+    Greek = 13,
+    ///
+    /// Norwegian
+    Norwegian = 14,
+    ///
+    /// Slovenian
+    Slovenian = 15,
+    ///
+    /// Simplified Chinese (experimental)
+    SimplifiedChinese = 30,
+    ///
+    /// Traditional Chinese (experimental)
+    TraditionalChinese = 31,
+}
+impl Language {
+    /// String value of the enum field names used in the ProtoBuf definition.
+    ///
+    /// The values are not transformed in any way and thus are considered stable
+    /// (if the ProtoBuf definition does not change) and safe for programmatic use.
+    pub fn as_str_name(&self) -> &'static str {
+        match self {
+            Self::English => "ENGLISH",
+            Self::French => "FRENCH",
+            Self::German => "GERMAN",
+            Self::Italian => "ITALIAN",
+            Self::Portuguese => "PORTUGUESE",
+            Self::Spanish => "SPANISH",
+            Self::Swedish => "SWEDISH",
+            Self::Finnish => "FINNISH",
+            Self::Polish => "POLISH",
+            Self::Turkish => "TURKISH",
+            Self::Serbian => "SERBIAN",
+            Self::Russian => "RUSSIAN",
+            Self::Dutch => "DUTCH",
+            Self::Greek => "GREEK",
+            Self::Norwegian => "NORWEGIAN",
+            Self::Slovenian => "SLOVENIAN",
+            Self::SimplifiedChinese => "SIMPLIFIED_CHINESE",
+            Self::TraditionalChinese => "TRADITIONAL_CHINESE",
+        }
+    }
+    /// Creates an enum from field names used in the ProtoBuf definition.
+    pub fn from_str_name(value: &str) -> ::core::option::Option<Self> {
+        match value {
+            "ENGLISH" => Some(Self::English),
+            "FRENCH" => Some(Self::French),
+            "GERMAN" => Some(Self::German),
+            "ITALIAN" => Some(Self::Italian),
+            "PORTUGUESE" => Some(Self::Portuguese),
+            "SPANISH" => Some(Self::Spanish),
+            "SWEDISH" => Some(Self::Swedish),
+            "FINNISH" => Some(Self::Finnish),
+            "POLISH" => Some(Self::Polish),
+            "TURKISH" => Some(Self::Turkish),
+            "SERBIAN" => Some(Self::Serbian),
+            "RUSSIAN" => Some(Self::Russian),
+            "DUTCH" => Some(Self::Dutch),
+            "GREEK" => Some(Self::Greek),
+            "NORWEGIAN" => Some(Self::Norwegian),
+            "SLOVENIAN" => Some(Self::Slovenian),
+            "SIMPLIFIED_CHINESE" => Some(Self::SimplifiedChinese),
+            "TRADITIONAL_CHINESE" => Some(Self::TraditionalChinese),
+            _ => None,
+        }
+    }
+}
+#[derive(serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[allow(clippy::doc_lazy_continuation)]
+#[allow(clippy::empty_docs)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Config {
     ///
     /// Payload Variant
-    #[prost(oneof = "config::PayloadVariant", tags = "1, 2, 3, 4, 5, 6, 7")]
+    #[prost(oneof = "config::PayloadVariant", tags = "1, 2, 3, 4, 5, 6, 7, 8, 9, 10")]
     pub payload_variant: ::core::option::Option<config::PayloadVariant>,
 }
 /// Nested message and enum types in `Config`.
@@ -194,6 +471,7 @@ pub mod config {
     #[derive(serde::Serialize, serde::Deserialize)]
     #[serde(rename_all = "camelCase")]
     #[allow(clippy::doc_lazy_continuation)]
+    #[allow(clippy::empty_docs)]
     #[derive(Clone, PartialEq, ::prost::Message)]
     pub struct DeviceConfig {
         ///
@@ -202,13 +480,10 @@ pub mod config {
         pub role: i32,
         ///
         /// Disabling this will disable the SerialConsole by not initilizing the StreamAPI
+        /// Moved to SecurityConfig
+        #[deprecated]
         #[prost(bool, tag = "2")]
         pub serial_enabled: bool,
-        ///
-        /// By default we turn off logging as soon as an API client connects (to keep shared serial link quiet).
-        /// Set this to true to leave the debug log outputting even when API is active.
-        #[prost(bool, tag = "3")]
-        pub debug_log_enabled: bool,
         ///
         /// For boards without a hard wired button, this is the pin number that will be used
         /// Boards that have more than one button can swap the function with this one. defaults to BUTTON_PIN if defined.
@@ -235,6 +510,8 @@ pub mod config {
         ///
         /// If true, device is considered to be "managed" by a mesh administrator
         /// Clients should then limit available configuration and administrative options inside the user interface
+        /// Moved to SecurityConfig
+        #[deprecated]
         #[prost(bool, tag = "9")]
         pub is_managed: bool,
         ///
@@ -257,6 +534,7 @@ pub mod config {
         #[derive(serde::Serialize, serde::Deserialize)]
         #[serde(rename_all = "camelCase")]
         #[allow(clippy::doc_lazy_continuation)]
+        #[allow(clippy::empty_docs)]
         #[derive(
             Clone,
             Copy,
@@ -326,6 +604,13 @@ pub mod config {
             ///     and automatic TAK PLI (position location information) broadcasts.
             ///     Uses position module configuration to determine TAK PLI broadcast interval.
             TakTracker = 10,
+            ///
+            /// Description: Will always rebroadcast packets, but will do so after all other modes.
+            /// Technical Details: Used for router nodes that are intended to provide additional coverage
+            ///     in areas not already covered by other routers, or to bridge around problematic terrain,
+            ///     but should not be given priority over other routers in order to avoid unnecessaraily
+            ///     consuming hops.
+            RouterLate = 11,
         }
         impl Role {
             /// String value of the enum field names used in the ProtoBuf definition.
@@ -345,6 +630,7 @@ pub mod config {
                     Self::ClientHidden => "CLIENT_HIDDEN",
                     Self::LostAndFound => "LOST_AND_FOUND",
                     Self::TakTracker => "TAK_TRACKER",
+                    Self::RouterLate => "ROUTER_LATE",
                 }
             }
             /// Creates an enum from field names used in the ProtoBuf definition.
@@ -361,6 +647,7 @@ pub mod config {
                     "CLIENT_HIDDEN" => Some(Self::ClientHidden),
                     "LOST_AND_FOUND" => Some(Self::LostAndFound),
                     "TAK_TRACKER" => Some(Self::TakTracker),
+                    "ROUTER_LATE" => Some(Self::RouterLate),
                     _ => None,
                 }
             }
@@ -370,6 +657,7 @@ pub mod config {
         #[derive(serde::Serialize, serde::Deserialize)]
         #[serde(rename_all = "camelCase")]
         #[allow(clippy::doc_lazy_continuation)]
+        #[allow(clippy::empty_docs)]
         #[derive(
             Clone,
             Copy,
@@ -399,6 +687,13 @@ pub mod config {
             /// Ignores observed messages from foreign meshes like LOCAL_ONLY,
             /// but takes it step further by also ignoring messages from nodenums not in the node's known list (NodeDB)
             KnownOnly = 3,
+            ///
+            /// Only permitted for SENSOR, TRACKER and TAK_TRACKER roles, this will inhibit all rebroadcasts, not unlike CLIENT_MUTE role.
+            None = 4,
+            ///
+            /// Ignores packets from non-standard portnums such as: TAK, RangeTest, PaxCounter, etc.
+            /// Only rebroadcasts packets with standard portnums: NodeInfo, Text, Position, Telemetry, and Routing.
+            CorePortnumsOnly = 5,
         }
         impl RebroadcastMode {
             /// String value of the enum field names used in the ProtoBuf definition.
@@ -411,6 +706,8 @@ pub mod config {
                     Self::AllSkipDecoding => "ALL_SKIP_DECODING",
                     Self::LocalOnly => "LOCAL_ONLY",
                     Self::KnownOnly => "KNOWN_ONLY",
+                    Self::None => "NONE",
+                    Self::CorePortnumsOnly => "CORE_PORTNUMS_ONLY",
                 }
             }
             /// Creates an enum from field names used in the ProtoBuf definition.
@@ -420,6 +717,8 @@ pub mod config {
                     "ALL_SKIP_DECODING" => Some(Self::AllSkipDecoding),
                     "LOCAL_ONLY" => Some(Self::LocalOnly),
                     "KNOWN_ONLY" => Some(Self::KnownOnly),
+                    "NONE" => Some(Self::None),
+                    "CORE_PORTNUMS_ONLY" => Some(Self::CorePortnumsOnly),
                     _ => None,
                 }
             }
@@ -430,6 +729,7 @@ pub mod config {
     #[derive(serde::Serialize, serde::Deserialize)]
     #[serde(rename_all = "camelCase")]
     #[allow(clippy::doc_lazy_continuation)]
+    #[allow(clippy::empty_docs)]
     #[derive(Clone, Copy, PartialEq, ::prost::Message)]
     pub struct PositionConfig {
         ///
@@ -505,6 +805,7 @@ pub mod config {
         #[derive(serde::Serialize, serde::Deserialize)]
         #[serde(rename_all = "camelCase")]
         #[allow(clippy::doc_lazy_continuation)]
+        #[allow(clippy::empty_docs)]
         #[derive(
             Clone,
             Copy,
@@ -597,6 +898,7 @@ pub mod config {
         #[derive(serde::Serialize, serde::Deserialize)]
         #[serde(rename_all = "camelCase")]
         #[allow(clippy::doc_lazy_continuation)]
+        #[allow(clippy::empty_docs)]
         #[derive(
             Clone,
             Copy,
@@ -649,6 +951,7 @@ pub mod config {
     #[derive(serde::Serialize, serde::Deserialize)]
     #[serde(rename_all = "camelCase")]
     #[allow(clippy::doc_lazy_continuation)]
+    #[allow(clippy::empty_docs)]
     #[derive(Clone, Copy, PartialEq, ::prost::Message)]
     pub struct PowerConfig {
         ///
@@ -705,6 +1008,7 @@ pub mod config {
     #[derive(serde::Serialize, serde::Deserialize)]
     #[serde(rename_all = "camelCase")]
     #[allow(clippy::doc_lazy_continuation)]
+    #[allow(clippy::empty_docs)]
     #[derive(Clone, PartialEq, ::prost::Message)]
     pub struct NetworkConfig {
         ///
@@ -740,12 +1044,17 @@ pub mod config {
         /// rsyslog Server and Port
         #[prost(string, tag = "9")]
         pub rsyslog_server: ::prost::alloc::string::String,
+        ///
+        /// Flags for enabling/disabling network protocols
+        #[prost(uint32, tag = "10")]
+        pub enabled_protocols: u32,
     }
     /// Nested message and enum types in `NetworkConfig`.
     pub mod network_config {
         #[derive(serde::Serialize, serde::Deserialize)]
         #[serde(rename_all = "camelCase")]
         #[allow(clippy::doc_lazy_continuation)]
+        #[allow(clippy::empty_docs)]
         #[derive(Clone, Copy, PartialEq, ::prost::Message)]
         pub struct IpV4Config {
             ///
@@ -768,6 +1077,7 @@ pub mod config {
         #[derive(serde::Serialize, serde::Deserialize)]
         #[serde(rename_all = "camelCase")]
         #[allow(clippy::doc_lazy_continuation)]
+        #[allow(clippy::empty_docs)]
         #[derive(
             Clone,
             Copy,
@@ -808,12 +1118,59 @@ pub mod config {
                 }
             }
         }
+        ///
+        /// Available flags auxiliary network protocols
+        #[derive(serde::Serialize, serde::Deserialize)]
+        #[serde(rename_all = "camelCase")]
+        #[allow(clippy::doc_lazy_continuation)]
+        #[allow(clippy::empty_docs)]
+        #[derive(
+            Clone,
+            Copy,
+            Debug,
+            PartialEq,
+            Eq,
+            Hash,
+            PartialOrd,
+            Ord,
+            ::prost::Enumeration
+        )]
+        #[repr(i32)]
+        pub enum ProtocolFlags {
+            ///
+            /// Do not broadcast packets over any network protocol
+            NoBroadcast = 0,
+            ///
+            /// Enable broadcasting packets via UDP over the local network
+            UdpBroadcast = 1,
+        }
+        impl ProtocolFlags {
+            /// String value of the enum field names used in the ProtoBuf definition.
+            ///
+            /// The values are not transformed in any way and thus are considered stable
+            /// (if the ProtoBuf definition does not change) and safe for programmatic use.
+            pub fn as_str_name(&self) -> &'static str {
+                match self {
+                    Self::NoBroadcast => "NO_BROADCAST",
+                    Self::UdpBroadcast => "UDP_BROADCAST",
+                }
+            }
+            /// Creates an enum from field names used in the ProtoBuf definition.
+            pub fn from_str_name(value: &str) -> ::core::option::Option<Self> {
+                match value {
+                    "NO_BROADCAST" => Some(Self::NoBroadcast),
+                    "UDP_BROADCAST" => Some(Self::UdpBroadcast),
+                    _ => None,
+                }
+            }
+        }
     }
     ///
     /// Display Config
     #[derive(serde::Serialize, serde::Deserialize)]
     #[serde(rename_all = "camelCase")]
     #[allow(clippy::doc_lazy_continuation)]
+    #[allow(clippy::empty_docs)]
     #[derive(Clone, Copy, PartialEq, ::prost::Message)]
     pub struct DisplayConfig {
         ///
@@ -863,6 +1220,11 @@ pub mod config {
         /// Indicates how to rotate or invert the compass output to accurate display on the display.
         #[prost(enumeration = "display_config::CompassOrientation", tag = "11")]
         pub compass_orientation: i32,
+        ///
+        /// If false (default), the device will display the time in 24-hour format on screen.
+        /// If true, the device will display the time in 12-hour format on screen.
+        #[prost(bool, tag = "12")]
+        pub use_12h_clock: bool,
     }
     /// Nested message and enum types in `DisplayConfig`.
     pub mod display_config {
@@ -871,6 +1233,7 @@ pub mod config {
         #[derive(serde::Serialize, serde::Deserialize)]
         #[serde(rename_all = "camelCase")]
         #[allow(clippy::doc_lazy_continuation)]
+        #[allow(clippy::empty_docs)]
         #[derive(
             Clone,
             Copy,
@@ -943,6 +1306,7 @@ pub mod config {
         #[derive(serde::Serialize, serde::Deserialize)]
         #[serde(rename_all = "camelCase")]
         #[allow(clippy::doc_lazy_continuation)]
+        #[allow(clippy::empty_docs)]
         #[derive(
             Clone,
             Copy,
@@ -988,6 +1352,7 @@ pub mod config {
         #[derive(serde::Serialize, serde::Deserialize)]
         #[serde(rename_all = "camelCase")]
         #[allow(clippy::doc_lazy_continuation)]
+        #[allow(clippy::empty_docs)]
         #[derive(
             Clone,
             Copy,
@@ -1041,6 +1406,7 @@ pub mod config {
         #[derive(serde::Serialize, serde::Deserialize)]
         #[serde(rename_all = "camelCase")]
         #[allow(clippy::doc_lazy_continuation)]
+        #[allow(clippy::empty_docs)]
         #[derive(
             Clone,
             Copy,
@@ -1094,6 +1460,7 @@ pub mod config {
         #[derive(serde::Serialize, serde::Deserialize)]
         #[serde(rename_all = "camelCase")]
         #[allow(clippy::doc_lazy_continuation)]
+        #[allow(clippy::empty_docs)]
         #[derive(
             Clone,
             Copy,
@@ -1170,6 +1537,7 @@ pub mod config {
     #[derive(serde::Serialize, serde::Deserialize)]
     #[serde(rename_all = "camelCase")]
     #[allow(clippy::doc_lazy_continuation)]
+    #[allow(clippy::empty_docs)]
     #[derive(Clone, PartialEq, ::prost::Message)]
     pub struct LoRaConfig {
         ///
@@ -1271,12 +1639,17 @@ pub mod config {
         /// If true, the device will not process any packets received via LoRa that passed via MQTT anywhere on the path towards it.
         #[prost(bool, tag = "104")]
         pub ignore_mqtt: bool,
+        ///
+        /// Sets the ok_to_mqtt bit on outgoing packets
+        #[prost(bool, tag = "105")]
+        pub config_ok_to_mqtt: bool,
     }
     /// Nested message and enum types in `LoRaConfig`.
     pub mod lo_ra_config {
         #[derive(serde::Serialize, serde::Deserialize)]
         #[serde(rename_all = "camelCase")]
         #[allow(clippy::doc_lazy_continuation)]
+        #[allow(clippy::empty_docs)]
         #[derive(
             Clone,
             Copy,
@@ -1347,6 +1720,15 @@ pub mod config {
             ///
             /// Singapore 923mhz
             Sg923 = 18,
+            ///
+            /// Philippines 433mhz
+            Ph433 = 19,
+            ///
+            /// Philippines 868mhz
+            Ph868 = 20,
+            ///
+            /// Philippines 915mhz
+            Ph915 = 21,
         }
         impl RegionCode {
             /// String value of the enum field names used in the ProtoBuf definition.
@@ -1374,6 +1756,9 @@ pub mod config {
                     Self::My433 => "MY_433",
                     Self::My919 => "MY_919",
                     Self::Sg923 => "SG_923",
+                    Self::Ph433 => "PH_433",
+                    Self::Ph868 => "PH_868",
+                    Self::Ph915 => "PH_915",
                 }
             }
             /// Creates an enum from field names used in the ProtoBuf definition.
@@ -1398,6 +1783,9 @@ pub mod config {
                     "MY_433" => Some(Self::My433),
                     "MY_919" => Some(Self::My919),
                     "SG_923" => Some(Self::Sg923),
+                    "PH_433" => Some(Self::Ph433),
+                    "PH_868" => Some(Self::Ph868),
+                    "PH_915" => Some(Self::Ph915),
                     _ => None,
                 }
             }
@@ -1408,6 +1796,7 @@ pub mod config {
         #[derive(serde::Serialize, serde::Deserialize)]
         #[serde(rename_all = "camelCase")]
         #[allow(clippy::doc_lazy_continuation)]
+        #[allow(clippy::empty_docs)]
         #[derive(
             Clone,
             Copy,
@@ -1429,6 +1818,7 @@ pub mod config {
             LongSlow = 1,
             ///
             /// Very Long Range - Slow
+            /// Deprecated in 2.5: Works only with txco and is unusably slow
             VeryLongSlow = 2,
             ///
             /// Medium Range - Slow
@@ -1445,6 +1835,11 @@ pub mod config {
             ///
             /// Long Range - Moderately Fast
             LongModerate = 7,
+            ///
+            /// Short Range - Turbo
+            /// This is the fastest preset and the only one with 500kHz bandwidth.
+            /// It is not legal to use in all regions due to this wider bandwidth.
+            ShortTurbo = 8,
         }
         impl ModemPreset {
             /// String value of the enum field names used in the ProtoBuf definition.
@@ -1461,6 +1856,7 @@ pub mod config {
                     Self::ShortSlow => "SHORT_SLOW",
                     Self::ShortFast => "SHORT_FAST",
                     Self::LongModerate => "LONG_MODERATE",
+                    Self::ShortTurbo => "SHORT_TURBO",
                 }
             }
             /// Creates an enum from field names used in the ProtoBuf definition.
@@ -1474,6 +1870,7 @@ pub mod config {
                     "SHORT_SLOW" => Some(Self::ShortSlow),
                     "SHORT_FAST" => Some(Self::ShortFast),
                     "LONG_MODERATE" => Some(Self::LongModerate),
+                    "SHORT_TURBO" => Some(Self::ShortTurbo),
                     _ => None,
                 }
             }
@@ -1482,6 +1879,7 @@ pub mod config {
     #[derive(serde::Serialize, serde::Deserialize)]
     #[serde(rename_all = "camelCase")]
     #[allow(clippy::doc_lazy_continuation)]
+    #[allow(clippy::empty_docs)]
     #[derive(Clone, Copy, PartialEq, ::prost::Message)]
     pub struct BluetoothConfig {
         ///
@@ -1496,16 +1894,13 @@ pub mod config {
         /// Specified PIN for PairingMode.FixedPin
         #[prost(uint32, tag = "3")]
         pub fixed_pin: u32,
-        ///
-        /// Enables device (serial style logs) over Bluetooth
-        #[prost(bool, tag = "4")]
-        pub device_logging_enabled: bool,
     }
     /// Nested message and enum types in `BluetoothConfig`.
     pub mod bluetooth_config {
         #[derive(serde::Serialize, serde::Deserialize)]
         #[serde(rename_all = "camelCase")]
         #[allow(clippy::doc_lazy_continuation)]
+        #[allow(clippy::empty_docs)]
         #[derive(
             Clone,
             Copy,
@@ -1552,11 +1947,59 @@ pub mod config {
             }
         }
     }
+    #[derive(serde::Serialize, serde::Deserialize)]
+    #[serde(rename_all = "camelCase")]
+    #[allow(clippy::doc_lazy_continuation)]
+    #[allow(clippy::empty_docs)]
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct SecurityConfig {
+        ///
+        /// The public key of the user's device.
+        /// Sent out to other nodes on the mesh to allow them to compute a shared secret key.
+        #[prost(bytes = "vec", tag = "1")]
+        pub public_key: ::prost::alloc::vec::Vec<u8>,
+        ///
+        /// The private key of the device.
+        /// Used to create a shared key with a remote device.
+        #[prost(bytes = "vec", tag = "2")]
+        pub private_key: ::prost::alloc::vec::Vec<u8>,
+        ///
+        /// The public key authorized to send admin messages to this node.
+        #[prost(bytes = "vec", repeated, tag = "3")]
+        pub admin_key: ::prost::alloc::vec::Vec<::prost::alloc::vec::Vec<u8>>,
+        ///
+        /// If true, device is considered to be "managed" by a mesh administrator via admin messages
+        /// Device is managed by a mesh administrator.
+        #[prost(bool, tag = "4")]
+        pub is_managed: bool,
+        ///
+        /// Serial Console over the Stream API."
+        #[prost(bool, tag = "5")]
+        pub serial_enabled: bool,
+        ///
+        /// By default we turn off logging as soon as an API client connects (to keep shared serial link quiet).
+        /// Output live debug logging over serial or bluetooth is set to true.
+        #[prost(bool, tag = "6")]
+        pub debug_log_api_enabled: bool,
+        ///
+        /// Allow incoming device control over the insecure legacy admin channel.
+        #[prost(bool, tag = "8")]
+        pub admin_channel_enabled: bool,
+    }
+    ///
+    /// Blank config request, strictly for getting the session key
+    #[derive(serde::Serialize, serde::Deserialize)]
+    #[serde(rename_all = "camelCase")]
+    #[allow(clippy::doc_lazy_continuation)]
+    #[allow(clippy::empty_docs)]
+    #[derive(Clone, Copy, PartialEq, ::prost::Message)]
+    pub struct SessionkeyConfig {}
     ///
     /// Payload Variant
     #[derive(serde::Serialize, serde::Deserialize)]
     #[serde(rename_all = "camelCase")]
     #[allow(clippy::doc_lazy_continuation)]
+    #[allow(clippy::empty_docs)]
     #[derive(Clone, PartialEq, ::prost::Oneof)]
     pub enum PayloadVariant {
         #[prost(message, tag = "1")]
@@ -1573,11 +2016,18 @@ pub mod config {
         Lora(LoRaConfig),
         #[prost(message, tag = "7")]
         Bluetooth(BluetoothConfig),
+        #[prost(message, tag = "8")]
+        Security(SecurityConfig),
+        #[prost(message, tag = "9")]
+        Sessionkey(SessionkeyConfig),
+        #[prost(message, tag = "10")]
+        DeviceUi(super::DeviceUiConfig),
     }
 }
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[allow(clippy::doc_lazy_continuation)]
+#[allow(clippy::empty_docs)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct DeviceConnectionStatus {
     ///
@@ -1602,6 +2052,7 @@ pub struct DeviceConnectionStatus {
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[allow(clippy::doc_lazy_continuation)]
+#[allow(clippy::empty_docs)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct WifiConnectionStatus {
     ///
@@ -1622,6 +2073,7 @@ pub struct WifiConnectionStatus {
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[allow(clippy::doc_lazy_continuation)]
+#[allow(clippy::empty_docs)]
 #[derive(Clone, Copy, PartialEq, ::prost::Message)]
 pub struct EthernetConnectionStatus {
     ///
@@ -1634,6 +2086,7 @@ pub struct EthernetConnectionStatus {
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[allow(clippy::doc_lazy_continuation)]
+#[allow(clippy::empty_docs)]
 #[derive(Clone, Copy, PartialEq, ::prost::Message)]
 pub struct NetworkConnectionStatus {
     ///
@@ -1658,6 +2111,7 @@ pub struct NetworkConnectionStatus {
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[allow(clippy::doc_lazy_continuation)]
+#[allow(clippy::empty_docs)]
 #[derive(Clone, Copy, PartialEq, ::prost::Message)]
 pub struct BluetoothConnectionStatus {
     ///
@@ -1678,6 +2132,7 @@ pub struct BluetoothConnectionStatus {
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[allow(clippy::doc_lazy_continuation)]
+#[allow(clippy::empty_docs)]
 #[derive(Clone, Copy, PartialEq, ::prost::Message)]
 pub struct SerialConnectionStatus {
     ///
@@ -1694,6 +2149,7 @@ pub struct SerialConnectionStatus {
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[allow(clippy::doc_lazy_continuation)]
+#[allow(clippy::empty_docs)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ModuleConfig {
     ///
@@ -1711,6 +2167,7 @@ pub mod module_config {
     #[derive(serde::Serialize, serde::Deserialize)]
     #[serde(rename_all = "camelCase")]
     #[allow(clippy::doc_lazy_continuation)]
+    #[allow(clippy::empty_docs)]
     #[derive(Clone, PartialEq, ::prost::Message)]
     pub struct MqttConfig {
         ///
@@ -1773,6 +2230,7 @@ pub mod module_config {
     #[derive(serde::Serialize, serde::Deserialize)]
     #[serde(rename_all = "camelCase")]
     #[allow(clippy::doc_lazy_continuation)]
+    #[allow(clippy::empty_docs)]
     #[derive(Clone, Copy, PartialEq, ::prost::Message)]
     pub struct MapReportSettings {
         ///
@@ -1789,6 +2247,7 @@ pub mod module_config {
     #[derive(serde::Serialize, serde::Deserialize)]
     #[serde(rename_all = "camelCase")]
     #[allow(clippy::doc_lazy_continuation)]
+    #[allow(clippy::empty_docs)]
     #[derive(Clone, PartialEq, ::prost::Message)]
     pub struct RemoteHardwareConfig {
         ///
@@ -1809,6 +2268,7 @@ pub mod module_config {
     #[derive(serde::Serialize, serde::Deserialize)]
     #[serde(rename_all = "camelCase")]
     #[allow(clippy::doc_lazy_continuation)]
+    #[allow(clippy::empty_docs)]
     #[derive(Clone, Copy, PartialEq, ::prost::Message)]
     pub struct NeighborInfoConfig {
         ///
@@ -1817,15 +2277,21 @@ pub mod module_config {
         pub enabled: bool,
         ///
         /// Interval in seconds of how often we should try to send our
-        /// Neighbor Info to the mesh
+        /// Neighbor Info (minimum is 14400, i.e., 4 hours)
         #[prost(uint32, tag = "2")]
         pub update_interval: u32,
+        ///
+        /// Whether in addition to sending it to MQTT and the PhoneAPI, our NeighborInfo should be transmitted over LoRa.
+        /// Note that this is not available on a channel with default key and name.
+        #[prost(bool, tag = "3")]
+        pub transmit_over_lora: bool,
     }
     ///
     /// Detection Sensor Module Config
     #[derive(serde::Serialize, serde::Deserialize)]
     #[serde(rename_all = "camelCase")]
     #[allow(clippy::doc_lazy_continuation)]
+    #[allow(clippy::empty_docs)]
     #[derive(Clone, PartialEq, ::prost::Message)]
     pub struct DetectionSensorConfig {
         ///
@@ -1833,13 +2299,15 @@ pub mod module_config {
         #[prost(bool, tag = "1")]
         pub enabled: bool,
         ///
-        /// Interval in seconds of how often we can send a message to the mesh when a state change is detected
+        /// Interval in seconds of how often we can send a message to the mesh when a
+        /// trigger event is detected
         #[prost(uint32, tag = "2")]
         pub minimum_broadcast_secs: u32,
         ///
-        /// Interval in seconds of how often we should send a message to the mesh with the current state regardless of changes
-        /// When set to 0, only state changes will be broadcasted
-        /// Works as a sort of status heartbeat for peace of mind
+        /// Interval in seconds of how often we should send a message to the mesh
+        /// with the current state regardless of trigger events When set to 0, only
+        /// trigger events will be broadcasted Works as a sort of status heartbeat
+        /// for peace of mind
         #[prost(uint32, tag = "3")]
         pub state_broadcast_secs: u32,
         ///
@@ -1858,21 +2326,84 @@ pub mod module_config {
         #[prost(uint32, tag = "6")]
         pub monitor_pin: u32,
         ///
-        /// Whether or not the GPIO pin state detection is triggered on HIGH (1)
-        /// Otherwise LOW (0)
-        #[prost(bool, tag = "7")]
-        pub detection_triggered_high: bool,
+        /// The type of trigger event to be used
+        #[prost(enumeration = "detection_sensor_config::TriggerType", tag = "7")]
+        pub detection_trigger_type: i32,
         ///
         /// Whether or not use INPUT_PULLUP mode for GPIO pin
         /// Only applicable if the board uses pull-up resistors on the pin
         #[prost(bool, tag = "8")]
         pub use_pullup: bool,
     }
+    /// Nested message and enum types in `DetectionSensorConfig`.
+    pub mod detection_sensor_config {
+        #[derive(serde::Serialize, serde::Deserialize)]
+        #[serde(rename_all = "camelCase")]
+        #[allow(clippy::doc_lazy_continuation)]
+        #[allow(clippy::empty_docs)]
+        #[derive(
+            Clone,
+            Copy,
+            Debug,
+            PartialEq,
+            Eq,
+            Hash,
+            PartialOrd,
+            Ord,
+            ::prost::Enumeration
+        )]
+        #[repr(i32)]
+        pub enum TriggerType {
+            /// Event is triggered if pin is low
+            LogicLow = 0,
+            /// Event is triggered if pin is high
+            LogicHigh = 1,
+            /// Event is triggered when pin goes high to low
+            FallingEdge = 2,
+            /// Event is triggered when pin goes low to high
+            RisingEdge = 3,
+            /// Event is triggered on every pin state change, low is considered to be
+            /// "active"
+            EitherEdgeActiveLow = 4,
+            /// Event is triggered on every pin state change, high is considered to be
+            /// "active"
+            EitherEdgeActiveHigh = 5,
+        }
+        impl TriggerType {
+            /// String value of the enum field names used in the ProtoBuf definition.
+            ///
+            /// The values are not transformed in any way and thus are considered stable
+            /// (if the ProtoBuf definition does not change) and safe for programmatic use.
+            pub fn as_str_name(&self) -> &'static str {
+                match self {
+                    Self::LogicLow => "LOGIC_LOW",
+                    Self::LogicHigh => "LOGIC_HIGH",
+                    Self::FallingEdge => "FALLING_EDGE",
+                    Self::RisingEdge => "RISING_EDGE",
+                    Self::EitherEdgeActiveLow => "EITHER_EDGE_ACTIVE_LOW",
+                    Self::EitherEdgeActiveHigh => "EITHER_EDGE_ACTIVE_HIGH",
+                }
+            }
+            /// Creates an enum from field names used in the ProtoBuf definition.
+            pub fn from_str_name(value: &str) -> ::core::option::Option<Self> {
+                match value {
+                    "LOGIC_LOW" => Some(Self::LogicLow),
+                    "LOGIC_HIGH" => Some(Self::LogicHigh),
+                    "FALLING_EDGE" => Some(Self::FallingEdge),
+                    "RISING_EDGE" => Some(Self::RisingEdge),
+                    "EITHER_EDGE_ACTIVE_LOW" => Some(Self::EitherEdgeActiveLow),
+                    "EITHER_EDGE_ACTIVE_HIGH" => Some(Self::EitherEdgeActiveHigh),
+                    _ => None,
+                }
+            }
+        }
+    }
     ///
     /// Audio Config for codec2 voice
     #[derive(serde::Serialize, serde::Deserialize)]
     #[serde(rename_all = "camelCase")]
     #[allow(clippy::doc_lazy_continuation)]
+    #[allow(clippy::empty_docs)]
     #[derive(Clone, Copy, PartialEq, ::prost::Message)]
     pub struct AudioConfig {
         ///
@@ -1911,6 +2442,7 @@ pub mod module_config {
         #[derive(serde::Serialize, serde::Deserialize)]
         #[serde(rename_all = "camelCase")]
         #[allow(clippy::doc_lazy_continuation)]
+        #[allow(clippy::empty_docs)]
         #[derive(
             Clone,
             Copy,
@@ -1974,6 +2506,7 @@ pub mod module_config {
     #[derive(serde::Serialize, serde::Deserialize)]
     #[serde(rename_all = "camelCase")]
     #[allow(clippy::doc_lazy_continuation)]
+    #[allow(clippy::empty_docs)]
     #[derive(Clone, Copy, PartialEq, ::prost::Message)]
     pub struct PaxcounterConfig {
         ///
@@ -1996,6 +2529,7 @@ pub mod module_config {
     #[derive(serde::Serialize, serde::Deserialize)]
     #[serde(rename_all = "camelCase")]
     #[allow(clippy::doc_lazy_continuation)]
+    #[allow(clippy::empty_docs)]
     #[derive(Clone, Copy, PartialEq, ::prost::Message)]
     pub struct SerialConfig {
         ///
@@ -2040,6 +2574,7 @@ pub mod module_config {
         #[derive(serde::Serialize, serde::Deserialize)]
         #[serde(rename_all = "camelCase")]
         #[allow(clippy::doc_lazy_continuation)]
+        #[allow(clippy::empty_docs)]
         #[derive(
             Clone,
             Copy,
@@ -2123,6 +2658,7 @@ pub mod module_config {
         #[derive(serde::Serialize, serde::Deserialize)]
         #[serde(rename_all = "camelCase")]
         #[allow(clippy::doc_lazy_continuation)]
+        #[allow(clippy::empty_docs)]
         #[derive(
             Clone,
             Copy,
@@ -2182,6 +2718,7 @@ pub mod module_config {
     #[derive(serde::Serialize, serde::Deserialize)]
     #[serde(rename_all = "camelCase")]
     #[allow(clippy::doc_lazy_continuation)]
+    #[allow(clippy::empty_docs)]
     #[derive(Clone, Copy, PartialEq, ::prost::Message)]
     pub struct ExternalNotificationConfig {
         ///
@@ -2261,6 +2798,7 @@ pub mod module_config {
     #[derive(serde::Serialize, serde::Deserialize)]
     #[serde(rename_all = "camelCase")]
     #[allow(clippy::doc_lazy_continuation)]
+    #[allow(clippy::empty_docs)]
     #[derive(Clone, Copy, PartialEq, ::prost::Message)]
     pub struct StoreForwardConfig {
         ///
@@ -2293,6 +2831,7 @@ pub mod module_config {
     #[derive(serde::Serialize, serde::Deserialize)]
     #[serde(rename_all = "camelCase")]
     #[allow(clippy::doc_lazy_continuation)]
+    #[allow(clippy::empty_docs)]
     #[derive(Clone, Copy, PartialEq, ::prost::Message)]
     pub struct RangeTestConfig {
         ///
@@ -2314,6 +2853,7 @@ pub mod module_config {
     #[derive(serde::Serialize, serde::Deserialize)]
     #[serde(rename_all = "camelCase")]
     #[allow(clippy::doc_lazy_continuation)]
+    #[allow(clippy::empty_docs)]
     #[derive(Clone, Copy, PartialEq, ::prost::Message)]
     pub struct TelemetryConfig {
         ///
@@ -2347,26 +2887,39 @@ pub mod module_config {
         #[prost(uint32, tag = "7")]
         pub air_quality_interval: u32,
         ///
-        /// Interval in seconds of how often we should try to send our
-        /// air quality metrics to the mesh
+        /// Enable/disable Power metrics
         #[prost(bool, tag = "8")]
         pub power_measurement_enabled: bool,
         ///
         /// Interval in seconds of how often we should try to send our
-        /// air quality metrics to the mesh
+        /// power metrics to the mesh
         #[prost(uint32, tag = "9")]
         pub power_update_interval: u32,
         ///
-        /// Interval in seconds of how often we should try to send our
-        /// air quality metrics to the mesh
+        /// Enable/Disable the power measurement module on-device display
         #[prost(bool, tag = "10")]
         pub power_screen_enabled: bool,
+        ///
+        /// Preferences for the (Health) Telemetry Module
+        /// Enable/Disable the telemetry measurement module measurement collection
+        #[prost(bool, tag = "11")]
+        pub health_measurement_enabled: bool,
+        ///
+        /// Interval in seconds of how often we should try to send our
+        /// health metrics to the mesh
+        #[prost(uint32, tag = "12")]
+        pub health_update_interval: u32,
+        ///
+        /// Enable/Disable the health telemetry module on-device display
+        #[prost(bool, tag = "13")]
+        pub health_screen_enabled: bool,
     }
     ///
-    /// TODO: REPLACE
+    /// Canned Messages Module Config
     #[derive(serde::Serialize, serde::Deserialize)]
     #[serde(rename_all = "camelCase")]
     #[allow(clippy::doc_lazy_continuation)]
+    #[allow(clippy::empty_docs)]
     #[derive(Clone, PartialEq, ::prost::Message)]
     pub struct CannedMessageConfig {
         ///
@@ -2407,7 +2960,7 @@ pub mod module_config {
         pub enabled: bool,
         ///
         /// Input event origin accepted by the canned message module.
-        /// Can be e.g. "rotEnc1", "upDownEnc1" or keyword "_any"
+        /// Can be e.g. "rotEnc1", "upDownEnc1", "scanAndSelect", "cardkb", "serialkb", or keyword "_any"
         #[prost(string, tag = "10")]
         pub allow_input_source: ::prost::alloc::string::String,
         ///
@@ -2423,6 +2976,7 @@ pub mod module_config {
         #[derive(serde::Serialize, serde::Deserialize)]
         #[serde(rename_all = "camelCase")]
         #[allow(clippy::doc_lazy_continuation)]
+        #[allow(clippy::empty_docs)]
         #[derive(
             Clone,
             Copy,
@@ -2500,6 +3054,7 @@ pub mod module_config {
     #[derive(serde::Serialize, serde::Deserialize)]
     #[serde(rename_all = "camelCase")]
     #[allow(clippy::doc_lazy_continuation)]
+    #[allow(clippy::empty_docs)]
     #[derive(Clone, Copy, PartialEq, ::prost::Message)]
     pub struct AmbientLightingConfig {
         ///
@@ -2528,6 +3083,7 @@ pub mod module_config {
     #[derive(serde::Serialize, serde::Deserialize)]
     #[serde(rename_all = "camelCase")]
     #[allow(clippy::doc_lazy_continuation)]
+    #[allow(clippy::empty_docs)]
     #[derive(Clone, PartialEq, ::prost::Oneof)]
     pub enum PayloadVariant {
         ///
@@ -2589,6 +3145,7 @@ pub mod module_config {
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[allow(clippy::doc_lazy_continuation)]
+#[allow(clippy::empty_docs)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct RemoteHardwarePin {
     ///
@@ -2607,6 +3164,7 @@ pub struct RemoteHardwarePin {
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[allow(clippy::doc_lazy_continuation)]
+#[allow(clippy::empty_docs)]
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
 #[repr(i32)]
 pub enum RemoteHardwarePinType {
@@ -2658,6 +3216,7 @@ impl RemoteHardwarePinType {
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[allow(clippy::doc_lazy_continuation)]
+#[allow(clippy::empty_docs)]
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
 #[repr(i32)]
 pub enum PortNum {
@@ -2722,6 +3281,9 @@ pub enum PortNum {
     /// NOTE: This portnum traffic is not sent to the public MQTT starting at firmware version 2.2.9
     DetectionSensorApp = 10,
     ///
+    /// Same as Text Message but used for critical alerts.
+    AlertApp = 11,
+    ///
     /// Provides a 'ping' service that replies to any packet it receives.
     /// Also serves as a small example module.
     /// ENCODING: ASCII Plaintext
@@ -2772,7 +3334,7 @@ pub enum PortNum {
     SimulatorApp = 69,
     ///
     /// Provides a traceroute functionality to show the route a packet towards
-    /// a certain destination would take on the mesh.
+    /// a certain destination would take on the mesh. Contains a RouteDiscovery message as payload.
     /// ENCODING: Protobuf
     TracerouteApp = 70,
     ///
@@ -2820,6 +3382,7 @@ impl PortNum {
             Self::WaypointApp => "WAYPOINT_APP",
             Self::AudioApp => "AUDIO_APP",
             Self::DetectionSensorApp => "DETECTION_SENSOR_APP",
+            Self::AlertApp => "ALERT_APP",
             Self::ReplyApp => "REPLY_APP",
             Self::IpTunnelApp => "IP_TUNNEL_APP",
             Self::PaxcounterApp => "PAXCOUNTER_APP",
@@ -2853,6 +3416,7 @@ impl PortNum {
             "WAYPOINT_APP" => Some(Self::WaypointApp),
             "AUDIO_APP" => Some(Self::AudioApp),
             "DETECTION_SENSOR_APP" => Some(Self::DetectionSensorApp),
+            "ALERT_APP" => Some(Self::AlertApp),
             "REPLY_APP" => Some(Self::ReplyApp),
             "IP_TUNNEL_APP" => Some(Self::IpTunnelApp),
             "PAXCOUNTER_APP" => Some(Self::PaxcounterApp),
@@ -2879,207 +3443,304 @@ impl PortNum {
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[allow(clippy::doc_lazy_continuation)]
+#[allow(clippy::empty_docs)]
 #[derive(Clone, Copy, PartialEq, ::prost::Message)]
 pub struct DeviceMetrics {
     ///
     /// 0-100 (>100 means powered)
-    #[prost(uint32, tag = "1")]
-    pub battery_level: u32,
+    #[prost(uint32, optional, tag = "1")]
+    pub battery_level: ::core::option::Option<u32>,
     ///
     /// Voltage measured
-    #[prost(float, tag = "2")]
-    pub voltage: f32,
+    #[prost(float, optional, tag = "2")]
+    pub voltage: ::core::option::Option<f32>,
     ///
     /// Utilization for the current channel, including well formed TX, RX and malformed RX (aka noise).
-    #[prost(float, tag = "3")]
-    pub channel_utilization: f32,
+    #[prost(float, optional, tag = "3")]
+    pub channel_utilization: ::core::option::Option<f32>,
     ///
     /// Percent of airtime for transmission used within the last hour.
-    #[prost(float, tag = "4")]
-    pub air_util_tx: f32,
+    #[prost(float, optional, tag = "4")]
+    pub air_util_tx: ::core::option::Option<f32>,
     ///
     /// How long the device has been running since the last reboot (in seconds)
-    #[prost(uint32, tag = "5")]
-    pub uptime_seconds: u32,
+    #[prost(uint32, optional, tag = "5")]
+    pub uptime_seconds: ::core::option::Option<u32>,
 }
 ///
 /// Weather station or other environmental metrics
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[allow(clippy::doc_lazy_continuation)]
+#[allow(clippy::empty_docs)]
 #[derive(Clone, Copy, PartialEq, ::prost::Message)]
 pub struct EnvironmentMetrics {
     ///
     /// Temperature measured
-    #[prost(float, tag = "1")]
-    pub temperature: f32,
+    #[prost(float, optional, tag = "1")]
+    pub temperature: ::core::option::Option<f32>,
     ///
     /// Relative humidity percent measured
-    #[prost(float, tag = "2")]
-    pub relative_humidity: f32,
+    #[prost(float, optional, tag = "2")]
+    pub relative_humidity: ::core::option::Option<f32>,
     ///
     /// Barometric pressure in hPA measured
-    #[prost(float, tag = "3")]
-    pub barometric_pressure: f32,
+    #[prost(float, optional, tag = "3")]
+    pub barometric_pressure: ::core::option::Option<f32>,
     ///
     /// Gas resistance in MOhm measured
-    #[prost(float, tag = "4")]
-    pub gas_resistance: f32,
+    #[prost(float, optional, tag = "4")]
+    pub gas_resistance: ::core::option::Option<f32>,
     ///
     /// Voltage measured (To be depreciated in favor of PowerMetrics in Meshtastic 3.x)
-    #[prost(float, tag = "5")]
-    pub voltage: f32,
+    #[prost(float, optional, tag = "5")]
+    pub voltage: ::core::option::Option<f32>,
     ///
     /// Current measured (To be depreciated in favor of PowerMetrics in Meshtastic 3.x)
-    #[prost(float, tag = "6")]
-    pub current: f32,
+    #[prost(float, optional, tag = "6")]
+    pub current: ::core::option::Option<f32>,
     ///
     /// relative scale IAQ value as measured by Bosch BME680 . value 0-500.
     /// Belongs to Air Quality but is not particle but VOC measurement. Other VOC values can also be put in here.
-    #[prost(uint32, tag = "7")]
-    pub iaq: u32,
+    #[prost(uint32, optional, tag = "7")]
+    pub iaq: ::core::option::Option<u32>,
     ///
     /// RCWL9620 Doppler Radar Distance Sensor, used for water level detection. Float value in mm.
-    #[prost(float, tag = "8")]
-    pub distance: f32,
+    #[prost(float, optional, tag = "8")]
+    pub distance: ::core::option::Option<f32>,
     ///
     /// VEML7700 high accuracy ambient light(Lux) digital 16-bit resolution sensor.
-    #[prost(float, tag = "9")]
-    pub lux: f32,
+    #[prost(float, optional, tag = "9")]
+    pub lux: ::core::option::Option<f32>,
     ///
     /// VEML7700 high accuracy white light(irradiance) not calibrated digital 16-bit resolution sensor.
-    #[prost(float, tag = "10")]
-    pub white_lux: f32,
+    #[prost(float, optional, tag = "10")]
+    pub white_lux: ::core::option::Option<f32>,
     ///
     /// Infrared lux
-    #[prost(float, tag = "11")]
-    pub ir_lux: f32,
+    #[prost(float, optional, tag = "11")]
+    pub ir_lux: ::core::option::Option<f32>,
     ///
     /// Ultraviolet lux
-    #[prost(float, tag = "12")]
-    pub uv_lux: f32,
+    #[prost(float, optional, tag = "12")]
+    pub uv_lux: ::core::option::Option<f32>,
     ///
     /// Wind direction in degrees
     /// 0 degrees = North, 90 = East, etc...
-    #[prost(uint32, tag = "13")]
-    pub wind_direction: u32,
+    #[prost(uint32, optional, tag = "13")]
+    pub wind_direction: ::core::option::Option<u32>,
     ///
     /// Wind speed in m/s
-    #[prost(float, tag = "14")]
-    pub wind_speed: f32,
+    #[prost(float, optional, tag = "14")]
+    pub wind_speed: ::core::option::Option<f32>,
     ///
     /// Weight in KG
-    #[prost(float, tag = "15")]
-    pub weight: f32,
+    #[prost(float, optional, tag = "15")]
+    pub weight: ::core::option::Option<f32>,
     ///
     /// Wind gust in m/s
-    #[prost(float, tag = "16")]
-    pub wind_gust: f32,
+    #[prost(float, optional, tag = "16")]
+    pub wind_gust: ::core::option::Option<f32>,
     ///
     /// Wind lull in m/s
-    #[prost(float, tag = "17")]
-    pub wind_lull: f32,
+    #[prost(float, optional, tag = "17")]
+    pub wind_lull: ::core::option::Option<f32>,
+    ///
+    /// Radiation in µR/h
+    #[prost(float, optional, tag = "18")]
+    pub radiation: ::core::option::Option<f32>,
+    ///
+    /// Rainfall in the last hour in mm
+    #[prost(float, optional, tag = "19")]
+    pub rainfall_1h: ::core::option::Option<f32>,
+    ///
+    /// Rainfall in the last 24 hours in mm
+    #[prost(float, optional, tag = "20")]
+    pub rainfall_24h: ::core::option::Option<f32>,
 }
 ///
 /// Power Metrics (voltage / current / etc)
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[allow(clippy::doc_lazy_continuation)]
+#[allow(clippy::empty_docs)]
 #[derive(Clone, Copy, PartialEq, ::prost::Message)]
 pub struct PowerMetrics {
     ///
     /// Voltage (Ch1)
-    #[prost(float, tag = "1")]
-    pub ch1_voltage: f32,
+    #[prost(float, optional, tag = "1")]
+    pub ch1_voltage: ::core::option::Option<f32>,
     ///
     /// Current (Ch1)
-    #[prost(float, tag = "2")]
-    pub ch1_current: f32,
+    #[prost(float, optional, tag = "2")]
+    pub ch1_current: ::core::option::Option<f32>,
     ///
     /// Voltage (Ch2)
-    #[prost(float, tag = "3")]
-    pub ch2_voltage: f32,
+    #[prost(float, optional, tag = "3")]
+    pub ch2_voltage: ::core::option::Option<f32>,
     ///
     /// Current (Ch2)
-    #[prost(float, tag = "4")]
-    pub ch2_current: f32,
+    #[prost(float, optional, tag = "4")]
+    pub ch2_current: ::core::option::Option<f32>,
     ///
     /// Voltage (Ch3)
-    #[prost(float, tag = "5")]
-    pub ch3_voltage: f32,
+    #[prost(float, optional, tag = "5")]
+    pub ch3_voltage: ::core::option::Option<f32>,
     ///
     /// Current (Ch3)
-    #[prost(float, tag = "6")]
-    pub ch3_current: f32,
+    #[prost(float, optional, tag = "6")]
+    pub ch3_current: ::core::option::Option<f32>,
 }
 ///
 /// Air quality metrics
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[allow(clippy::doc_lazy_continuation)]
+#[allow(clippy::empty_docs)]
 #[derive(Clone, Copy, PartialEq, ::prost::Message)]
 pub struct AirQualityMetrics {
     ///
     /// Concentration Units Standard PM1.0
-    #[prost(uint32, tag = "1")]
-    pub pm10_standard: u32,
+    #[prost(uint32, optional, tag = "1")]
+    pub pm10_standard: ::core::option::Option<u32>,
     ///
     /// Concentration Units Standard PM2.5
-    #[prost(uint32, tag = "2")]
-    pub pm25_standard: u32,
+    #[prost(uint32, optional, tag = "2")]
+    pub pm25_standard: ::core::option::Option<u32>,
     ///
     /// Concentration Units Standard PM10.0
-    #[prost(uint32, tag = "3")]
-    pub pm100_standard: u32,
+    #[prost(uint32, optional, tag = "3")]
+    pub pm100_standard: ::core::option::Option<u32>,
     ///
     /// Concentration Units Environmental PM1.0
-    #[prost(uint32, tag = "4")]
-    pub pm10_environmental: u32,
+    #[prost(uint32, optional, tag = "4")]
+    pub pm10_environmental: ::core::option::Option<u32>,
     ///
     /// Concentration Units Environmental PM2.5
-    #[prost(uint32, tag = "5")]
-    pub pm25_environmental: u32,
+    #[prost(uint32, optional, tag = "5")]
+    pub pm25_environmental: ::core::option::Option<u32>,
     ///
     /// Concentration Units Environmental PM10.0
-    #[prost(uint32, tag = "6")]
-    pub pm100_environmental: u32,
+    #[prost(uint32, optional, tag = "6")]
+    pub pm100_environmental: ::core::option::Option<u32>,
     ///
     /// 0.3um Particle Count
-    #[prost(uint32, tag = "7")]
-    pub particles_03um: u32,
+    #[prost(uint32, optional, tag = "7")]
+    pub particles_03um: ::core::option::Option<u32>,
     ///
     /// 0.5um Particle Count
-    #[prost(uint32, tag = "8")]
-    pub particles_05um: u32,
+    #[prost(uint32, optional, tag = "8")]
+    pub particles_05um: ::core::option::Option<u32>,
     ///
     /// 1.0um Particle Count
-    #[prost(uint32, tag = "9")]
-    pub particles_10um: u32,
+    #[prost(uint32, optional, tag = "9")]
+    pub particles_10um: ::core::option::Option<u32>,
     ///
     /// 2.5um Particle Count
-    #[prost(uint32, tag = "10")]
-    pub particles_25um: u32,
+    #[prost(uint32, optional, tag = "10")]
+    pub particles_25um: ::core::option::Option<u32>,
     ///
     /// 5.0um Particle Count
-    #[prost(uint32, tag = "11")]
-    pub particles_50um: u32,
+    #[prost(uint32, optional, tag = "11")]
+    pub particles_50um: ::core::option::Option<u32>,
     ///
     /// 10.0um Particle Count
-    #[prost(uint32, tag = "12")]
-    pub particles_100um: u32,
+    #[prost(uint32, optional, tag = "12")]
+    pub particles_100um: ::core::option::Option<u32>,
+    ///
+    /// 10.0um Particle Count
+    #[prost(uint32, optional, tag = "13")]
+    pub co2: ::core::option::Option<u32>,
+}
+///
+/// Local device mesh statistics
+#[derive(serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[allow(clippy::doc_lazy_continuation)]
+#[allow(clippy::empty_docs)]
+#[derive(Clone, Copy, PartialEq, ::prost::Message)]
+pub struct LocalStats {
+    ///
+    /// How long the device has been running since the last reboot (in seconds)
+    #[prost(uint32, tag = "1")]
+    pub uptime_seconds: u32,
+    ///
+    /// Utilization for the current channel, including well formed TX, RX and malformed RX (aka noise).
+    #[prost(float, tag = "2")]
+    pub channel_utilization: f32,
+    ///
+    /// Percent of airtime for transmission used within the last hour.
+    #[prost(float, tag = "3")]
+    pub air_util_tx: f32,
+    ///
+    /// Number of packets sent
+    #[prost(uint32, tag = "4")]
+    pub num_packets_tx: u32,
+    ///
+    /// Number of packets received (both good and bad)
+    #[prost(uint32, tag = "5")]
+    pub num_packets_rx: u32,
+    ///
+    /// Number of packets received that are malformed or violate the protocol
+    #[prost(uint32, tag = "6")]
+    pub num_packets_rx_bad: u32,
+    ///
+    /// Number of nodes online (in the past 2 hours)
+    #[prost(uint32, tag = "7")]
+    pub num_online_nodes: u32,
+    ///
+    /// Number of nodes total
+    #[prost(uint32, tag = "8")]
+    pub num_total_nodes: u32,
+    ///
+    /// Number of received packets that were duplicates (due to multiple nodes relaying).
+    /// If this number is high, there are nodes in the mesh relaying packets when it's unnecessary, for example due to the ROUTER/REPEATER role.
+    #[prost(uint32, tag = "9")]
+    pub num_rx_dupe: u32,
+    ///
+    /// Number of packets we transmitted that were a relay for others (not originating from ourselves).
+    #[prost(uint32, tag = "10")]
+    pub num_tx_relay: u32,
+    ///
+    /// Number of times we canceled a packet to be relayed, because someone else did it before us.
+    /// This will always be zero for ROUTERs/REPEATERs. If this number is high, some other node(s) is/are relaying faster than you.
+    #[prost(uint32, tag = "11")]
+    pub num_tx_relay_canceled: u32,
+}
+///
+/// Health telemetry metrics
+#[derive(serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[allow(clippy::doc_lazy_continuation)]
+#[allow(clippy::empty_docs)]
+#[derive(Clone, Copy, PartialEq, ::prost::Message)]
+pub struct HealthMetrics {
+    ///
+    /// Heart rate (beats per minute)
+    #[prost(uint32, optional, tag = "1")]
+    pub heart_bpm: ::core::option::Option<u32>,
+    ///
+    /// SpO2 (blood oxygen saturation) level
+    #[prost(uint32, optional, tag = "2")]
+    pub sp_o2: ::core::option::Option<u32>,
+    ///
+    /// Body temperature in degrees Celsius
+    #[prost(float, optional, tag = "3")]
+    pub temperature: ::core::option::Option<f32>,
 }
 ///
 /// Types of Measurements the telemetry module is equipped to handle
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[allow(clippy::doc_lazy_continuation)]
+#[allow(clippy::empty_docs)]
 #[derive(Clone, Copy, PartialEq, ::prost::Message)]
 pub struct Telemetry {
     ///
     /// Seconds since 1970 - or 0 for unknown/unset
     #[prost(fixed32, tag = "1")]
     pub time: u32,
-    #[prost(oneof = "telemetry::Variant", tags = "2, 3, 4, 5")]
+    #[prost(oneof = "telemetry::Variant", tags = "2, 3, 4, 5, 6, 7")]
     pub variant: ::core::option::Option<telemetry::Variant>,
 }
 /// Nested message and enum types in `Telemetry`.
@@ -3087,6 +3748,7 @@ pub mod telemetry {
     #[derive(serde::Serialize, serde::Deserialize)]
     #[serde(rename_all = "camelCase")]
     #[allow(clippy::doc_lazy_continuation)]
+    #[allow(clippy::empty_docs)]
     #[derive(Clone, Copy, PartialEq, ::prost::Oneof)]
     pub enum Variant {
         ///
@@ -3105,6 +3767,14 @@ pub mod telemetry {
         /// Power Metrics
         #[prost(message, tag = "5")]
         PowerMetrics(super::PowerMetrics),
+        ///
+        /// Local device mesh statistics
+        #[prost(message, tag = "6")]
+        LocalStats(super::LocalStats),
+        ///
+        /// Health telemetry metrics
+        #[prost(message, tag = "7")]
+        HealthMetrics(super::HealthMetrics),
     }
 }
 ///
@@ -3112,6 +3782,7 @@ pub mod telemetry {
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[allow(clippy::doc_lazy_continuation)]
+#[allow(clippy::empty_docs)]
 #[derive(Clone, Copy, PartialEq, ::prost::Message)]
 pub struct Nau7802Config {
     ///
@@ -3128,6 +3799,7 @@ pub struct Nau7802Config {
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[allow(clippy::doc_lazy_continuation)]
+#[allow(clippy::empty_docs)]
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
 #[repr(i32)]
 pub enum TelemetrySensorType {
@@ -3218,6 +3890,27 @@ pub enum TelemetrySensorType {
     ///
     /// MAX17048 1S lipo battery sensor (voltage, state of charge, time to go)
     Max17048 = 28,
+    ///
+    /// Custom I2C sensor implementation based on <https://github.com/meshtastic/i2c-sensor>
+    CustomSensor = 29,
+    ///
+    /// MAX30102 Pulse Oximeter and Heart-Rate Sensor
+    Max30102 = 30,
+    ///
+    /// MLX90614 non-contact IR temperature sensor
+    Mlx90614 = 31,
+    ///
+    /// SCD40/SCD41 CO2, humidity, temperature sensor
+    Scd4x = 32,
+    ///
+    /// ClimateGuard RadSens, radiation, Geiger-Muller Tube
+    Radsens = 33,
+    ///
+    /// High accuracy current and voltage
+    Ina226 = 34,
+    ///
+    /// DFRobot Gravity tipping bucket rain gauge
+    DfrobotRain = 35,
 }
 impl TelemetrySensorType {
     /// String value of the enum field names used in the ProtoBuf definition.
@@ -3255,6 +3948,13 @@ impl TelemetrySensorType {
             Self::Bmp3xx => "BMP3XX",
             Self::Icm20948 => "ICM20948",
             Self::Max17048 => "MAX17048",
+            Self::CustomSensor => "CUSTOM_SENSOR",
+            Self::Max30102 => "MAX30102",
+            Self::Mlx90614 => "MLX90614",
+            Self::Scd4x => "SCD4X",
+            Self::Radsens => "RADSENS",
+            Self::Ina226 => "INA226",
+            Self::DfrobotRain => "DFROBOT_RAIN",
         }
     }
     /// Creates an enum from field names used in the ProtoBuf definition.
@@ -3289,6 +3989,13 @@ impl TelemetrySensorType {
             "BMP3XX" => Some(Self::Bmp3xx),
             "ICM20948" => Some(Self::Icm20948),
             "MAX17048" => Some(Self::Max17048),
+            "CUSTOM_SENSOR" => Some(Self::CustomSensor),
+            "MAX30102" => Some(Self::Max30102),
+            "MLX90614" => Some(Self::Mlx90614),
+            "SCD4X" => Some(Self::Scd4x),
+            "RADSENS" => Some(Self::Radsens),
+            "INA226" => Some(Self::Ina226),
+            "DFROBOT_RAIN" => Some(Self::DfrobotRain),
             _ => None,
         }
     }
@@ -3296,6 +4003,7 @@ impl TelemetrySensorType {
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[allow(clippy::doc_lazy_continuation)]
+#[allow(clippy::empty_docs)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct XModem {
     #[prost(enumeration = "x_modem::Control", tag = "1")]
@@ -3312,6 +4020,7 @@ pub mod x_modem {
     #[derive(serde::Serialize, serde::Deserialize)]
     #[serde(rename_all = "camelCase")]
     #[allow(clippy::doc_lazy_continuation)]
+    #[allow(clippy::empty_docs)]
     #[derive(
         Clone,
         Copy,
@@ -3368,25 +4077,26 @@ pub mod x_modem {
     }
 }
 ///
-/// a gps position
+/// A GPS Position
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[allow(clippy::doc_lazy_continuation)]
+#[allow(clippy::empty_docs)]
 #[derive(Clone, Copy, PartialEq, ::prost::Message)]
 pub struct Position {
     ///
     /// The new preferred location encoding, multiply by 1e-7 to get degrees
     /// in floating point
-    #[prost(sfixed32, tag = "1")]
-    pub latitude_i: i32,
+    #[prost(sfixed32, optional, tag = "1")]
+    pub latitude_i: ::core::option::Option<i32>,
     ///
     /// TODO: REPLACE
-    #[prost(sfixed32, tag = "2")]
-    pub longitude_i: i32,
+    #[prost(sfixed32, optional, tag = "2")]
+    pub longitude_i: ::core::option::Option<i32>,
     ///
     /// In meters above MSL (but see issue #359)
-    #[prost(int32, tag = "3")]
-    pub altitude: i32,
+    #[prost(int32, optional, tag = "3")]
+    pub altitude: ::core::option::Option<i32>,
     ///
     /// This is usually not sent over the mesh (to save space), but it is sent
     /// from the phone so that the local device can set its time if it is sent over
@@ -3412,12 +4122,12 @@ pub struct Position {
     pub timestamp_millis_adjust: i32,
     ///
     /// HAE altitude in meters - can be used instead of MSL altitude
-    #[prost(sint32, tag = "9")]
-    pub altitude_hae: i32,
+    #[prost(sint32, optional, tag = "9")]
+    pub altitude_hae: ::core::option::Option<i32>,
     ///
     /// Geoidal separation in meters
-    #[prost(sint32, tag = "10")]
-    pub altitude_geoidal_separation: i32,
+    #[prost(sint32, optional, tag = "10")]
+    pub altitude_geoidal_separation: ::core::option::Option<i32>,
     ///
     /// Horizontal, Vertical and Position Dilution of Precision, in 1/100 units
     /// - PDOP is sufficient for most cases
@@ -3447,12 +4157,12 @@ pub struct Position {
     /// - "heading" is where the fuselage points (measured in horizontal plane)
     /// - "yaw" indicates a relative rotation about the vertical axis
     /// TODO: REMOVE/INTEGRATE
-    #[prost(uint32, tag = "15")]
-    pub ground_speed: u32,
+    #[prost(uint32, optional, tag = "15")]
+    pub ground_speed: ::core::option::Option<u32>,
     ///
     /// TODO: REPLACE
-    #[prost(uint32, tag = "16")]
-    pub ground_track: u32,
+    #[prost(uint32, optional, tag = "16")]
+    pub ground_track: ::core::option::Option<u32>,
     ///
     /// GPS fix quality (from NMEA GxGGA statement or similar)
     #[prost(uint32, tag = "17")]
@@ -3493,6 +4203,7 @@ pub mod position {
     #[derive(serde::Serialize, serde::Deserialize)]
     #[serde(rename_all = "camelCase")]
     #[allow(clippy::doc_lazy_continuation)]
+    #[allow(clippy::empty_docs)]
     #[derive(
         Clone,
         Copy,
@@ -3549,6 +4260,7 @@ pub mod position {
     #[derive(serde::Serialize, serde::Deserialize)]
     #[serde(rename_all = "camelCase")]
     #[allow(clippy::doc_lazy_continuation)]
+    #[allow(clippy::empty_docs)]
     #[derive(
         Clone,
         Copy,
@@ -3629,6 +4341,7 @@ pub mod position {
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[allow(clippy::doc_lazy_continuation)]
+#[allow(clippy::empty_docs)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct User {
     ///
@@ -3671,24 +4384,43 @@ pub struct User {
     /// Indicates that the user's role in the mesh
     #[prost(enumeration = "config::device_config::Role", tag = "7")]
     pub role: i32,
+    ///
+    /// The public key of the user's device.
+    /// This is sent out to other nodes on the mesh to allow them to compute a shared secret key.
+    #[prost(bytes = "vec", tag = "8")]
+    pub public_key: ::prost::alloc::vec::Vec<u8>,
 }
 ///
-/// A message used in our Dynamic Source Routing protocol (RFC 4728 based)
+/// A message used in a traceroute
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[allow(clippy::doc_lazy_continuation)]
+#[allow(clippy::empty_docs)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct RouteDiscovery {
     ///
-    /// The list of nodenums this packet has visited so far
+    /// The list of nodenums this packet has visited so far to the destination.
     #[prost(fixed32, repeated, tag = "1")]
     pub route: ::prost::alloc::vec::Vec<u32>,
+    ///
+    /// The list of SNRs (in dB, scaled by 4) in the route towards the destination.
+    #[prost(int32, repeated, tag = "2")]
+    pub snr_towards: ::prost::alloc::vec::Vec<i32>,
+    ///
+    /// The list of nodenums the packet has visited on the way back from the destination.
+    #[prost(fixed32, repeated, tag = "3")]
+    pub route_back: ::prost::alloc::vec::Vec<u32>,
+    ///
+    /// The list of SNRs (in dB, scaled by 4) in the route back from the destination.
+    #[prost(int32, repeated, tag = "4")]
+    pub snr_back: ::prost::alloc::vec::Vec<i32>,
 }
 ///
 /// A Routing control Data packet handled by the routing module
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[allow(clippy::doc_lazy_continuation)]
+#[allow(clippy::empty_docs)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Routing {
     #[prost(oneof = "routing::Variant", tags = "1, 2, 3")]
@@ -3702,6 +4434,7 @@ pub mod routing {
     #[derive(serde::Serialize, serde::Deserialize)]
     #[serde(rename_all = "camelCase")]
     #[allow(clippy::doc_lazy_continuation)]
+    #[allow(clippy::empty_docs)]
     #[derive(
         Clone,
         Copy,
@@ -3753,6 +4486,18 @@ pub mod routing {
         /// The application layer service on the remote node received your request, but considered your request not authorized
         /// (i.e you did not send the request on the required bound channel)
         NotAuthorized = 33,
+        ///
+        /// The client specified a PKI transport, but the node was unable to send the packet using PKI (and did not send the message at all)
+        PkiFailed = 34,
+        ///
+        /// The receiving node does not have a Public Key to decode with
+        PkiUnknownPubkey = 35,
+        ///
+        /// Admin packet otherwise checks out, but uses a bogus or expired session key
+        AdminBadSessionKey = 36,
+        ///
+        /// Admin packet sent using PKC, but not from a public key on the admin key list
+        AdminPublicKeyUnauthorized = 37,
     }
     impl Error {
         /// String value of the enum field names used in the ProtoBuf definition.
@@ -3773,6 +4518,10 @@ pub mod routing {
                 Self::DutyCycleLimit => "DUTY_CYCLE_LIMIT",
                 Self::BadRequest => "BAD_REQUEST",
                 Self::NotAuthorized => "NOT_AUTHORIZED",
+                Self::PkiFailed => "PKI_FAILED",
+                Self::PkiUnknownPubkey => "PKI_UNKNOWN_PUBKEY",
+                Self::AdminBadSessionKey => "ADMIN_BAD_SESSION_KEY",
+                Self::AdminPublicKeyUnauthorized => "ADMIN_PUBLIC_KEY_UNAUTHORIZED",
             }
         }
         /// Creates an enum from field names used in the ProtoBuf definition.
@@ -3790,6 +4539,10 @@ pub mod routing {
                 "DUTY_CYCLE_LIMIT" => Some(Self::DutyCycleLimit),
                 "BAD_REQUEST" => Some(Self::BadRequest),
                 "NOT_AUTHORIZED" => Some(Self::NotAuthorized),
+                "PKI_FAILED" => Some(Self::PkiFailed),
+                "PKI_UNKNOWN_PUBKEY" => Some(Self::PkiUnknownPubkey),
+                "ADMIN_BAD_SESSION_KEY" => Some(Self::AdminBadSessionKey),
+                "ADMIN_PUBLIC_KEY_UNAUTHORIZED" => Some(Self::AdminPublicKeyUnauthorized),
                 _ => None,
             }
         }
@@ -3797,6 +4550,7 @@ pub mod routing {
     #[derive(serde::Serialize, serde::Deserialize)]
     #[serde(rename_all = "camelCase")]
     #[allow(clippy::doc_lazy_continuation)]
+    #[allow(clippy::empty_docs)]
     #[derive(Clone, PartialEq, ::prost::Oneof)]
     pub enum Variant {
         ///
@@ -3821,6 +4575,7 @@ pub mod routing {
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[allow(clippy::doc_lazy_continuation)]
+#[allow(clippy::empty_docs)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Data {
     ///
@@ -3865,12 +4620,17 @@ pub struct Data {
     /// a message a heart or poop emoji.
     #[prost(fixed32, tag = "8")]
     pub emoji: u32,
+    ///
+    /// Bitfield for extra flags. First use is to indicate that user approves the packet being uploaded to MQTT.
+    #[prost(uint32, optional, tag = "9")]
+    pub bitfield: ::core::option::Option<u32>,
 }
 ///
 /// Waypoint message, used to share arbitrary locations across the mesh
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[allow(clippy::doc_lazy_continuation)]
+#[allow(clippy::empty_docs)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Waypoint {
     ///
@@ -3879,12 +4639,12 @@ pub struct Waypoint {
     pub id: u32,
     ///
     /// latitude_i
-    #[prost(sfixed32, tag = "2")]
-    pub latitude_i: i32,
+    #[prost(sfixed32, optional, tag = "2")]
+    pub latitude_i: ::core::option::Option<i32>,
     ///
     /// longitude_i
-    #[prost(sfixed32, tag = "3")]
-    pub longitude_i: i32,
+    #[prost(sfixed32, optional, tag = "3")]
+    pub longitude_i: ::core::option::Option<i32>,
     ///
     /// Time the waypoint is to expire (epoch)
     #[prost(uint32, tag = "4")]
@@ -3912,6 +4672,7 @@ pub struct Waypoint {
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[allow(clippy::doc_lazy_continuation)]
+#[allow(clippy::empty_docs)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MqttClientProxyMessage {
     ///
@@ -3936,6 +4697,7 @@ pub mod mqtt_client_proxy_message {
     #[derive(serde::Serialize, serde::Deserialize)]
     #[serde(rename_all = "camelCase")]
     #[allow(clippy::doc_lazy_continuation)]
+    #[allow(clippy::empty_docs)]
     #[derive(Clone, PartialEq, ::prost::Oneof)]
     pub enum PayloadVariant {
         ///
@@ -3955,6 +4717,7 @@ pub mod mqtt_client_proxy_message {
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[allow(clippy::doc_lazy_continuation)]
+#[allow(clippy::empty_docs)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MeshPacket {
     ///
@@ -4002,7 +4765,7 @@ pub struct MeshPacket {
     #[prost(float, tag = "8")]
     pub rx_snr: f32,
     ///
-    /// If unset treated as zero (no forwarding, send to adjacent nodes only)
+    /// If unset treated as zero (no forwarding, send to direct neighbor nodes only)
     /// if 1, allow hopping through one node, etc...
     /// For our usecase real world topologies probably have a max of about 3.
     /// This field is normally placed into a few of bits in the header.
@@ -4043,6 +4806,30 @@ pub struct MeshPacket {
     /// When receiving a packet, the difference between hop_start and hop_limit gives how many hops it traveled.
     #[prost(uint32, tag = "15")]
     pub hop_start: u32,
+    ///
+    /// Records the public key the packet was encrypted with, if applicable.
+    #[prost(bytes = "vec", tag = "16")]
+    pub public_key: ::prost::alloc::vec::Vec<u8>,
+    ///
+    /// Indicates whether the packet was en/decrypted using PKI
+    #[prost(bool, tag = "17")]
+    pub pki_encrypted: bool,
+    ///
+    /// Last byte of the node number of the node that should be used as the next hop in routing.
+    /// Set by the firmware internally, clients are not supposed to set this.
+    #[prost(uint32, tag = "18")]
+    pub next_hop: u32,
+    ///
+    /// Last byte of the node number of the node that will relay/relayed this packet.
+    /// Set by the firmware internally, clients are not supposed to set this.
+    #[prost(uint32, tag = "19")]
+    pub relay_node: u32,
+    ///
+    /// *Never* sent over the radio links.
+    /// Timestamp after which this packet may be sent.
+    /// Set by the firmware internally, clients are not supposed to set this.
+    #[prost(uint32, tag = "20")]
+    pub tx_after: u32,
     #[prost(oneof = "mesh_packet::PayloadVariant", tags = "4, 5")]
     pub payload_variant: ::core::option::Option<mesh_packet::PayloadVariant>,
 }
@@ -4070,6 +4857,7 @@ pub mod mesh_packet {
     #[derive(serde::Serialize, serde::Deserialize)]
     #[serde(rename_all = "camelCase")]
     #[allow(clippy::doc_lazy_continuation)]
+    #[allow(clippy::empty_docs)]
     #[derive(
         Clone,
         Copy,
@@ -4101,6 +4889,16 @@ pub mod mesh_packet {
         /// assume it is important and use a slightly higher priority
         Reliable = 70,
         ///
+        /// If priority is unset but the packet is a response to a request, we want it to get there relatively quickly.
+        /// Furthermore, responses stop relaying packets directed to a node early.
+        Response = 80,
+        ///
+        /// Higher priority for specific message types (portnums) to distinguish between other reliable packets.
+        High = 100,
+        ///
+        /// Higher priority alert message used for critical alerts which take priority over other reliable packets.
+        Alert = 110,
+        ///
         /// Ack/naks are sent with very high priority to ensure that retransmission
         /// stops as soon as possible
         Ack = 120,
@@ -4120,6 +4918,9 @@ pub mod mesh_packet {
                 Self::Background => "BACKGROUND",
                 Self::Default => "DEFAULT",
                 Self::Reliable => "RELIABLE",
+                Self::Response => "RESPONSE",
+                Self::High => "HIGH",
+                Self::Alert => "ALERT",
                 Self::Ack => "ACK",
                 Self::Max => "MAX",
             }
@@ -4132,6 +4933,9 @@ pub mod mesh_packet {
                 "BACKGROUND" => Some(Self::Background),
                 "DEFAULT" => Some(Self::Default),
                 "RELIABLE" => Some(Self::Reliable),
+                "RESPONSE" => Some(Self::Response),
+                "HIGH" => Some(Self::High),
+                "ALERT" => Some(Self::Alert),
                 "ACK" => Some(Self::Ack),
                 "MAX" => Some(Self::Max),
                 _ => None,
@@ -4143,6 +4947,7 @@ pub mod mesh_packet {
     #[derive(serde::Serialize, serde::Deserialize)]
     #[serde(rename_all = "camelCase")]
     #[allow(clippy::doc_lazy_continuation)]
+    #[allow(clippy::empty_docs)]
     #[derive(
         Clone,
         Copy,
@@ -4191,6 +4996,7 @@ pub mod mesh_packet {
     #[derive(serde::Serialize, serde::Deserialize)]
     #[serde(rename_all = "camelCase")]
     #[allow(clippy::doc_lazy_continuation)]
+    #[allow(clippy::empty_docs)]
     #[derive(Clone, PartialEq, ::prost::Oneof)]
     pub enum PayloadVariant {
         ///
@@ -4223,6 +5029,7 @@ pub mod mesh_packet {
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[allow(clippy::doc_lazy_continuation)]
+#[allow(clippy::empty_docs)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct NodeInfo {
     ///
@@ -4260,14 +5067,19 @@ pub struct NodeInfo {
     #[prost(bool, tag = "8")]
     pub via_mqtt: bool,
     ///
-    /// Number of hops away from us this node is (0 if adjacent)
-    #[prost(uint32, tag = "9")]
-    pub hops_away: u32,
+    /// Number of hops away from us this node is (0 if direct neighbor)
+    #[prost(uint32, optional, tag = "9")]
+    pub hops_away: ::core::option::Option<u32>,
     ///
     /// True if node is in our favorites list
     /// Persists between NodeDB internal clean ups
     #[prost(bool, tag = "10")]
     pub is_favorite: bool,
+    ///
+    /// True if node is in our ignored list
+    /// Persists between NodeDB internal clean ups
+    #[prost(bool, tag = "11")]
+    pub is_ignored: bool,
 }
 ///
 /// Unique local debugging info for this node
@@ -4276,7 +5088,8 @@ pub struct NodeInfo {
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[allow(clippy::doc_lazy_continuation)]
-#[derive(Clone, Copy, PartialEq, ::prost::Message)]
+#[allow(clippy::empty_docs)]
+#[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MyNodeInfo {
     ///
     /// Tells the phone what our node number is, default starting value is
@@ -4293,6 +5106,14 @@ pub struct MyNodeInfo {
     /// Phone/PC apps should compare this to their build number and if too low tell the user they must update their app
     #[prost(uint32, tag = "11")]
     pub min_app_version: u32,
+    ///
+    /// Unique hardware identifier for this device
+    #[prost(bytes = "vec", tag = "12")]
+    pub device_id: ::prost::alloc::vec::Vec<u8>,
+    ///
+    /// The PlatformIO environment used to build this firmware
+    #[prost(string, tag = "13")]
+    pub pio_env: ::prost::alloc::string::String,
 }
 ///
 /// Debug output from the device.
@@ -4303,6 +5124,7 @@ pub struct MyNodeInfo {
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[allow(clippy::doc_lazy_continuation)]
+#[allow(clippy::empty_docs)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct LogRecord {
     ///
@@ -4329,6 +5151,7 @@ pub mod log_record {
     #[derive(serde::Serialize, serde::Deserialize)]
     #[serde(rename_all = "camelCase")]
     #[allow(clippy::doc_lazy_continuation)]
+    #[allow(clippy::empty_docs)]
     #[derive(
         Clone,
         Copy,
@@ -4398,6 +5221,7 @@ pub mod log_record {
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[allow(clippy::doc_lazy_continuation)]
+#[allow(clippy::empty_docs)]
 #[derive(Clone, Copy, PartialEq, ::prost::Message)]
 pub struct QueueStatus {
     /// Last attempt to queue status, ErrorCode
@@ -4421,6 +5245,7 @@ pub struct QueueStatus {
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[allow(clippy::doc_lazy_continuation)]
+#[allow(clippy::empty_docs)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct FromRadio {
     ///
@@ -4432,7 +5257,7 @@ pub struct FromRadio {
     /// Log levels, chosen to match python logging conventions.
     #[prost(
         oneof = "from_radio::PayloadVariant",
-        tags = "2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15"
+        tags = "2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17"
     )]
     pub payload_variant: ::core::option::Option<from_radio::PayloadVariant>,
 }
@@ -4443,6 +5268,7 @@ pub mod from_radio {
     #[derive(serde::Serialize, serde::Deserialize)]
     #[serde(rename_all = "camelCase")]
     #[allow(clippy::doc_lazy_continuation)]
+    #[allow(clippy::empty_docs)]
     #[derive(Clone, PartialEq, ::prost::Oneof)]
     pub enum PayloadVariant {
         ///
@@ -4509,13 +5335,50 @@ pub mod from_radio {
         /// File system manifest messages
         #[prost(message, tag = "15")]
         FileInfo(super::FileInfo),
+        ///
+        /// Notification message to the client
+        #[prost(message, tag = "16")]
+        ClientNotification(super::ClientNotification),
+        ///
+        /// Persistent data for device-ui
+        #[prost(message, tag = "17")]
+        DeviceuiConfig(super::DeviceUiConfig),
     }
+}
+///
+/// A notification message from the device to the client
+/// To be used for important messages that should to be displayed to the user
+/// in the form of push notifications or validation messages when saving
+/// invalid configuration.
+#[derive(serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[allow(clippy::doc_lazy_continuation)]
+#[allow(clippy::empty_docs)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ClientNotification {
+    ///
+    /// The id of the packet we're notifying in response to
+    #[prost(uint32, optional, tag = "1")]
+    pub reply_id: ::core::option::Option<u32>,
+    ///
+    /// Seconds since 1970 - or 0 for unknown/unset
+    #[prost(fixed32, tag = "2")]
+    pub time: u32,
+    ///
+    /// The level type of notification
+    #[prost(enumeration = "log_record::Level", tag = "3")]
+    pub level: i32,
+    ///
+    /// The message body of the notification
+    #[prost(string, tag = "4")]
+    pub message: ::prost::alloc::string::String,
 }
 ///
 /// Individual File info for the device
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[allow(clippy::doc_lazy_continuation)]
+#[allow(clippy::empty_docs)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct FileInfo {
     ///
@@ -4533,6 +5396,7 @@ pub struct FileInfo {
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[allow(clippy::doc_lazy_continuation)]
+#[allow(clippy::empty_docs)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ToRadio {
     ///
@@ -4547,6 +5411,7 @@ pub mod to_radio {
     #[derive(serde::Serialize, serde::Deserialize)]
     #[serde(rename_all = "camelCase")]
     #[allow(clippy::doc_lazy_continuation)]
+    #[allow(clippy::empty_docs)]
     #[derive(Clone, PartialEq, ::prost::Oneof)]
     pub enum PayloadVariant {
         ///
@@ -4587,6 +5452,7 @@ pub mod to_radio {
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[allow(clippy::doc_lazy_continuation)]
+#[allow(clippy::empty_docs)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Compressed {
     ///
@@ -4603,6 +5469,7 @@ pub struct Compressed {
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[allow(clippy::doc_lazy_continuation)]
+#[allow(clippy::empty_docs)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct NeighborInfo {
     ///
@@ -4627,6 +5494,7 @@ pub struct NeighborInfo {
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[allow(clippy::doc_lazy_continuation)]
+#[allow(clippy::empty_docs)]
 #[derive(Clone, Copy, PartialEq, ::prost::Message)]
 pub struct Neighbor {
     ///
@@ -4653,6 +5521,7 @@ pub struct Neighbor {
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[allow(clippy::doc_lazy_continuation)]
+#[allow(clippy::empty_docs)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct DeviceMetadata {
     ///
@@ -4695,6 +5564,15 @@ pub struct DeviceMetadata {
     /// Has Remote Hardware enabled
     #[prost(bool, tag = "10")]
     pub has_remote_hardware: bool,
+    ///
+    /// Has PKC capabilities
+    #[prost(bool, tag = "11")]
+    pub has_pkc: bool,
+    ///
+    /// Bit field of boolean for excluded modules
+    /// (bitwise OR of ExcludedModules)
+    #[prost(uint32, tag = "12")]
+    pub excluded_modules: u32,
 }
 ///
 /// A heartbeat message is sent to the node from the client to keep the connection alive.
@@ -4702,6 +5580,7 @@ pub struct DeviceMetadata {
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[allow(clippy::doc_lazy_continuation)]
+#[allow(clippy::empty_docs)]
 #[derive(Clone, Copy, PartialEq, ::prost::Message)]
 pub struct Heartbeat {}
 ///
@@ -4709,6 +5588,7 @@ pub struct Heartbeat {}
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[allow(clippy::doc_lazy_continuation)]
+#[allow(clippy::empty_docs)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct NodeRemoteHardwarePin {
     ///
@@ -4723,6 +5603,7 @@ pub struct NodeRemoteHardwarePin {
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[allow(clippy::doc_lazy_continuation)]
+#[allow(clippy::empty_docs)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ChunkedPayload {
     ///
@@ -4747,6 +5628,7 @@ pub struct ChunkedPayload {
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[allow(clippy::doc_lazy_continuation)]
+#[allow(clippy::empty_docs)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ResendChunks {
     #[prost(uint32, repeated, tag = "1")]
@@ -4757,6 +5639,7 @@ pub struct ResendChunks {
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[allow(clippy::doc_lazy_continuation)]
+#[allow(clippy::empty_docs)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ChunkedPayloadResponse {
     ///
@@ -4773,6 +5656,7 @@ pub mod chunked_payload_response {
     #[derive(serde::Serialize, serde::Deserialize)]
     #[serde(rename_all = "camelCase")]
     #[allow(clippy::doc_lazy_continuation)]
+    #[allow(clippy::empty_docs)]
     #[derive(Clone, PartialEq, ::prost::Oneof)]
     pub enum PayloadVariant {
         ///
@@ -4797,6 +5681,7 @@ pub mod chunked_payload_response {
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[allow(clippy::doc_lazy_continuation)]
+#[allow(clippy::empty_docs)]
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
 #[repr(i32)]
 pub enum HardwareModel {
@@ -4875,6 +5760,9 @@ pub enum HardwareModel {
     /// Heltec HRU-3601: <https://heltec.org/project/hru-3601/>
     HeltecHru3601 = 23,
     ///
+    /// Heltec Wireless Bridge
+    HeltecWirelessBridge = 24,
+    ///
     /// B&Q Consulting Station Edition G1: <https://uniteng.com/wiki/doku.php?id=meshtastic:station>
     StationG1 = 25,
     ///
@@ -4928,7 +5816,7 @@ pub enum HardwareModel {
     /// Custom Disaster Radio esp32 v3 device <https://github.com/sudomesh/disaster-radio/tree/master/hardware/board_esp32_v3>
     DrDev = 41,
     ///
-    /// M5 esp32 based MCU modules with enclosure, TFT and LORA Shields. All Variants (Basic, Core, Fire, Core2, Paper) <https://m5stack.com/>
+    /// M5 esp32 based MCU modules with enclosure, TFT and LORA Shields. All Variants (Basic, Core, Fire, Core2, CoreS3, Paper) <https://m5stack.com/>
     M5stack = 42,
     ///
     /// New Heltec LoRA32 with ESP32-S3 CPU
@@ -5041,6 +5929,51 @@ pub enum HardwareModel {
     /// SSD1306 OLED and No GPS
     Radiomaster900Bandit = 74,
     ///
+    /// Minewsemi ME25LS01 (ME25LE01_V1.0). NRF52840 w/ LR1110 radio, buttons and leds and pins.
+    Me25ls014y10td = 75,
+    ///
+    /// RP2040_FEATHER_RFM95
+    /// Adafruit Feather RP2040 with RFM95 LoRa Radio RFM95 with SX1272, SSD1306 OLED
+    /// <https://www.adafruit.com/product/5714>
+    /// <https://www.adafruit.com/product/326>
+    /// <https://www.adafruit.com/product/938>
+    ///   ^^^ short A0 to switch to I2C address 0x3C
+    ///
+    Rp2040FeatherRfm95 = 76,
+    /// M5 esp32 based MCU modules with enclosure, TFT and LORA Shields. All Variants (Basic, Core, Fire, Core2, CoreS3, Paper) <https://m5stack.com/>
+    M5stackCorebasic = 77,
+    M5stackCore2 = 78,
+    /// Pico2 with Waveshare Hat, same as Pico
+    RpiPico2 = 79,
+    /// M5 esp32 based MCU modules with enclosure, TFT and LORA Shields. All Variants (Basic, Core, Fire, Core2, CoreS3, Paper) <https://m5stack.com/>
+    M5stackCores3 = 80,
+    /// Seeed XIAO S3 DK
+    SeeedXiaoS3 = 81,
+    ///
+    /// Nordic nRF52840+Semtech SX1262 LoRa BLE Combo Module. nRF52840+SX1262 MS24SF1
+    Ms24sf1 = 82,
+    ///
+    /// Lilygo TLora-C6 with the new ESP32-C6 MCU
+    TloraC6 = 83,
+    ///
+    /// WisMesh Tap
+    /// RAK-4631 w/ TFT in injection modled case
+    WismeshTap = 84,
+    ///
+    /// Similar to PORTDUINO but used by Routastic devices, this is not any
+    /// particular device and does not run Meshtastic's code but supports
+    /// the same frame format.
+    /// Runs on linux, see <https://github.com/Jorropo/routastic>
+    Routastic = 85,
+    ///
+    /// Mesh-Tab, esp32 based
+    /// <https://github.com/valzzu/Mesh-Tab>
+    MeshTab = 86,
+    ///
+    /// MeshLink board developed by LoraItalia. NRF52840, eByte E22900M22S (Will also come with other frequencies), 25w MPPT solar charger (5v,12v,18v selectable), support for gps, buzzer, oled or e-ink display, 10 gpios, hardware watchdog
+    /// <https://www.loraitalia.it>
+    Meshlink = 87,
+    ///
     /// ------------------------------------------------------------------------------------------------------------------------------------------
     /// Reserved ID For developing private Ports. These will show up in live traffic sparsely, so we can use a high number. Keep it within 8 bits.
     /// ------------------------------------------------------------------------------------------------------------------------------------------
@@ -5077,6 +6010,7 @@ impl HardwareModel {
             Self::WioWm1110 => "WIO_WM1110",
             Self::Rak2560 => "RAK2560",
             Self::HeltecHru3601 => "HELTEC_HRU_3601",
+            Self::HeltecWirelessBridge => "HELTEC_WIRELESS_BRIDGE",
             Self::StationG1 => "STATION_G1",
             Self::Rak11310 => "RAK11310",
             Self::SenseloraRp2040 => "SENSELORA_RP2040",
@@ -5127,6 +6061,19 @@ impl HardwareModel {
             Self::Rak3172 => "RAK3172",
             Self::WioE5 => "WIO_E5",
             Self::Radiomaster900Bandit => "RADIOMASTER_900_BANDIT",
+            Self::Me25ls014y10td => "ME25LS01_4Y10TD",
+            Self::Rp2040FeatherRfm95 => "RP2040_FEATHER_RFM95",
+            Self::M5stackCorebasic => "M5STACK_COREBASIC",
+            Self::M5stackCore2 => "M5STACK_CORE2",
+            Self::RpiPico2 => "RPI_PICO2",
+            Self::M5stackCores3 => "M5STACK_CORES3",
+            Self::SeeedXiaoS3 => "SEEED_XIAO_S3",
+            Self::Ms24sf1 => "MS24SF1",
+            Self::TloraC6 => "TLORA_C6",
+            Self::WismeshTap => "WISMESH_TAP",
+            Self::Routastic => "ROUTASTIC",
+            Self::MeshTab => "MESH_TAB",
+            Self::Meshlink => "MESHLINK",
             Self::PrivateHw => "PRIVATE_HW",
         }
     }
@@ -5157,6 +6104,7 @@ impl HardwareModel {
             "WIO_WM1110" => Some(Self::WioWm1110),
             "RAK2560" => Some(Self::Rak2560),
             "HELTEC_HRU_3601" => Some(Self::HeltecHru3601),
+            "HELTEC_WIRELESS_BRIDGE" => Some(Self::HeltecWirelessBridge),
             "STATION_G1" => Some(Self::StationG1),
             "RAK11310" => Some(Self::Rak11310),
             "SENSELORA_RP2040" => Some(Self::SenseloraRp2040),
@@ -5207,6 +6155,19 @@ impl HardwareModel {
             "RAK3172" => Some(Self::Rak3172),
             "WIO_E5" => Some(Self::WioE5),
             "RADIOMASTER_900_BANDIT" => Some(Self::Radiomaster900Bandit),
+            "ME25LS01_4Y10TD" => Some(Self::Me25ls014y10td),
+            "RP2040_FEATHER_RFM95" => Some(Self::Rp2040FeatherRfm95),
+            "M5STACK_COREBASIC" => Some(Self::M5stackCorebasic),
+            "M5STACK_CORE2" => Some(Self::M5stackCore2),
+            "RPI_PICO2" => Some(Self::RpiPico2),
+            "M5STACK_CORES3" => Some(Self::M5stackCores3),
+            "SEEED_XIAO_S3" => Some(Self::SeeedXiaoS3),
+            "MS24SF1" => Some(Self::Ms24sf1),
+            "TLORA_C6" => Some(Self::TloraC6),
+            "WISMESH_TAP" => Some(Self::WismeshTap),
+            "ROUTASTIC" => Some(Self::Routastic),
+            "MESH_TAB" => Some(Self::MeshTab),
+            "MESHLINK" => Some(Self::Meshlink),
             "PRIVATE_HW" => Some(Self::PrivateHw),
             _ => None,
         }
@@ -5217,6 +6178,7 @@ impl HardwareModel {
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[allow(clippy::doc_lazy_continuation)]
+#[allow(clippy::empty_docs)]
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
 #[repr(i32)]
 pub enum Constants {
@@ -5228,7 +6190,7 @@ pub enum Constants {
     /// From mesh.options
     /// note: this payload length is ONLY the bytes that are sent inside of the Data protobuf (excluding protobuf overhead). The 16 byte header is
     /// outside of this envelope
-    DataPayloadLen = 237,
+    DataPayloadLen = 233,
 }
 impl Constants {
     /// String value of the enum field names used in the ProtoBuf definition.
@@ -5258,6 +6220,7 @@ impl Constants {
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[allow(clippy::doc_lazy_continuation)]
+#[allow(clippy::empty_docs)]
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
 #[repr(i32)]
 pub enum CriticalErrorCode {
@@ -5354,19 +6317,124 @@ impl CriticalErrorCode {
     }
 }
 ///
+/// Enum for modules excluded from a device's configuration.
+/// Each value represents a ModuleConfigType that can be toggled as excluded
+/// by setting its corresponding bit in the `excluded_modules` bitmask field.
+#[derive(serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[allow(clippy::doc_lazy_continuation)]
+#[allow(clippy::empty_docs)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+#[repr(i32)]
+pub enum ExcludedModules {
+    ///
+    /// Default value of 0 indicates no modules are excluded.
+    ExcludedNone = 0,
+    ///
+    /// MQTT module
+    MqttConfig = 1,
+    ///
+    /// Serial module
+    SerialConfig = 2,
+    ///
+    /// External Notification module
+    ExtnotifConfig = 4,
+    ///
+    /// Store and Forward module
+    StoreforwardConfig = 8,
+    ///
+    /// Range Test module
+    RangetestConfig = 16,
+    ///
+    /// Telemetry module
+    TelemetryConfig = 32,
+    ///
+    /// Canned Message module
+    CannedmsgConfig = 64,
+    ///
+    /// Audio module
+    AudioConfig = 128,
+    ///
+    /// Remote Hardware module
+    RemotehardwareConfig = 256,
+    ///
+    /// Neighbor Info module
+    NeighborinfoConfig = 512,
+    ///
+    /// Ambient Lighting module
+    AmbientlightingConfig = 1024,
+    ///
+    /// Detection Sensor module
+    DetectionsensorConfig = 2048,
+    ///
+    /// Paxcounter module
+    PaxcounterConfig = 4096,
+}
+impl ExcludedModules {
+    /// String value of the enum field names used in the ProtoBuf definition.
+    ///
+    /// The values are not transformed in any way and thus are considered stable
+    /// (if the ProtoBuf definition does not change) and safe for programmatic use.
+    pub fn as_str_name(&self) -> &'static str {
+        match self {
+            Self::ExcludedNone => "EXCLUDED_NONE",
+            Self::MqttConfig => "MQTT_CONFIG",
+            Self::SerialConfig => "SERIAL_CONFIG",
+            Self::ExtnotifConfig => "EXTNOTIF_CONFIG",
+            Self::StoreforwardConfig => "STOREFORWARD_CONFIG",
+            Self::RangetestConfig => "RANGETEST_CONFIG",
+            Self::TelemetryConfig => "TELEMETRY_CONFIG",
+            Self::CannedmsgConfig => "CANNEDMSG_CONFIG",
+            Self::AudioConfig => "AUDIO_CONFIG",
+            Self::RemotehardwareConfig => "REMOTEHARDWARE_CONFIG",
+            Self::NeighborinfoConfig => "NEIGHBORINFO_CONFIG",
+            Self::AmbientlightingConfig => "AMBIENTLIGHTING_CONFIG",
+            Self::DetectionsensorConfig => "DETECTIONSENSOR_CONFIG",
+            Self::PaxcounterConfig => "PAXCOUNTER_CONFIG",
+        }
+    }
+    /// Creates an enum from field names used in the ProtoBuf definition.
+    pub fn from_str_name(value: &str) -> ::core::option::Option<Self> {
+        match value {
+            "EXCLUDED_NONE" => Some(Self::ExcludedNone),
+            "MQTT_CONFIG" => Some(Self::MqttConfig),
+            "SERIAL_CONFIG" => Some(Self::SerialConfig),
+            "EXTNOTIF_CONFIG" => Some(Self::ExtnotifConfig),
+            "STOREFORWARD_CONFIG" => Some(Self::StoreforwardConfig),
+            "RANGETEST_CONFIG" => Some(Self::RangetestConfig),
+            "TELEMETRY_CONFIG" => Some(Self::TelemetryConfig),
+            "CANNEDMSG_CONFIG" => Some(Self::CannedmsgConfig),
+            "AUDIO_CONFIG" => Some(Self::AudioConfig),
+            "REMOTEHARDWARE_CONFIG" => Some(Self::RemotehardwareConfig),
+            "NEIGHBORINFO_CONFIG" => Some(Self::NeighborinfoConfig),
+            "AMBIENTLIGHTING_CONFIG" => Some(Self::AmbientlightingConfig),
+            "DETECTIONSENSOR_CONFIG" => Some(Self::DetectionsensorConfig),
+            "PAXCOUNTER_CONFIG" => Some(Self::PaxcounterConfig),
+            _ => None,
+        }
+    }
+}
+///
 /// This message is handled by the Admin module and is responsible for all settings/channel read/write operations.
 /// This message is used to do settings operations to both remote AND local nodes.
 /// (Prior to 1.2 these operations were done via special ToRadio operations)
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[allow(clippy::doc_lazy_continuation)]
+#[allow(clippy::empty_docs)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct AdminMessage {
+    ///
+    /// The node generates this key and sends it with any get_x_response packets.
+    /// The client MUST include the same key with any set_x commands. Key expires after 300 seconds.
+    /// Prevents replay attacks for admin messages.
+    #[prost(bytes = "vec", tag = "101")]
+    pub session_passkey: ::prost::alloc::vec::Vec<u8>,
     ///
     /// TODO: REPLACE
     #[prost(
         oneof = "admin_message::PayloadVariant",
-        tags = "1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 64, 65, 94, 95, 96, 97, 98, 99, 100"
+        tags = "1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 64, 65, 94, 95, 96, 97, 98, 99, 100"
     )]
     pub payload_variant: ::core::option::Option<admin_message::PayloadVariant>,
 }
@@ -5377,6 +6445,7 @@ pub mod admin_message {
     #[derive(serde::Serialize, serde::Deserialize)]
     #[serde(rename_all = "camelCase")]
     #[allow(clippy::doc_lazy_continuation)]
+    #[allow(clippy::empty_docs)]
     #[derive(
         Clone,
         Copy,
@@ -5411,6 +6480,15 @@ pub mod admin_message {
         ///
         /// TODO: REPLACE
         BluetoothConfig = 6,
+        ///
+        /// TODO: REPLACE
+        SecurityConfig = 7,
+        ///
+        ///
+        SessionkeyConfig = 8,
+        ///
+        /// device-ui config
+        DeviceuiConfig = 9,
     }
     impl ConfigType {
         /// String value of the enum field names used in the ProtoBuf definition.
@@ -5426,6 +6504,9 @@ pub mod admin_message {
                 Self::DisplayConfig => "DISPLAY_CONFIG",
                 Self::LoraConfig => "LORA_CONFIG",
                 Self::BluetoothConfig => "BLUETOOTH_CONFIG",
+                Self::SecurityConfig => "SECURITY_CONFIG",
+                Self::SessionkeyConfig => "SESSIONKEY_CONFIG",
+                Self::DeviceuiConfig => "DEVICEUI_CONFIG",
             }
         }
         /// Creates an enum from field names used in the ProtoBuf definition.
@@ -5438,6 +6519,9 @@ pub mod admin_message {
                 "DISPLAY_CONFIG" => Some(Self::DisplayConfig),
                 "LORA_CONFIG" => Some(Self::LoraConfig),
                 "BLUETOOTH_CONFIG" => Some(Self::BluetoothConfig),
+                "SECURITY_CONFIG" => Some(Self::SecurityConfig),
+                "SESSIONKEY_CONFIG" => Some(Self::SessionkeyConfig),
+                "DEVICEUI_CONFIG" => Some(Self::DeviceuiConfig),
                 _ => None,
             }
         }
@@ -5447,6 +6531,7 @@ pub mod admin_message {
     #[derive(serde::Serialize, serde::Deserialize)]
     #[serde(rename_all = "camelCase")]
     #[allow(clippy::doc_lazy_continuation)]
+    #[allow(clippy::empty_docs)]
     #[derive(
         Clone,
         Copy,
@@ -5547,6 +6632,7 @@ pub mod admin_message {
     #[derive(serde::Serialize, serde::Deserialize)]
     #[serde(rename_all = "camelCase")]
     #[allow(clippy::doc_lazy_continuation)]
+    #[allow(clippy::empty_docs)]
     #[derive(Clone, PartialEq, ::prost::Oneof)]
     pub enum PayloadVariant {
         ///
@@ -5688,6 +6774,31 @@ pub mod admin_message {
         #[prost(bool, tag = "42")]
         RemoveFixedPosition(bool),
         ///
+        /// Set time only on the node
+        /// Convenience method to set the time on the node (as Net quality) without any other position data
+        #[prost(fixed32, tag = "43")]
+        SetTimeOnly(u32),
+        ///
+        /// Tell the node to send the stored ui data.
+        #[prost(bool, tag = "44")]
+        GetUiConfigRequest(bool),
+        ///
+        /// Reply stored device ui data.
+        #[prost(message, tag = "45")]
+        GetUiConfigResponse(super::DeviceUiConfig),
+        ///
+        /// Tell the node to store UI data persistently.
+        #[prost(message, tag = "46")]
+        StoreUiConfig(super::DeviceUiConfig),
+        ///
+        /// Set specified node-num to be ignored on the NodeDB on the device
+        #[prost(uint32, tag = "47")]
+        SetIgnoredNode(u32),
+        ///
+        /// Set specified node-num to be un-ignored on the NodeDB on the device
+        #[prost(uint32, tag = "48")]
+        RemoveIgnoredNode(u32),
+        ///
         /// Begins an edit transaction for config, module config, owner, and channel settings changes
         /// This will delay the standard *implicit* save to the file system and subsequent reboot behavior until committed (commit_edit_settings)
         #[prost(bool, tag = "64")]
@@ -5733,6 +6844,7 @@ pub mod admin_message {
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[allow(clippy::doc_lazy_continuation)]
+#[allow(clippy::empty_docs)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct HamParameters {
     ///
@@ -5759,6 +6871,7 @@ pub struct HamParameters {
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[allow(clippy::doc_lazy_continuation)]
+#[allow(clippy::empty_docs)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct NodeRemoteHardwarePinsResponse {
     ///
@@ -5775,6 +6888,7 @@ pub struct NodeRemoteHardwarePinsResponse {
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[allow(clippy::doc_lazy_continuation)]
+#[allow(clippy::empty_docs)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ChannelSet {
     ///
@@ -5791,6 +6905,7 @@ pub struct ChannelSet {
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[allow(clippy::doc_lazy_continuation)]
+#[allow(clippy::empty_docs)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct TakPacket {
     ///
@@ -5811,7 +6926,7 @@ pub struct TakPacket {
     pub status: ::core::option::Option<Status>,
     ///
     /// The payload of the packet
-    #[prost(oneof = "tak_packet::PayloadVariant", tags = "5, 6")]
+    #[prost(oneof = "tak_packet::PayloadVariant", tags = "5, 6, 7")]
     pub payload_variant: ::core::option::Option<tak_packet::PayloadVariant>,
 }
 /// Nested message and enum types in `TAKPacket`.
@@ -5821,6 +6936,7 @@ pub mod tak_packet {
     #[derive(serde::Serialize, serde::Deserialize)]
     #[serde(rename_all = "camelCase")]
     #[allow(clippy::doc_lazy_continuation)]
+    #[allow(clippy::empty_docs)]
     #[derive(Clone, PartialEq, ::prost::Oneof)]
     pub enum PayloadVariant {
         ///
@@ -5831,6 +6947,11 @@ pub mod tak_packet {
         /// ATAK GeoChat message
         #[prost(message, tag = "6")]
         Chat(super::GeoChat),
+        ///
+        /// Generic CoT detail XML
+        /// May be compressed / truncated by the sender (EUD)
+        #[prost(bytes, tag = "7")]
+        Detail(::prost::alloc::vec::Vec<u8>),
     }
 }
 ///
@@ -5838,6 +6959,7 @@ pub mod tak_packet {
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[allow(clippy::doc_lazy_continuation)]
+#[allow(clippy::empty_docs)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct GeoChat {
     ///
@@ -5859,6 +6981,7 @@ pub struct GeoChat {
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[allow(clippy::doc_lazy_continuation)]
+#[allow(clippy::empty_docs)]
 #[derive(Clone, Copy, PartialEq, ::prost::Message)]
 pub struct Group {
     ///
@@ -5877,6 +7000,7 @@ pub struct Group {
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[allow(clippy::doc_lazy_continuation)]
+#[allow(clippy::empty_docs)]
 #[derive(Clone, Copy, PartialEq, ::prost::Message)]
 pub struct Status {
     ///
@@ -5890,6 +7014,7 @@ pub struct Status {
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[allow(clippy::doc_lazy_continuation)]
+#[allow(clippy::empty_docs)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Contact {
     ///
@@ -5909,6 +7034,7 @@ pub struct Contact {
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[allow(clippy::doc_lazy_continuation)]
+#[allow(clippy::empty_docs)]
 #[derive(Clone, Copy, PartialEq, ::prost::Message)]
 pub struct Pli {
     ///
@@ -5937,6 +7063,7 @@ pub struct Pli {
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[allow(clippy::doc_lazy_continuation)]
+#[allow(clippy::empty_docs)]
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
 #[repr(i32)]
 pub enum Team {
@@ -6037,6 +7164,7 @@ impl Team {
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[allow(clippy::doc_lazy_continuation)]
+#[allow(clippy::empty_docs)]
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
 #[repr(i32)]
 pub enum MemberRole {
@@ -6107,6 +7235,7 @@ impl MemberRole {
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[allow(clippy::doc_lazy_continuation)]
+#[allow(clippy::empty_docs)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct CannedMessageModuleConfig {
     ///
@@ -6117,6 +7246,7 @@ pub struct CannedMessageModuleConfig {
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[allow(clippy::doc_lazy_continuation)]
+#[allow(clippy::empty_docs)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct LocalConfig {
     ///
@@ -6153,10 +7283,15 @@ pub struct LocalConfig {
     /// NodeDB.cpp in the device code.
     #[prost(uint32, tag = "8")]
     pub version: u32,
+    ///
+    /// The part of the config that is specific to Security settings
+    #[prost(message, optional, tag = "9")]
+    pub security: ::core::option::Option<config::SecurityConfig>,
 }
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[allow(clippy::doc_lazy_continuation)]
+#[allow(clippy::empty_docs)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct LocalModuleConfig {
     ///
@@ -6226,6 +7361,7 @@ pub struct LocalModuleConfig {
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[allow(clippy::doc_lazy_continuation)]
+#[allow(clippy::empty_docs)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct DeviceProfile {
     ///
@@ -6248,12 +7384,25 @@ pub struct DeviceProfile {
     /// The ModuleConfig of the node
     #[prost(message, optional, tag = "5")]
     pub module_config: ::core::option::Option<LocalModuleConfig>,
+    ///
+    /// Fixed position data
+    #[prost(message, optional, tag = "6")]
+    pub fixed_position: ::core::option::Option<Position>,
+    ///
+    /// Ringtone for ExternalNotification
+    #[prost(string, optional, tag = "7")]
+    pub ringtone: ::core::option::Option<::prost::alloc::string::String>,
+    ///
+    /// Predefined messages for CannedMessage
+    #[prost(string, optional, tag = "8")]
+    pub canned_messages: ::core::option::Option<::prost::alloc::string::String>,
 }
 ///
 /// Position with static location information only for NodeDBLite
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[allow(clippy::doc_lazy_continuation)]
+#[allow(clippy::empty_docs)]
 #[derive(Clone, Copy, PartialEq, ::prost::Message)]
 pub struct PositionLite {
     ///
@@ -6285,6 +7434,50 @@ pub struct PositionLite {
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[allow(clippy::doc_lazy_continuation)]
+#[allow(clippy::empty_docs)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct UserLite {
+    ///
+    /// This is the addr of the radio.
+    #[deprecated]
+    #[prost(bytes = "vec", tag = "1")]
+    pub macaddr: ::prost::alloc::vec::Vec<u8>,
+    ///
+    /// A full name for this user, i.e. "Kevin Hester"
+    #[prost(string, tag = "2")]
+    pub long_name: ::prost::alloc::string::String,
+    ///
+    /// A VERY short name, ideally two characters.
+    /// Suitable for a tiny OLED screen
+    #[prost(string, tag = "3")]
+    pub short_name: ::prost::alloc::string::String,
+    ///
+    /// TBEAM, HELTEC, etc...
+    /// Starting in 1.2.11 moved to hw_model enum in the NodeInfo object.
+    /// Apps will still need the string here for older builds
+    /// (so OTA update can find the right image), but if the enum is available it will be used instead.
+    #[prost(enumeration = "HardwareModel", tag = "4")]
+    pub hw_model: i32,
+    ///
+    /// In some regions Ham radio operators have different bandwidth limitations than others.
+    /// If this user is a licensed operator, set this flag.
+    /// Also, "long_name" should be their licence number.
+    #[prost(bool, tag = "5")]
+    pub is_licensed: bool,
+    ///
+    /// Indicates that the user's role in the mesh
+    #[prost(enumeration = "config::device_config::Role", tag = "6")]
+    pub role: i32,
+    ///
+    /// The public key of the user's device.
+    /// This is sent out to other nodes on the mesh to allow them to compute a shared secret key.
+    #[prost(bytes = "vec", tag = "7")]
+    pub public_key: ::prost::alloc::vec::Vec<u8>,
+}
+#[derive(serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[allow(clippy::doc_lazy_continuation)]
+#[allow(clippy::empty_docs)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct NodeInfoLite {
     ///
@@ -6294,7 +7487,7 @@ pub struct NodeInfoLite {
     ///
     /// The user info for this node
     #[prost(message, optional, tag = "2")]
-    pub user: ::core::option::Option<User>,
+    pub user: ::core::option::Option<UserLite>,
     ///
     /// This position data. Note: before 1.2.14 we would also store the last time we've heard from this node in position.time, that is no longer true.
     /// Position.time now indicates the last time we received a POSITION from that node.
@@ -6322,14 +7515,23 @@ pub struct NodeInfoLite {
     #[prost(bool, tag = "8")]
     pub via_mqtt: bool,
     ///
-    /// Number of hops away from us this node is (0 if adjacent)
-    #[prost(uint32, tag = "9")]
-    pub hops_away: u32,
+    /// Number of hops away from us this node is (0 if direct neighbor)
+    #[prost(uint32, optional, tag = "9")]
+    pub hops_away: ::core::option::Option<u32>,
     ///
     /// True if node is in our favorites list
     /// Persists between NodeDB internal clean ups
     #[prost(bool, tag = "10")]
     pub is_favorite: bool,
+    ///
+    /// True if node is in our ignored list
+    /// Persists between NodeDB internal clean ups
+    #[prost(bool, tag = "11")]
+    pub is_ignored: bool,
+    ///
+    /// Last byte of the node number of the node that should be used as the next hop to reach this node.
+    #[prost(uint32, tag = "12")]
+    pub next_hop: u32,
 }
 ///
 /// This message is never sent over the wire, but it is used for serializing DB
@@ -6340,6 +7542,7 @@ pub struct NodeInfoLite {
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[allow(clippy::doc_lazy_continuation)]
+#[allow(clippy::empty_docs)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct DeviceState {
     ///
@@ -6374,7 +7577,9 @@ pub struct DeviceState {
     #[prost(bool, tag = "9")]
     pub no_save: bool,
     ///
-    /// Some GPS receivers seem to have bogus settings from the factory, so we always do one factory reset.
+    /// Previously used to manage GPS factory resets.
+    /// Deprecated in 2.5.23
+    #[deprecated]
     #[prost(bool, tag = "11")]
     pub did_gps_reset: bool,
     ///
@@ -6397,6 +7602,7 @@ pub struct DeviceState {
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[allow(clippy::doc_lazy_continuation)]
+#[allow(clippy::empty_docs)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ChannelFile {
     ///
@@ -6411,91 +7617,11 @@ pub struct ChannelFile {
     pub version: u32,
 }
 ///
-/// This can be used for customizing the firmware distribution. If populated,
-/// show a secondary bootup screen with custom logo and text for 2.5 seconds.
-#[derive(serde::Serialize, serde::Deserialize)]
-#[serde(rename_all = "camelCase")]
-#[allow(clippy::doc_lazy_continuation)]
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct OemStore {
-    ///
-    /// The Logo width in Px
-    #[prost(uint32, tag = "1")]
-    pub oem_icon_width: u32,
-    ///
-    /// The Logo height in Px
-    #[prost(uint32, tag = "2")]
-    pub oem_icon_height: u32,
-    ///
-    /// The Logo in XBM bytechar format
-    #[prost(bytes = "vec", tag = "3")]
-    pub oem_icon_bits: ::prost::alloc::vec::Vec<u8>,
-    ///
-    /// Use this font for the OEM text.
-    #[prost(enumeration = "ScreenFonts", tag = "4")]
-    pub oem_font: i32,
-    ///
-    /// Use this font for the OEM text.
-    #[prost(string, tag = "5")]
-    pub oem_text: ::prost::alloc::string::String,
-    ///
-    /// The default device encryption key, 16 or 32 byte
-    #[prost(bytes = "vec", tag = "6")]
-    pub oem_aes_key: ::prost::alloc::vec::Vec<u8>,
-    ///
-    /// A Preset LocalConfig to apply during factory reset
-    #[prost(message, optional, tag = "7")]
-    pub oem_local_config: ::core::option::Option<LocalConfig>,
-    ///
-    /// A Preset LocalModuleConfig to apply during factory reset
-    #[prost(message, optional, tag = "8")]
-    pub oem_local_module_config: ::core::option::Option<LocalModuleConfig>,
-}
-///
-/// Font sizes for the device screen
-#[derive(serde::Serialize, serde::Deserialize)]
-#[serde(rename_all = "camelCase")]
-#[allow(clippy::doc_lazy_continuation)]
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
-#[repr(i32)]
-pub enum ScreenFonts {
-    ///
-    /// TODO: REPLACE
-    FontSmall = 0,
-    ///
-    /// TODO: REPLACE
-    FontMedium = 1,
-    ///
-    /// TODO: REPLACE
-    FontLarge = 2,
-}
-impl ScreenFonts {
-    /// String value of the enum field names used in the ProtoBuf definition.
-    ///
-    /// The values are not transformed in any way and thus are considered stable
-    /// (if the ProtoBuf definition does not change) and safe for programmatic use.
-    pub fn as_str_name(&self) -> &'static str {
-        match self {
-            Self::FontSmall => "FONT_SMALL",
-            Self::FontMedium => "FONT_MEDIUM",
-            Self::FontLarge => "FONT_LARGE",
-        }
-    }
-    /// Creates an enum from field names used in the ProtoBuf definition.
-    pub fn from_str_name(value: &str) -> ::core::option::Option<Self> {
-        match value {
-            "FONT_SMALL" => Some(Self::FontSmall),
-            "FONT_MEDIUM" => Some(Self::FontMedium),
-            "FONT_LARGE" => Some(Self::FontLarge),
-            _ => None,
-        }
-    }
-}
-///
 /// This message wraps a MeshPacket with extra metadata about the sender and how it arrived.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[allow(clippy::doc_lazy_continuation)]
+#[allow(clippy::empty_docs)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ServiceEnvelope {
     ///
@@ -6518,6 +7644,7 @@ pub struct ServiceEnvelope {
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[allow(clippy::doc_lazy_continuation)]
+#[allow(clippy::empty_docs)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MapReport {
     ///
@@ -6580,6 +7707,7 @@ pub struct MapReport {
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[allow(clippy::doc_lazy_continuation)]
+#[allow(clippy::empty_docs)]
 #[derive(Clone, Copy, PartialEq, ::prost::Message)]
 pub struct Paxcount {
     ///
@@ -6600,6 +7728,7 @@ pub struct Paxcount {
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[allow(clippy::doc_lazy_continuation)]
+#[allow(clippy::empty_docs)]
 #[derive(Clone, Copy, PartialEq, ::prost::Message)]
 pub struct PowerMon {}
 /// Nested message and enum types in `PowerMon`.
@@ -6609,6 +7738,7 @@ pub mod power_mon {
     #[derive(serde::Serialize, serde::Deserialize)]
     #[serde(rename_all = "camelCase")]
     #[allow(clippy::doc_lazy_continuation)]
+    #[allow(clippy::empty_docs)]
     #[derive(
         Clone,
         Copy,
@@ -6696,6 +7826,7 @@ pub mod power_mon {
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[allow(clippy::doc_lazy_continuation)]
+#[allow(clippy::empty_docs)]
 #[derive(Clone, Copy, PartialEq, ::prost::Message)]
 pub struct PowerStressMessage {
     ///
@@ -6714,6 +7845,7 @@ pub mod power_stress_message {
     #[derive(serde::Serialize, serde::Deserialize)]
     #[serde(rename_all = "camelCase")]
     #[allow(clippy::doc_lazy_continuation)]
+    #[allow(clippy::empty_docs)]
     #[derive(
         Clone,
         Copy,
@@ -6839,6 +7971,7 @@ pub mod power_stress_message {
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[allow(clippy::doc_lazy_continuation)]
+#[allow(clippy::empty_docs)]
 #[derive(Clone, Copy, PartialEq, ::prost::Message)]
 pub struct HardwareMessage {
     ///
@@ -6862,6 +7995,7 @@ pub mod hardware_message {
     #[derive(serde::Serialize, serde::Deserialize)]
     #[serde(rename_all = "camelCase")]
     #[allow(clippy::doc_lazy_continuation)]
+    #[allow(clippy::empty_docs)]
     #[derive(
         Clone,
         Copy,
@@ -6930,6 +8064,7 @@ pub mod hardware_message {
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[allow(clippy::doc_lazy_continuation)]
+#[allow(clippy::empty_docs)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct RtttlConfig {
     ///
@@ -6942,6 +8077,7 @@ pub struct RtttlConfig {
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[allow(clippy::doc_lazy_continuation)]
+#[allow(clippy::empty_docs)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct StoreAndForward {
     ///
@@ -6960,6 +8096,7 @@ pub mod store_and_forward {
     #[derive(serde::Serialize, serde::Deserialize)]
     #[serde(rename_all = "camelCase")]
     #[allow(clippy::doc_lazy_continuation)]
+    #[allow(clippy::empty_docs)]
     #[derive(Clone, Copy, PartialEq, ::prost::Message)]
     pub struct Statistics {
         ///
@@ -7004,6 +8141,7 @@ pub mod store_and_forward {
     #[derive(serde::Serialize, serde::Deserialize)]
     #[serde(rename_all = "camelCase")]
     #[allow(clippy::doc_lazy_continuation)]
+    #[allow(clippy::empty_docs)]
     #[derive(Clone, Copy, PartialEq, ::prost::Message)]
     pub struct History {
         ///
@@ -7025,6 +8163,7 @@ pub mod store_and_forward {
     #[derive(serde::Serialize, serde::Deserialize)]
     #[serde(rename_all = "camelCase")]
     #[allow(clippy::doc_lazy_continuation)]
+    #[allow(clippy::empty_docs)]
     #[derive(Clone, Copy, PartialEq, ::prost::Message)]
     pub struct Heartbeat {
         ///
@@ -7042,6 +8181,7 @@ pub mod store_and_forward {
     #[derive(serde::Serialize, serde::Deserialize)]
     #[serde(rename_all = "camelCase")]
     #[allow(clippy::doc_lazy_continuation)]
+    #[allow(clippy::empty_docs)]
     #[derive(
         Clone,
         Copy,
@@ -7159,6 +8299,7 @@ pub mod store_and_forward {
     #[derive(serde::Serialize, serde::Deserialize)]
     #[serde(rename_all = "camelCase")]
     #[allow(clippy::doc_lazy_continuation)]
+    #[allow(clippy::empty_docs)]
     #[derive(Clone, PartialEq, ::prost::Oneof)]
     pub enum Variant {
         ///
