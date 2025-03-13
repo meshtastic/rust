@@ -63,6 +63,7 @@ fn main() -> std::io::Result<()> {
     {
         config.type_attribute(".", "#[serde(rename_all = \"camelCase\")]");
         config.type_attribute(".", "#[allow(clippy::doc_lazy_continuation)]");
+        config.type_attribute(".", "#[allow(clippy::empty_docs)]");
     }
 
     config.out_dir(gen_dir);
