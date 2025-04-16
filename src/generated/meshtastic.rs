@@ -4132,7 +4132,7 @@ pub struct Position {
     /// Horizontal, Vertical and Position Dilution of Precision, in 1/100 units
     /// - PDOP is sufficient for most cases
     /// - for higher precision scenarios, HDOP and VDOP can be used instead,
-    ///    in which case PDOP becomes redundant (PDOP=sqrt(HDOP^2 + VDOP^2))
+    ///  in which case PDOP becomes redundant (PDOP=sqrt(HDOP^2 + VDOP^2))
     /// TODO: REMOVE/INTEGRATE
     #[prost(uint32, tag = "11")]
     pub pdop: u32,
@@ -4183,12 +4183,12 @@ pub struct Position {
     /// Estimated/expected time (in seconds) until next update:
     /// - if we update at fixed intervals of X seconds, use X
     /// - if we update at dynamic intervals (based on relative movement etc),
-    ///    but "AT LEAST every Y seconds", use Y
+    /// but "AT LEAST every Y seconds", use Y
     #[prost(uint32, tag = "21")]
     pub next_update: u32,
     ///
     /// A sequence number, incremented with each Position message to help
-    ///    detect lost updates if needed
+    /// detect lost updates if needed
     #[prost(uint32, tag = "22")]
     pub seq_number: u32,
     ///
