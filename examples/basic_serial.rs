@@ -10,7 +10,7 @@ use meshtastic::api::StreamApi;
 use meshtastic::utils;
 
 /// Set up the logger to output to stdout  
-/// **Note:** the invokation of this function is commented out in main by default.
+/// **Note:** the invocation of this function is commented out in main by default.
 fn setup_logger() -> Result<(), fern::InitError> {
     fern::Dispatch::new()
         .format(|out, message, record| {
