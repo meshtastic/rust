@@ -61,7 +61,7 @@ pub struct StreamApi;
 /// on the `StreamApi` struct. Once the user has called `StreamApi::connect`, the user is then expected
 /// to call the `configure` method on the resulting `ConnectedStreamApi` instance. The "send" methods
 /// will not be available to the user until `configure` has been called, as the device will not
-/// repond to them.
+/// respond to them.
 ///
 /// This struct can either be in the `Connected`, or `Configured` state. The `Connected` state is
 /// used to indicate that the user has connected to a radio, but that the device connection has not
@@ -749,7 +749,7 @@ impl ConnectedStreamApi<state::Configured> {
         Ok(())
     }
 
-    /// Sends the specified `Positon` over the mesh.
+    /// Sends the specified `Position` over the mesh.
     ///
     /// Sending a `Position` packet will update the internal position of the connected radio
     /// in addition to sending the packet over the mesh.
@@ -1207,7 +1207,7 @@ impl ConnectedStreamApi<state::Configured> {
     /// This is a limitation of the current firmware.
     ///
     /// **Note:** It is the responsibility of the user of this library to avoid calling
-    /// this method multiple times, and to avoid calling this method without first caling the
+    /// this method multiple times, and to avoid calling this method without first calling the
     /// `start_config_transaction` method. This will result in undefined radio behavior.
     ///
     /// # Arguments
