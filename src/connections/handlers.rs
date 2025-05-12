@@ -69,7 +69,7 @@ where
                 read_output_tx
                     .send(data)
                     .inspect_err(|_| error!("Failed to send data through channel"))
-                    .map_err(|e| InternalChannelError::from(e))?
+                    .map_err(InternalChannelError::from)?
             }
 
             // TODO check if port has fatally errored, and if so, tell UI
@@ -129,7 +129,7 @@ where
             .write(message.data())
             .await
             .inspect_err(|e| error!("Error writing to stream: {:?}", e))
-            .map_err(|e| InternalStreamError::write_error(e))?;
+            .map_err(InternalStreamError::write_error)?;
     }
 
     debug!("Write handler finished");
@@ -231,7 +231,7 @@ async fn start_heartbeat_handler(
         write_input_tx
             .send(packet_with_header)
             .inspect_err(|e| error!("Error writing heartbeat packet to stream: {:?}", e))
-            .map_err(|e| InternalStreamError::write_error(e))?;
+            .map_err(InternalStreamError::write_error)?;
 
         log::info!("Sent heartbeat packet");
     }
