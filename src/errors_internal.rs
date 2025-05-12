@@ -84,6 +84,14 @@ pub enum InternalStreamError {
     ConnectionLost,
 }
 
+impl InternalStreamError {
+    pub fn write_error(err: impl std::error::Error + Send + Sync + 'static) -> Self {
+        Self::StreamWriteError {
+            source: Box::new(err),
+        }
+    }
+}
+
 /// An enum that defines the possible internal errors that can occur within the library when handling data channels.
 #[allow(clippy::enum_variant_names)]
 #[derive(Error, Debug)]
