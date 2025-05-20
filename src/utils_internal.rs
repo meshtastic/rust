@@ -1,8 +1,14 @@
+#[cfg(feature = "bluetooth-le")]
+use crate::connections::ble_handler::BleHandler;
 use crate::errors_internal::Error;
+#[cfg(feature = "bluetooth-le")]
+use futures::stream::StreamExt;
 use std::time::Duration;
 use std::time::UNIX_EPOCH;
 
 use rand::{distr::StandardUniform, prelude::Distribution, Rng};
+#[cfg(feature = "bluetooth-le")]
+use tokio::io::{AsyncReadExt, AsyncWriteExt, DuplexStream};
 use tokio_serial::{available_ports, SerialPort, SerialStream};
 
 use crate::connections::stream_api::StreamHandle;
@@ -192,6 +198,113 @@ pub async fn build_tcp_stream(
     };
 
     Ok(StreamHandle::from_stream(stream))
+}
+
+/// A helper method that uses the `btleplug` and `tokio` crates to build a BLE stream
+/// that is compatible with the `StreamApi` API. This requires that the stream
+/// implements `AsyncReadExt + AsyncWriteExt` traits.
+///
+/// This method is intended to be used to create a `DuplexStream` instance, which is
+/// then passed into the `StreamApi::connect` method.
+///
+/// # Arguments
+///
+/// * `ble_id` - Name or MAC address of a BLE device
+///
+/// # Returns
+///
+/// Returns a result that resolves to a `tokio::io::DuplexStream` instance, or
+/// an error if the stream could not be created.
+///
+/// # Examples
+///
+/// ```
+/// // Connect to a radio, identified by its MAC address
+/// let duplex_stream = utils::build_ble_stream(BleId::from_mac_address("E3:44:4E:18:F7:A4").await?;
+/// let decoded_listener = stream_api.connect(duplex_stream).await;
+/// ```
+///
+/// # Errors
+///
+/// Will return an instance of `Error` in the event that the radio refuses the connection, it
+/// cannot be found or if the specified address is invalid.
+///
+/// # Panics
+///
+/// None
+///
+#[cfg(feature = "bluetooth-le")]
+pub async fn build_ble_stream(
+    ble_id: &crate::connections::ble_handler::BleId,
+) -> Result<StreamHandle<DuplexStream>, Error> {
+    use crate::{
+        connections::ble_handler::{AdapterEvent, RadioMessage},
+        errors_internal::InternalStreamError,
+    };
+    let ble_handler = BleHandler::new(ble_id).await?;
+    // `client` will be returned to the user, server is the opposite end of the channel and it's
+    // directly connected to a `BleHandler`.
+    let (client, mut server) = tokio::io::duplex(1024);
+    let handle = tokio::spawn(async move {
+        let duplex_write_error_fn = |e| {
+            Error::InternalStreamError(InternalStreamError::StreamWriteError {
+                source: Box::new(e),
+            })
+        };
+        let mut read_messages_count = ble_handler.read_fromnum().await?;
+        let mut buf = [0u8; 1024];
+        if let Ok(len) = server.read(&mut buf).await {
+            ble_handler.write_to_radio(&buf[..len]).await?
+        }
+        loop {
+            match ble_handler.read_from_radio().await? {
+                RadioMessage::Eof => break,
+                RadioMessage::Packet(packet) => {
+                    server
+                        .write(packet.data())
+                        .await
+                        .map_err(duplex_write_error_fn)?;
+                }
+            }
+        }
+
+        let mut notification_stream = ble_handler.notifications().await?;
+        let mut adapter_events = ble_handler.adapter_events().await?;
+        loop {
+            // Note: the following `tokio::select` is only half-duplex on the BLE radio. While we
+            // are reading from the radio, we are not writing to it and vice versa. However, BLE is
+            // a half-duplex technology, so we wouldn't gain much with a full duplex solution
+            // anyway.
+            tokio::select!(
+                // Data from device, forward it to the user
+                notification = notification_stream.next() => {
+                    let avail_msg_count = notification.ok_or(InternalStreamError::Eof)?;
+                    for _ in read_messages_count..avail_msg_count {
+                        if let RadioMessage::Packet(packet) = ble_handler.read_from_radio().await? {
+                            server.write(packet.data()).await.map_err(duplex_write_error_fn)?;
+                        }
+                    }
+                    read_messages_count = avail_msg_count;
+                },
+                // Data from user, forward it to the device
+                from_server = server.read(&mut buf) => {
+                    let len = from_server.map_err(duplex_write_error_fn)?;
+                    ble_handler.write_to_radio(&buf[..len]).await?;
+                },
+                event = adapter_events.next() => {
+                    if Some(AdapterEvent::Disconnected) == event {
+                        log::error!("BLE disconnected");
+                        Err(InternalStreamError::ConnectionLost)?
+                    }
+                }
+            );
+        }
+    });
+
+    Ok(StreamHandle {
+        stream: client,
+        join_handle: Some(handle),
+    })
 }
 
 /// A helper method to generate random numbers using the `rand` crate.
