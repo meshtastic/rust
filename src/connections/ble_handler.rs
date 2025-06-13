@@ -9,6 +9,7 @@ use log::error;
 use std::fmt::Display;
 use std::future;
 use std::str::FromStr;
+use std::time::Duration;
 use uuid::Uuid;
 
 use crate::errors_internal::{BleConnectionError, Error, InternalStreamError};
@@ -64,8 +65,8 @@ impl Display for BleId {
 
 #[allow(dead_code)]
 impl BleHandler {
-    pub async fn new(ble_id: &BleId) -> Result<Self, Error> {
-        let (radio, adapter) = Self::find_ble_radio(ble_id).await?;
+    pub async fn new(ble_id: &BleId, scan_duration: Duration) -> Result<Self, Error> {
+        let (radio, adapter) = Self::find_ble_radio(ble_id, scan_duration).await?;
         radio.connect().await.map_err(|e| Error::StreamBuildError {
             source: Box::new(e),
             description: format!("Failed to connect to the device {ble_id}"),
@@ -81,12 +82,16 @@ impl BleHandler {
         })
     }
 
-    async fn scan_peripherals(adapter: &Adapter) -> Result<Vec<Peripheral>, btleplug::Error> {
+    async fn scan_peripherals(
+        adapter: &Adapter,
+        scan_duration: Duration,
+    ) -> Result<Vec<Peripheral>, btleplug::Error> {
         adapter
             .start_scan(ScanFilter {
                 services: vec![MSH_SERVICE],
             })
             .await?;
+        tokio::time::sleep(scan_duration).await;
         adapter.peripherals().await
     }
 
@@ -94,7 +99,10 @@ impl BleHandler {
     /// It searches for the 'MSH_SERVICE' running on the device.
     ///
     /// It also returns the associated adapter that can reach this radio.
-    async fn find_ble_radio(ble_id: &BleId) -> Result<(Peripheral, Adapter), Error> {
+    async fn find_ble_radio(
+        ble_id: &BleId,
+        scan_duration: Duration,
+    ) -> Result<(Peripheral, Adapter), Error> {
         //TODO: support searching both by a name and by a MAC address
         let scan_error_fn = |e: btleplug::Error| Error::StreamBuildError {
             source: Box::new(e),
@@ -104,7 +112,7 @@ impl BleHandler {
         let adapters = manager.adapters().await.map_err(scan_error_fn)?;
 
         for adapter in &adapters {
-            let peripherals = Self::scan_peripherals(adapter).await;
+            let peripherals = Self::scan_peripherals(adapter, scan_duration).await;
             match peripherals {
                 Err(e) => {
                     error!("Error while scanning for meshtastic peripherals: {e:?}");
