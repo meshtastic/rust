@@ -26,10 +26,10 @@ jobs:
         run: cargo check
       - name: cargo fmt
         run: cargo fmt --all -- --check
-      - name: cargo test
-        run: cargo test --all-features
       - name: cargo clippy
         run: |
           rustup override set 1.80
           rustup component add clippy
           cargo clippy -- -D warnings
+      - name: cargo test
+        run: cargo +1.76.0 test --all-features
