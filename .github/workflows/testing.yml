@@ -19,7 +19,9 @@ jobs:
         run: |
           sudo apt-get install -y libdbus-1-dev
       - name: Set toolchain version
-        run: rustup override set 1.76
+        run: |
+          rustup override set 1.76
+          rustup component add rustfmt
       - name: cargo check
         run: cargo check
       - name: cargo fmt
@@ -27,6 +29,7 @@ jobs:
       - name: cargo test
         run: cargo test --all-features
       - name: cargo clippy
-        run:
+        run: |
           rustup override set 1.80
+          rustup component add clippy
           cargo clippy -- -D warnings
