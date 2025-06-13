@@ -29,6 +29,8 @@ jobs:
 
       - name: Install Rust stable
         uses: dtolnay/rust-toolchain@1.76
+        with:
+          components: rustfmt clippy
 
       - name: Install dependencies (Ubuntu only)
         if: matrix.platform == 'ubuntu-20.04'
