@@ -28,7 +28,7 @@ jobs:
           version: 8
 
       - name: Install Rust stable
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@1.76
 
       - name: Install dependencies (Ubuntu only)
         if: matrix.platform == 'ubuntu-20.04'
