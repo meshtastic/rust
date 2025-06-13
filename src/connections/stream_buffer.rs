@@ -145,7 +145,7 @@ impl StreamBuffer {
                     continue;
                 }
                 Err(e) => {
-                    error!("Failed to send decoded packet: {}", e.to_string());
+                    error!("Failed to send decoded packet: {}", e);
                     break;
                 }
             };

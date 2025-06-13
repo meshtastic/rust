@@ -20,7 +20,7 @@ pub mod wrappers;
 /// * `Local` - A packet that should be handled by the connected node.
 /// * `Broadcast` - A packet that should be broadcast to all nodes in the mesh.
 /// * `Node(u32)` - A packet that should be sent to a specific node in the mesh,
-///     specified by the passed `u32` id.
+///   specified by the passed `u32` id.
 ///
 /// # Default
 ///

@@ -75,12 +75,12 @@ pub fn available_serial_ports() -> Result<Vec<String>, tokio_serial::Error> {
 /// # Arguments
 ///
 /// * `port_name` - The system-specific name of the serial port to open. Unix ports
-///     will be of the form /dev/ttyUSBx, while Windows ports will be of the form COMx.
+///   will be of the form /dev/ttyUSBx, while Windows ports will be of the form COMx.
 /// * `baud_rate` - The baud rate of the serial port. Defaults to `115_200` if not passed.
 /// * `dtr` - Asserts the "Data Terminal Ready" signal for the serial port if `true`.
-///     Defaults to `true` if not passed.
+///   Defaults to `true` if not passed.
 /// * `rts` - Asserts the "Request To Send" signal for the serial port if `true`.
-///     Defaults to `false` if not passed.
+///   Defaults to `false` if not passed.
 ///
 /// # Returns
 ///
