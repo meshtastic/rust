@@ -11,6 +11,7 @@ use meshtastic::utils;
 
 /// Set up the logger to output to stdout  
 /// **Note:** the invocation of this function is commented out in main by default.
+#[allow(dead_code)]
 fn setup_logger() -> Result<(), fern::InitError> {
     fern::Dispatch::new()
         .format(|out, message, record| {
