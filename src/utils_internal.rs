@@ -2,6 +2,8 @@
 use crate::connections::ble_handler::BleHandler;
 use crate::errors_internal::Error;
 #[cfg(feature = "bluetooth-le")]
+use btleplug::api::BDAddr;
+#[cfg(feature = "bluetooth-le")]
 use futures::stream::StreamExt;
 use std::time::Duration;
 use std::time::UNIX_EPOCH;
@@ -201,6 +203,35 @@ pub async fn build_tcp_stream(
     Ok(StreamHandle::from_stream(stream))
 }
 
+/// A helper method to list the names of all reachable Meshtstic Bluetooth radios. This method is
+/// intended to be used to select a valid Bluetooth radio, then to pass that device ID to the
+/// `build_ble_stream` method.
+///
+/// # Arguments
+///
+/// `scan_duration` - Duration of a Bluetooth LE scan for devices
+///
+/// # Returns
+///
+/// A vector of Bluetooth devices identified by BleId which contains a name and a MAC address.
+///
+/// # Examples
+///
+/// ```
+/// let ble_devices = utils::available_ble_devices().await.unwrap();
+/// println!("Available Meshtastic BLE devices: {:?}", ble_devices);
+/// ```
+///
+/// # Errors
+///
+/// Fails if the Blueetooth scan fails.
+#[cfg(feature = "bluetooth-le")]
+pub async fn available_ble_devices(
+    scan_duration: Duration,
+) -> Result<Vec<(Option<String>, BDAddr)>, Error> {
+    BleHandler::available_ble_devices(scan_duration).await
+}
+
 /// A helper method that uses the `btleplug` and `tokio` crates to build a BLE stream
 /// that is compatible with the `StreamApi` API. This requires that the stream
 /// implements `AsyncReadExt + AsyncWriteExt` traits.
@@ -210,7 +241,8 @@ pub async fn build_tcp_stream(
 ///
 /// # Arguments
 ///
-/// * `ble_id` - Name or MAC address of a BLE device
+/// * `ble_id` - Name or MAC address of a BLE device to connect to.
+/// * `scan_duration` - The duration of the BLE scan.
 ///
 /// # Returns
 ///
@@ -221,7 +253,11 @@ pub async fn build_tcp_stream(
 ///
 /// ```
 /// // Connect to a radio, identified by its MAC address
-/// let duplex_stream = utils::build_ble_stream(BleId::from_mac_address("E3:44:4E:18:F7:A4").await?;
+/// let duplex_stream = utils::build_ble_stream(
+///     &BleId::from_mac_address("E3:44:4E:18:F7:A4").unwrap(),
+///     Duration::from_secs(5),
+/// )
+/// .await?;
 /// let decoded_listener = stream_api.connect(duplex_stream).await;
 /// ```
 ///

@@ -141,6 +141,8 @@ pub mod utils {
     pub mod stream {
         #[cfg(feature = "bluetooth-le")]
         pub use crate::connections::ble_handler::BleId;
+        #[cfg(feature = "bluetooth-le")]
+        pub use crate::utils_internal::available_ble_devices;
         pub use crate::utils_internal::available_serial_ports;
         #[cfg(feature = "bluetooth-le")]
         pub use crate::utils_internal::build_ble_stream;
