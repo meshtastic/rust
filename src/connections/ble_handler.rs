@@ -45,6 +45,16 @@ pub enum BleId {
 }
 
 impl BleId {
+    /// Constructs BLE ID from the short name used by Meshtastic.
+    ///
+    /// It ends with `_abcd`, where `abcd` are the last 4 hex-digits of the MAC address.
+    pub fn from_name(name: &str) -> BleId {
+        BleId::Name(name.to_owned())
+    }
+
+    /// Constructs a BLE ID from a MAC address.
+    ///
+    /// Both `aa:bb:cc:dd:ee:ff` and `aabbccddeeff` formats are acceptable.
     pub fn from_mac_address(mac: &str) -> Result<BleId, Error> {
         let bdaddr = BDAddr::from_str(mac).map_err(|e| Error::InvalidParameter {
             source: Box::new(e),
