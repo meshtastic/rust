@@ -23,6 +23,9 @@ serde = ["dep:serde", "dep:serde_json"]
 ts-gen = ["gen", "serde", "dep:specta"]
 bluetooth-le = ["dep:uuid", "dep:btleplug", "dep:futures"]
 
+[lints.rust]
+missing_docs = "warn"
+
 [[example]]
 name = "basic_serial"
 
