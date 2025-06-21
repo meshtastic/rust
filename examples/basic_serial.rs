@@ -1,6 +1,6 @@
-/// This example connects to a radio via serial, and prints out all received packets.
-/// This example requires a powered and flashed Meshtastic radio.
-/// https://meshtastic.org/docs/supported-hardware
+//! This example connects to a radio via serial, and prints out all received packets.
+//! This example requires a powered and flashed Meshtastic radio.
+//! https://meshtastic.org/docs/supported-hardware
 extern crate meshtastic;
 
 use std::io::{self, BufRead};
