@@ -41,7 +41,7 @@ fn main() -> std::io::Result<()> {
         protos.push(path.to_owned());
     }
 
-    protos.sort_by(|a, b| a.cmp(b));
+    protos.sort();
 
     let mut config = prost_build::Config::new();
 
