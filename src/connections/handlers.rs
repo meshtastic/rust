@@ -137,7 +137,6 @@ where
     Ok(())
 }
 
-/// Spawns a new handler for processing incoming packets.
 pub fn spawn_processing_handler(
     cancellation_token: CancellationToken,
     read_output_rx: UnboundedReceiver<IncomingStreamData>,
