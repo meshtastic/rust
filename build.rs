@@ -68,6 +68,9 @@ fn main() -> std::io::Result<()> {
         config.type_attribute(".", "#[allow(clippy::empty_docs)]");
     }
 
+    config.type_attribute(".", "#[allow(missing_docs)]");
+    config.type_attribute(".", "#[allow(clippy::doc_overindented_list_items)]");
+
     config.out_dir(gen_dir);
     config.compile_protos(&protos, &[protobufs_dir])
 }
