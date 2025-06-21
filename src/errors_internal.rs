@@ -41,10 +41,6 @@ pub enum Error {
     /// An error indicating that too much data is being sent.
     /// NOTE: This error name is misspelled and should be treated as if it is `InvalidDataSize`.
     #[error("Trying to send too much data")]
-    #[deprecated(
-        since = "0.1.6",
-        note = "This error type is no longer used. It is also misspelled in the meshtastic crate."
-    )]
     InvalidaDataSize {
         /// The length of the data of invalid size.
         data_length: usize,
