@@ -39,8 +39,13 @@ pub enum Error {
     },
 
     /// An error indicating that too much data is being sent.
+    /// NOTE: This error name is misspelled and should be treated as if it is `InvalidDataSize`.
     #[error("Trying to send too much data")]
     InvalidaDataSize { data_length: usize },
+    InvalidaDataSize {
+        /// The length of the data of invalid size.
+        data_length: usize,
+    },
 
     /// An error indicating that the method failed to remove a packet header from a packet buffer
     /// due to the packet buffer being too small to contain a header.
