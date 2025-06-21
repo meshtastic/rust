@@ -1,3 +1,5 @@
+//! The `build.rs` script for this crate.
+
 #[cfg(not(feature = "gen"))]
 fn main() {}
 
