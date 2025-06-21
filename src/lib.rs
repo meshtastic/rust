@@ -1,3 +1,4 @@
+//! A Rust library for communicating with and configuring Meshtastic devices.
 pub(crate) mod connections;
 pub(crate) mod errors_internal;
 pub(crate) mod utils_internal;
