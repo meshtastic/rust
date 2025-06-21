@@ -84,11 +84,23 @@ pub struct ConnectedStreamApi<State = state::Configured> {
 /// A struct that provides a reference to an underlying stream for reading/writing data and
 /// potentially an accompanying join handle that processes data on the other side of the stream.
 pub struct StreamHandle<T: AsyncReadExt + AsyncWriteExt + Send> {
+    /// The underlying stream.
     pub stream: T,
+    /// An optional join handle that processes data on the other side of the stream.
     pub join_handle: Option<JoinHandle<Result<(), Error>>>,
 }
 
 impl<T: AsyncReadExt + AsyncWriteExt + Send> StreamHandle<T> {
+    /// A method to create a new `StreamHandle` from a provided stream. The resulting [`StreamHandle`]
+    /// will have no join handle.
+    ///
+    /// # Arguments
+    ///
+    /// * `stream` - A generic stream that will be used as the underlying stream for the `StreamHandle`.
+    ///
+    /// # Returns
+    ///
+    /// Returns a new `StreamHandle` instance with the provided stream as the underlying stream.
     pub fn from_stream(stream: T) -> Self {
         Self {
             stream,

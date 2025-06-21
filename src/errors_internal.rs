@@ -9,7 +9,10 @@ use crate::connections::wrappers::encoded_data::{
 pub enum Error {
     /// An error indicating that the user has entered a channel outside of the range of valid channels [0..7].
     #[error("Invalid channel {channel} entered. Valid channels are in the range [0..7]")]
-    InvalidChannelIndex { channel: u32 },
+    InvalidChannelIndex {
+        /// The invalid channel index that was entered.
+        channel: u32,
+    },
 
     /// An error indicating that the library failed to encode a protocol buffer message.
     #[error(transparent)]
@@ -22,13 +25,16 @@ pub enum Error {
     /// An error indicating that a struct implementing the `PacketRouter` trait failed to handle a packet.
     #[error("Packet handler failed with error {source:?}")]
     PacketHandlerFailure {
+        /// The source error that caused the packet handler failure.
         source: Box<dyn std::error::Error + Send + Sync + 'static>,
     },
 
     /// An error indicating that the library failed to build a data stream within a stream builder utility function.
     #[error("Failed to build input data stream with error {source:?}")]
     StreamBuildError {
+        /// The source error that caused the stream build error.
         source: Box<dyn std::error::Error + Send + Sync + 'static>,
+        /// The description of the stream build error.
         description: String,
     },
 
@@ -40,12 +46,16 @@ pub enum Error {
     /// due to the packet buffer being too small to contain a header.
     #[error("Failed to remove packet header from packet buffer due to insufficient data length: {packet}")]
     InsufficientPacketBufferLength {
+        /// The packet that is too small to contain a header.
         packet: EncodedToRadioPacketWithHeader,
     },
 
+    /// An error indicating that a function was passed a parameter that is not valid.
     #[error("Invalid function parameter: {source:?}")]
     InvalidParameter {
+        /// The source error that caused the invalid parameter error.
         source: Box<dyn std::error::Error + Send + Sync + 'static>,
+        /// The description of the invalid parameter.
         description: String,
     },
 
@@ -102,6 +112,7 @@ pub enum InternalChannelError {
     #[error(transparent)]
     IncomingStreamDataWriteError(#[from] tokio::sync::mpsc::error::SendError<IncomingStreamData>),
 
+    /// An error indicating that a channel was closed prematurely.
     #[error("Channel unexpectedly closed")]
     ChannelClosedEarly,
 }
