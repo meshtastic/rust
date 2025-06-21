@@ -159,12 +159,10 @@ pub mod utils {
 /// represents the payload data of a packet that is intended to be sent to the radio. This
 /// struct includes the required packet header, and can be sent to the radio.
 pub mod types {
-    pub use crate::connections::wrappers::NodeId;
-
-    pub use crate::connections::wrappers::mesh_channel::MeshChannel;
-
     pub use crate::connections::wrappers::encoded_data::EncodedMeshPacketData;
     pub use crate::connections::wrappers::encoded_data::EncodedToRadioPacket;
     pub use crate::connections::wrappers::encoded_data::EncodedToRadioPacketWithHeader;
     pub use crate::connections::wrappers::encoded_data::IncomingStreamData;
+    pub use crate::connections::wrappers::mesh_channel::MeshChannel;
+    pub use crate::connections::wrappers::NodeId;
 }
