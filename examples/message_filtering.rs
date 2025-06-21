@@ -1,6 +1,6 @@
-/// This example connects to a radio via serial, and demonstrates how to
-/// configure handlers for different types of decoded radio packets.
-/// https://meshtastic.org/docs/supported-hardware
+//! This example connects to a radio via serial, and demonstrates how to
+//! configure handlers for different types of decoded radio packets.
+//! https://meshtastic.org/docs/supported-hardware
 extern crate meshtastic;
 
 use std::io::{self, BufRead};

@@ -1,6 +1,6 @@
-/// This example connects to a TCP port on the radio, and prints out all received packets.
-/// This can be used with a simulated radio via the Meshtastic Docker firmware image.
-/// https://meshtastic.org/docs/software/linux-native#usage-with-docker
+//! This example connects to a TCP port on the radio, and prints out all received packets.
+//! This can be used with a simulated radio via the Meshtastic Docker firmware image.
+//! https://meshtastic.org/docs/software/linux-native#usage-with-docker
 extern crate meshtastic;
 
 use std::io::{self, BufRead};
