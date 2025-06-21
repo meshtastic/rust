@@ -74,6 +74,7 @@ pub mod packet {
 /// definitions of the `meshtastic/protobufs` Git submodule. These structs and enums
 /// are not edited directly, but are instead generated at build time.
 pub mod protobufs {
+    #![allow(missing_docs)]
     #![allow(non_snake_case)]
     include!("generated/meshtastic.rs");
 }
