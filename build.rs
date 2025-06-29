@@ -44,30 +44,20 @@ fn main() -> std::io::Result<()> {
     protos.sort();
 
     let mut config = prost_build::Config::new();
-
-    let mut derive_string = String::from("#[derive(");
-
-    #[cfg(feature = "serde")]
-    {
-        derive_string.push_str("serde::Serialize, serde::Deserialize, ");
-    }
-
-    #[cfg(feature = "ts-gen")]
-    {
-        derive_string.push_str("specta::Type, ");
-    }
-
-    derive_string.push_str(")]");
-
-    config.type_attribute(".", derive_string.as_str());
-
-    #[cfg(feature = "serde")]
-    {
-        config.type_attribute(".", "#[serde(rename_all = \"camelCase\")]");
-        config.type_attribute(".", "#[allow(clippy::doc_lazy_continuation)]");
-        config.type_attribute(".", "#[allow(clippy::empty_docs)]");
-        config.type_attribute(".", "#[allow(clippy::doc_overindented_list_items)]");
-    }
+    config.type_attribute(
+        ".",
+        "#[cfg_attr(feature = \"serde\", derive(serde::Serialize, serde::Deserialize))]",
+    );
+    config.type_attribute(
+        ".",
+        "#[cfg_attr(feature = \"serde\", serde(rename_all = \"camelCase\"))]",
+    );
+    config.type_attribute(
+        ".",
+        "#[cfg_attr(feature = \"ts-gen\", derive(specta::Type))]",
+    );
+    config.type_attribute(".", "#[allow(clippy::doc_lazy_continuation)]");
+    config.type_attribute(".", "#[allow(clippy::empty_docs)]");
 
     config.out_dir(gen_dir);
     config.compile_protos(&protos, &[protobufs_dir])
