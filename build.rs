@@ -56,8 +56,6 @@ fn main() -> std::io::Result<()> {
         ".",
         "#[cfg_attr(feature = \"ts-gen\", derive(specta::Type))]",
     );
-    config.type_attribute(".", "#[allow(clippy::doc_lazy_continuation)]");
-    config.type_attribute(".", "#[allow(clippy::empty_docs)]");
 
     config.out_dir(gen_dir);
     config.compile_protos(&protos, &[protobufs_dir])
