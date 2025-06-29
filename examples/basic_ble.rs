@@ -1,4 +1,4 @@
-/// This example connects via Bluetooth LE to the radio, and prints out all received packets.
+//! This example connects via Bluetooth LE to the radio, and prints out all received packets.
 extern crate meshtastic;
 
 use std::io::{self, BufRead};
@@ -22,7 +22,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .expect("Failed to find next line")
         .expect("Could not read next line");
 
-    // You can also use `BleId::from_mac_address("AB")` instead of `BleId::from_name()`.
+    // You can also use `BleId::from_mac_address(..)` instead of `BleId::from_name(..)`.
     let ble_stream =
         utils::stream::build_ble_stream(&BleId::from_name(&entered_name), Duration::from_secs(5))
             .await?;

@@ -39,15 +39,21 @@ pub enum RadioMessage {
     Packet(EncodedToRadioPacketWithHeader),
 }
 
+/// Bluetooth Low Energy ID, used to filter available devices.
 pub enum BleId {
+    /// ID constructed from a name
     Name(String),
+    /// ID represented from a MAC address
     MacAddress(BDAddr),
 }
 
 impl BleId {
-    /// Constructs BLE ID from the short name used by Meshtastic.
+    /// Constructs BLE ID from the name used by Meshtastic.
     ///
-    /// It ends with `_abcd`, where `abcd` are the last 4 hex-digits of the MAC address.
+    /// The first parts of the name is the Meshtastic short name and it ends with `_abcd`, where
+    /// `abcd` are the last 4 hex-digits of the MAC address.
+    ///
+    /// A device with a short name "ZG1" and a MAC address ending with `2ef4` has name "ZG1_2ef4".
     pub fn from_name(name: &str) -> BleId {
         BleId::Name(name.to_owned())
     }
