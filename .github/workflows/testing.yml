@@ -18,11 +18,18 @@ jobs:
         if: matrix.os == 'ubuntu-latest'
         run: |
           sudo apt-get install -y libdbus-1-dev
+      - name: Set toolchain version
+        run: |
+          rustup override set 1.76
+          rustup component add rustfmt
       - name: cargo check
         run: cargo check
       - name: cargo fmt
         run: cargo fmt --all -- --check
       - name: cargo clippy
-        run: cargo clippy -- -D warnings
+        run: |
+          rustup override set 1.80
+          rustup component add clippy
+          cargo clippy -- -D warnings
       - name: cargo test
-        run: cargo test --all-features
+        run: cargo +1.76.0 test --all-features

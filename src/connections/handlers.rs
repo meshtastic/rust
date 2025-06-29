@@ -66,10 +66,10 @@ where
                 let data: IncomingStreamData = buffer[..n].to_vec().into();
                 trace!("Read data: {:?}", data);
 
-                if let Err(e) = read_output_tx.send(data) {
-                    error!("Failed to send data through channel");
-                    return Err(Error::InternalChannelError(e.into()));
-                }
+                read_output_tx
+                    .send(data)
+                    .inspect_err(|_| error!("Failed to send data through channel"))
+                    .map_err(InternalChannelError::from)?
             }
 
             // TODO check if port has fatally errored, and if so, tell UI
@@ -106,10 +106,7 @@ where
                 Ok(())
             }
             write_result = handle => {
-                if let Err(e) = &write_result {
-                    error!("Write handler unexpectedly terminated {e:?}");
-                }
-                write_result
+                write_result.inspect_err(|e| error!("Write handler unexpectedly terminated {e:?}"))
             }
         }
     })
@@ -128,14 +125,11 @@ where
     while let Some(message) = write_input_rx.recv().await {
         trace!("Writing packet data: {:?}", message);
 
-        if let Err(e) = write_stream.write(message.data()).await {
-            error!("Error writing to stream: {:?}", e);
-            return Err(Error::InternalStreamError(
-                InternalStreamError::StreamWriteError {
-                    source: Box::new(e),
-                },
-            ));
-        }
+        write_stream
+            .write(message.data())
+            .await
+            .inspect_err(|e| error!("Error writing to stream: {:?}", e))
+            .map_err(InternalStreamError::write_error)?;
     }
 
     debug!("Write handler finished");
@@ -192,10 +186,9 @@ pub fn spawn_heartbeat_handler(
                 Ok(())
             }
             write_result = handle => {
-                if let Err(e) = &write_result {
-                    error!("Heartbeat handler unexpectedly terminated {e:?}");
-                }
-                write_result
+                write_result.inspect_err(|e|
+                    error!("Heartbeat handler unexpectedly terminated {e:?}")
+                )
             }
         }
     })
@@ -235,14 +228,10 @@ async fn start_heartbeat_handler(
 
         trace!("Sending heartbeat packet");
 
-        if let Err(e) = write_input_tx.send(packet_with_header) {
-            error!("Error writing heartbeat packet to stream: {:?}", e);
-            return Err(Error::InternalStreamError(
-                InternalStreamError::StreamWriteError {
-                    source: Box::new(e),
-                },
-            ));
-        }
+        write_input_tx
+            .send(packet_with_header)
+            .inspect_err(|e| error!("Error writing heartbeat packet to stream: {:?}", e))
+            .map_err(InternalStreamError::write_error)?;
 
         log::info!("Sent heartbeat packet");
     }

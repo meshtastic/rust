@@ -1,8 +1,8 @@
-/// This example connects to a radio via serial, and demonstrates how to
-/// configure handlers for different types of decoded radio packets.
-/// https://meshtastic.org/docs/supported-hardware
-///
-/// Run this example with the command `cargo run --example generate_typescript_types --features "ts-gen"`
+//! This example connects to a radio via serial, and demonstrates how to
+//! configure handlers for different types of decoded radio packets.
+//! https://meshtastic.org/docs/supported-hardware
+//!
+//! Run this example with the command `cargo run --example generate_typescript_types --features "ts-gen"`
 extern crate meshtastic;
 
 use meshtastic::ts::specta::{

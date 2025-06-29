@@ -1,3 +1,5 @@
+//! The `build.rs` script for this crate.
+
 #[cfg(not(feature = "gen"))]
 fn main() {}
 
@@ -39,7 +41,7 @@ fn main() -> std::io::Result<()> {
         protos.push(path.to_owned());
     }
 
-    protos.sort_by(|a, b| a.cmp(b));
+    protos.sort();
 
     let mut config = prost_build::Config::new();
 
@@ -64,6 +66,7 @@ fn main() -> std::io::Result<()> {
         config.type_attribute(".", "#[serde(rename_all = \"camelCase\")]");
         config.type_attribute(".", "#[allow(clippy::doc_lazy_continuation)]");
         config.type_attribute(".", "#[allow(clippy::empty_docs)]");
+        config.type_attribute(".", "#[allow(clippy::doc_overindented_list_items)]");
     }
 
     config.out_dir(gen_dir);

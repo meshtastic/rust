@@ -1,3 +1,4 @@
+//! A Rust library for communicating with and configuring Meshtastic devices.
 pub(crate) mod connections;
 pub(crate) mod errors_internal;
 pub(crate) mod utils_internal;
@@ -73,6 +74,7 @@ pub mod packet {
 /// definitions of the `meshtastic/protobufs` Git submodule. These structs and enums
 /// are not edited directly, but are instead generated at build time.
 pub mod protobufs {
+    #![allow(missing_docs)]
     #![allow(non_snake_case)]
     include!("generated/meshtastic.rs");
 }
@@ -160,12 +162,10 @@ pub mod utils {
 /// represents the payload data of a packet that is intended to be sent to the radio. This
 /// struct includes the required packet header, and can be sent to the radio.
 pub mod types {
-    pub use crate::connections::wrappers::NodeId;
-
-    pub use crate::connections::wrappers::mesh_channel::MeshChannel;
-
     pub use crate::connections::wrappers::encoded_data::EncodedMeshPacketData;
     pub use crate::connections::wrappers::encoded_data::EncodedToRadioPacket;
     pub use crate::connections::wrappers::encoded_data::EncodedToRadioPacketWithHeader;
     pub use crate::connections::wrappers::encoded_data::IncomingStreamData;
+    pub use crate::connections::wrappers::mesh_channel::MeshChannel;
+    pub use crate::connections::wrappers::NodeId;
 }

@@ -9,6 +9,7 @@ authors = ["Adam McQuilkin"]
 readme = "README.md"
 license = "GPL-3.0"
 version = "0.1.6"
+rust-version = "1.76"
 edition = "2021"
 
 [lib]
@@ -21,6 +22,9 @@ gen = ["dep:prost-build", "dep:protoc-bin-vendored", "dep:walkdir"]
 serde = ["dep:serde", "dep:serde_json"]
 ts-gen = ["gen", "serde", "dep:specta"]
 bluetooth-le = ["dep:uuid", "dep:btleplug", "dep:futures"]
+
+[lints.rust]
+missing_docs = "warn"
 
 [[example]]
 name = "basic_serial"
