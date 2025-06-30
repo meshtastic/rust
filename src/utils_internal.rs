@@ -121,7 +121,7 @@ pub fn build_serial_stream(
     let mut serial_stream =
         tokio_serial::SerialStream::open(&builder).map_err(|e| Error::StreamBuildError {
             source: Box::new(e),
-            description: format!("Error opening serial port \"{}\"", port_name).to_string(),
+            description: format!("Error opening serial port \"{port_name}\"").to_string(),
         })?;
 
     serial_stream
@@ -187,12 +187,13 @@ pub async fn build_tcp_stream(
     let stream = match tokio::time::timeout(timeout_duration, connection_future).await {
         Ok(stream) => stream.map_err(|e| Error::StreamBuildError {
             source: Box::new(e),
-            description: format!("Failed to connect to {}", address).to_string(),
+            description: format!("Failed to connect to {address}"),
         })?,
         Err(e) => {
-            return Err(Error::StreamBuildError{source:Box::new(e),description:format!(
-                    "Timed out connecting to {}. Check that the radio is on, network is enabled, and the address is correct.",
-                    address,
+            return Err(Error::StreamBuildError{
+                source: Box::new(e),
+                description: format!(
+                    "Timed out connecting to {address}. Check that the radio is on, network is enabled, and the address is correct."
                 )});
         }
     };
