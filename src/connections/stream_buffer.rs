@@ -86,8 +86,7 @@ impl StreamBuffer {
                     }
                     StreamBufferError::IncorrectFramingByte { found_framing_byte } => {
                         error!(
-                            "Byte {} not equal to 0xc3, waiting for more data",
-                            found_framing_byte
+                            "Byte {found_framing_byte} not equal to 0xc3, waiting for more data"
                         );
 
                         break; // Wait for more data
@@ -97,25 +96,18 @@ impl StreamBuffer {
                         packet_size,
                     } => {
                         error!(
-                            "Incomplete packet data, expected {} bytes, found {} bytes",
-                            packet_size, buffer_size
+                            "Incomplete packet data, expected {packet_size} bytes, found {buffer_size} bytes"
                         );
 
                         break; // Wait for more data
                     }
                     StreamBufferError::MissingMSB { msb_index } => {
-                        error!(
-                            "Could not find MSB at index {}, waiting for more data",
-                            msb_index
-                        );
+                        error!("Could not find MSB at index {msb_index}, waiting for more data");
 
                         break; // Wait for more data
                     }
                     StreamBufferError::MissingLSB { lsb_index } => {
-                        error!(
-                            "Could not find LSB at index {}, waiting for more data",
-                            lsb_index
-                        );
+                        error!("Could not find LSB at index {lsb_index}, waiting for more data");
 
                         break; // Wait for more data
                     }
@@ -123,8 +115,7 @@ impl StreamBuffer {
                         next_packet_start_idx,
                     } => {
                         error!(
-                              "Detected malformed packet with next packet starting at index {}, purged malformed packet",
-                              next_packet_start_idx
+                              "Detected malformed packet with next packet starting at index {next_packet_start_idx}, purged malformed packet"
                           );
 
                         continue; // Don't need more data to continue, purge from buffer
@@ -145,7 +136,7 @@ impl StreamBuffer {
                     continue;
                 }
                 Err(e) => {
-                    error!("Failed to send decoded packet: {}", e);
+                    error!("Failed to send decoded packet: {e}");
                     break;
                 }
             };
@@ -202,19 +193,16 @@ impl StreamBuffer {
         let mut framing_index = StreamBuffer::find_framing_index_or_clear_buffer(buffer)?;
 
         if framing_index != 0 {
-            debug!(
-                "Found framing byte at index {}, shifting buffer",
-                framing_index
-            );
+            debug!("Found framing byte at index {framing_index}, shifting buffer");
 
             buffer.drain(0..framing_index);
 
-            log::trace!("Buffer after shifting: {:?}", buffer);
+            log::trace!("Buffer after shifting: {buffer:?}");
 
             framing_index = StreamBuffer::find_framing_index_or_clear_buffer(buffer)?;
         }
 
-        trace!("Returning framing index: {}", framing_index);
+        trace!("Returning framing index: {framing_index}");
 
         Ok(framing_index)
     }
