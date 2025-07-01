@@ -18,7 +18,7 @@
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
 #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct ChannelSettings {
     ///
     /// Deprecated in favor of LoraConfig.channel_num
@@ -81,7 +81,7 @@ pub struct ChannelSettings {
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
 #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
-#[derive(Clone, Copy, PartialEq, ::prost::Message)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct ModuleSettings {
     ///
     /// Bits of precision for the location sent in position packets.
@@ -98,7 +98,7 @@ pub struct ModuleSettings {
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
 #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct Channel {
     ///
     /// The index of this channel in the channel table (from 0 to MAX_NUM_CHANNELS-1)
@@ -180,7 +180,7 @@ pub mod channel {
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
 #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct DeviceUiConfig {
     ///
     /// A version integer used to invalidate saved files when we make incompatible changes.
@@ -234,7 +234,7 @@ pub struct DeviceUiConfig {
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
 #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct NodeFilter {
     ///
     /// Filter unknown nodes
@@ -268,7 +268,7 @@ pub struct NodeFilter {
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
 #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct NodeHighlight {
     ///
     /// Hightlight nodes w/ active chat
@@ -461,7 +461,7 @@ pub mod config {
     #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
     #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
     #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
-    #[derive(Clone, PartialEq, ::prost::Message)]
+    #[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
     pub struct DeviceConfig {
         ///
         /// Sets the role of node
@@ -716,7 +716,7 @@ pub mod config {
     #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
     #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
     #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
-    #[derive(Clone, Copy, PartialEq, ::prost::Message)]
+    #[derive(Clone, Copy, PartialEq, Eq, Hash, ::prost::Message)]
     pub struct PositionConfig {
         ///
         /// We should send our position this often (but only if it has changed significantly)
@@ -991,7 +991,7 @@ pub mod config {
     #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
     #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
     #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
-    #[derive(Clone, PartialEq, ::prost::Message)]
+    #[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
     pub struct NetworkConfig {
         ///
         /// Enable WiFi (disables Bluetooth)
@@ -1036,7 +1036,7 @@ pub mod config {
         #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
         #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
         #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
-        #[derive(Clone, Copy, PartialEq, ::prost::Message)]
+        #[derive(Clone, Copy, PartialEq, Eq, Hash, ::prost::Message)]
         pub struct IpV4Config {
             ///
             /// Static IP address
@@ -1149,7 +1149,7 @@ pub mod config {
     #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
     #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
     #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
-    #[derive(Clone, Copy, PartialEq, ::prost::Message)]
+    #[derive(Clone, Copy, PartialEq, Eq, Hash, ::prost::Message)]
     pub struct DisplayConfig {
         ///
         /// Number of seconds the screen stays on after pressing the user button or receiving a message
@@ -1849,7 +1849,7 @@ pub mod config {
     #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
     #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
     #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
-    #[derive(Clone, Copy, PartialEq, ::prost::Message)]
+    #[derive(Clone, Copy, PartialEq, Eq, Hash, ::prost::Message)]
     pub struct BluetoothConfig {
         ///
         /// Enable Bluetooth on the device
@@ -1918,7 +1918,7 @@ pub mod config {
     #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
     #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
     #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
-    #[derive(Clone, PartialEq, ::prost::Message)]
+    #[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
     pub struct SecurityConfig {
         ///
         /// The public key of the user's device.
@@ -1958,7 +1958,7 @@ pub mod config {
     #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
     #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
     #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
-    #[derive(Clone, Copy, PartialEq, ::prost::Message)]
+    #[derive(Clone, Copy, PartialEq, Eq, Hash, ::prost::Message)]
     pub struct SessionkeyConfig {}
     ///
     /// Payload Variant
@@ -1992,7 +1992,7 @@ pub mod config {
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
 #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct DeviceConnectionStatus {
     ///
     /// WiFi Status
@@ -2016,7 +2016,7 @@ pub struct DeviceConnectionStatus {
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
 #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct WifiConnectionStatus {
     ///
     /// Connection status
@@ -2036,7 +2036,7 @@ pub struct WifiConnectionStatus {
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
 #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
-#[derive(Clone, Copy, PartialEq, ::prost::Message)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct EthernetConnectionStatus {
     ///
     /// Connection status
@@ -2048,7 +2048,7 @@ pub struct EthernetConnectionStatus {
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
 #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
-#[derive(Clone, Copy, PartialEq, ::prost::Message)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct NetworkConnectionStatus {
     ///
     /// IP address of device
@@ -2072,7 +2072,7 @@ pub struct NetworkConnectionStatus {
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
 #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
-#[derive(Clone, Copy, PartialEq, ::prost::Message)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct BluetoothConnectionStatus {
     ///
     /// The pairing PIN for bluetooth
@@ -2092,7 +2092,7 @@ pub struct BluetoothConnectionStatus {
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
 #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
-#[derive(Clone, Copy, PartialEq, ::prost::Message)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct SerialConnectionStatus {
     ///
     /// Serial baud rate
@@ -2125,7 +2125,7 @@ pub mod module_config {
     #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
     #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
     #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
-    #[derive(Clone, PartialEq, ::prost::Message)]
+    #[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
     pub struct MqttConfig {
         ///
         /// If a meshtastic node is able to reach the internet it will normally attempt to gateway any channels that are marked as
@@ -2187,7 +2187,7 @@ pub mod module_config {
     #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
     #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
     #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
-    #[derive(Clone, Copy, PartialEq, ::prost::Message)]
+    #[derive(Clone, Copy, PartialEq, Eq, Hash, ::prost::Message)]
     pub struct MapReportSettings {
         ///
         /// How often we should report our info to the map (in seconds)
@@ -2223,7 +2223,7 @@ pub mod module_config {
     #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
     #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
     #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
-    #[derive(Clone, Copy, PartialEq, ::prost::Message)]
+    #[derive(Clone, Copy, PartialEq, Eq, Hash, ::prost::Message)]
     pub struct NeighborInfoConfig {
         ///
         /// Whether the Module is enabled
@@ -2245,7 +2245,7 @@ pub mod module_config {
     #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
     #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
     #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
-    #[derive(Clone, PartialEq, ::prost::Message)]
+    #[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
     pub struct DetectionSensorConfig {
         ///
         /// Whether the Module is enabled
@@ -2355,7 +2355,7 @@ pub mod module_config {
     #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
     #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
     #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
-    #[derive(Clone, Copy, PartialEq, ::prost::Message)]
+    #[derive(Clone, Copy, PartialEq, Eq, Hash, ::prost::Message)]
     pub struct AudioConfig {
         ///
         /// Whether Audio is enabled
@@ -2456,7 +2456,7 @@ pub mod module_config {
     #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
     #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
     #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
-    #[derive(Clone, Copy, PartialEq, ::prost::Message)]
+    #[derive(Clone, Copy, PartialEq, Eq, Hash, ::prost::Message)]
     pub struct PaxcounterConfig {
         ///
         /// Enable the Paxcounter Module
@@ -2478,7 +2478,7 @@ pub mod module_config {
     #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
     #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
     #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
-    #[derive(Clone, Copy, PartialEq, ::prost::Message)]
+    #[derive(Clone, Copy, PartialEq, Eq, Hash, ::prost::Message)]
     pub struct SerialConfig {
         ///
         /// Preferences for the SerialModule
@@ -2664,7 +2664,7 @@ pub mod module_config {
     #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
     #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
     #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
-    #[derive(Clone, Copy, PartialEq, ::prost::Message)]
+    #[derive(Clone, Copy, PartialEq, Eq, Hash, ::prost::Message)]
     pub struct ExternalNotificationConfig {
         ///
         /// Enable the ExternalNotificationModule
@@ -2743,7 +2743,7 @@ pub mod module_config {
     #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
     #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
     #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
-    #[derive(Clone, Copy, PartialEq, ::prost::Message)]
+    #[derive(Clone, Copy, PartialEq, Eq, Hash, ::prost::Message)]
     pub struct StoreForwardConfig {
         ///
         /// Enable the Store and Forward Module
@@ -2775,7 +2775,7 @@ pub mod module_config {
     #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
     #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
     #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
-    #[derive(Clone, Copy, PartialEq, ::prost::Message)]
+    #[derive(Clone, Copy, PartialEq, Eq, Hash, ::prost::Message)]
     pub struct RangeTestConfig {
         ///
         /// Enable the Range Test Module
@@ -2796,7 +2796,7 @@ pub mod module_config {
     #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
     #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
     #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
-    #[derive(Clone, Copy, PartialEq, ::prost::Message)]
+    #[derive(Clone, Copy, PartialEq, Eq, Hash, ::prost::Message)]
     pub struct TelemetryConfig {
         ///
         /// Interval in seconds of how often we should try to send our
@@ -2861,7 +2861,7 @@ pub mod module_config {
     #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
     #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
     #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
-    #[derive(Clone, PartialEq, ::prost::Message)]
+    #[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
     pub struct CannedMessageConfig {
         ///
         /// Enable the rotary encoder #1. This is a 'dumb' encoder sending pulses on both A and B pins while rotating.
@@ -2994,7 +2994,7 @@ pub mod module_config {
     #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
     #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
     #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
-    #[derive(Clone, Copy, PartialEq, ::prost::Message)]
+    #[derive(Clone, Copy, PartialEq, Eq, Hash, ::prost::Message)]
     pub struct AmbientLightingConfig {
         ///
         /// Sets LED to on or off.
@@ -3083,7 +3083,7 @@ pub mod module_config {
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
 #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct RemoteHardwarePin {
     ///
     /// GPIO Pin number (must match Arduino)
@@ -3528,7 +3528,7 @@ pub struct PowerMetrics {
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
 #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
-#[derive(Clone, Copy, PartialEq, ::prost::Message)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct AirQualityMetrics {
     ///
     /// Concentration Units Standard PM1.0
@@ -3928,7 +3928,7 @@ impl TelemetrySensorType {
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
 #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct XModem {
     #[prost(enumeration = "x_modem::Control", tag = "1")]
     pub control: i32,
@@ -4004,7 +4004,7 @@ pub mod x_modem {
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
 #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
-#[derive(Clone, Copy, PartialEq, ::prost::Message)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct Position {
     ///
     /// The new preferred location encoding, multiply by 1e-7 to get degrees
@@ -4261,7 +4261,7 @@ pub mod position {
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
 #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct User {
     ///
     /// A globally unique ID string for this user.
@@ -4314,7 +4314,7 @@ pub struct User {
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
 #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct RouteDiscovery {
     ///
     /// The list of nodenums this packet has visited so far to the destination.
@@ -4338,7 +4338,7 @@ pub struct RouteDiscovery {
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
 #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct Routing {
     #[prost(oneof = "routing::Variant", tags = "1, 2, 3")]
     pub variant: ::core::option::Option<routing::Variant>,
@@ -4466,7 +4466,7 @@ pub mod routing {
     #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
     #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
     #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
-    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    #[derive(Clone, PartialEq, Eq, Hash, ::prost::Oneof)]
     pub enum Variant {
         ///
         /// A route request going from the requester
@@ -4490,7 +4490,7 @@ pub mod routing {
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
 #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct Data {
     ///
     /// Formerly named typ and of type Type
@@ -4544,7 +4544,7 @@ pub struct Data {
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
 #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct Waypoint {
     ///
     /// Id of the waypoint
@@ -4585,7 +4585,7 @@ pub struct Waypoint {
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
 #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct MqttClientProxyMessage {
     ///
     /// The MQTT topic this message will be sent /received on
@@ -4609,7 +4609,7 @@ pub mod mqtt_client_proxy_message {
     #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
     #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
     #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
-    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    #[derive(Clone, PartialEq, Eq, Hash, ::prost::Oneof)]
     pub enum PayloadVariant {
         ///
         /// Bytes
@@ -4904,7 +4904,7 @@ pub mod mesh_packet {
     #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
     #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
     #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
-    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    #[derive(Clone, PartialEq, Eq, Hash, ::prost::Oneof)]
     pub enum PayloadVariant {
         ///
         /// TODO: REPLACE
@@ -4994,7 +4994,7 @@ pub struct NodeInfo {
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
 #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct MyNodeInfo {
     ///
     /// Tells the phone what our node number is, default starting value is
@@ -5029,7 +5029,7 @@ pub struct MyNodeInfo {
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
 #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct LogRecord {
     ///
     /// Log levels, chosen to match python logging conventions.
@@ -5124,7 +5124,7 @@ pub mod log_record {
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
 #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
-#[derive(Clone, Copy, PartialEq, ::prost::Message)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct QueueStatus {
     /// Last attempt to queue status, ErrorCode
     #[prost(int32, tag = "1")]
@@ -5253,7 +5253,7 @@ pub mod from_radio {
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
 #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct ClientNotification {
     ///
     /// The id of the packet we're notifying in response to
@@ -5277,7 +5277,7 @@ pub struct ClientNotification {
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
 #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct FileInfo {
     ///
     /// The fully qualified path of the file
@@ -5348,7 +5348,7 @@ pub mod to_radio {
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
 #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct Compressed {
     ///
     /// PortNum to determine the how to handle the compressed payload.
@@ -5414,7 +5414,7 @@ pub struct Neighbor {
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
 #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct DeviceMetadata {
     ///
     /// Device firmware version string
@@ -5472,14 +5472,14 @@ pub struct DeviceMetadata {
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
 #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
-#[derive(Clone, Copy, PartialEq, ::prost::Message)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct Heartbeat {}
 ///
 /// RemoteHardwarePins associated with a node
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
 #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct NodeRemoteHardwarePin {
     ///
     /// The node_num exposing the available gpio pin
@@ -5493,7 +5493,7 @@ pub struct NodeRemoteHardwarePin {
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
 #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct ChunkedPayload {
     ///
     /// The ID of the entire payload
@@ -5517,7 +5517,7 @@ pub struct ChunkedPayload {
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
 #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct ResendChunks {
     #[prost(uint32, repeated, tag = "1")]
     pub chunks: ::prost::alloc::vec::Vec<u32>,
@@ -5527,7 +5527,7 @@ pub struct ResendChunks {
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
 #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct ChunkedPayloadResponse {
     ///
     /// The ID of the entire payload
@@ -5543,7 +5543,7 @@ pub mod chunked_payload_response {
     #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
     #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
     #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
-    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    #[derive(Clone, PartialEq, Eq, Hash, ::prost::Oneof)]
     pub enum PayloadVariant {
         ///
         /// Request to transfer chunked payload
@@ -6780,7 +6780,7 @@ pub struct ChannelSet {
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
 #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct TakPacket {
     ///
     /// Are the payloads strings compressed for LoRA transport?
@@ -6810,7 +6810,7 @@ pub mod tak_packet {
     #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
     #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
     #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
-    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    #[derive(Clone, PartialEq, Eq, Hash, ::prost::Oneof)]
     pub enum PayloadVariant {
         ///
         /// TAK position report
@@ -6832,7 +6832,7 @@ pub mod tak_packet {
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
 #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct GeoChat {
     ///
     /// The text message
@@ -6853,7 +6853,7 @@ pub struct GeoChat {
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
 #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
-#[derive(Clone, Copy, PartialEq, ::prost::Message)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct Group {
     ///
     /// Role of the group member
@@ -6871,7 +6871,7 @@ pub struct Group {
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
 #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
-#[derive(Clone, Copy, PartialEq, ::prost::Message)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct Status {
     ///
     /// Battery level
@@ -6884,7 +6884,7 @@ pub struct Status {
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
 #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct Contact {
     ///
     /// Callsign
@@ -6903,7 +6903,7 @@ pub struct Contact {
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
 #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
-#[derive(Clone, Copy, PartialEq, ::prost::Message)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct Pli {
     ///
     /// The new preferred location encoding, multiply by 1e-7 to get degrees
@@ -7101,7 +7101,7 @@ impl MemberRole {
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
 #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct CannedMessageModuleConfig {
     ///
     /// Predefined messages for canned message module separated by '|' characters.
@@ -7264,7 +7264,7 @@ pub struct DeviceProfile {
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
 #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
-#[derive(Clone, Copy, PartialEq, ::prost::Message)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct PositionLite {
     ///
     /// The new preferred location encoding, multiply by 1e-7 to get degrees
@@ -7295,7 +7295,7 @@ pub struct PositionLite {
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
 #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct UserLite {
     ///
     /// This is the addr of the radio.
@@ -7500,7 +7500,7 @@ pub struct ServiceEnvelope {
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
 #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct MapReport {
     ///
     /// A full name for this user, i.e. "Kevin Hester"
@@ -7562,7 +7562,7 @@ pub struct MapReport {
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
 #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
-#[derive(Clone, Copy, PartialEq, ::prost::Message)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct Paxcount {
     ///
     /// seen Wifi devices
@@ -7582,7 +7582,7 @@ pub struct Paxcount {
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
 #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
-#[derive(Clone, Copy, PartialEq, ::prost::Message)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct PowerMon {}
 /// Nested message and enum types in `PowerMon`.
 pub mod power_mon {
@@ -7821,7 +7821,7 @@ pub mod power_stress_message {
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
 #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
-#[derive(Clone, Copy, PartialEq, ::prost::Message)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct HardwareMessage {
     ///
     /// What type of HardwareMessage is this?
@@ -7912,7 +7912,7 @@ pub mod hardware_message {
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
 #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct RtttlConfig {
     ///
     /// Ringtone for PWM Buzzer in RTTTL Format.
@@ -7924,7 +7924,7 @@ pub struct RtttlConfig {
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
 #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct StoreAndForward {
     ///
     /// TODO: REPLACE
@@ -7942,7 +7942,7 @@ pub mod store_and_forward {
     #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
     #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
     #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
-    #[derive(Clone, Copy, PartialEq, ::prost::Message)]
+    #[derive(Clone, Copy, PartialEq, Eq, Hash, ::prost::Message)]
     pub struct Statistics {
         ///
         /// Number of messages we have ever seen
@@ -7986,7 +7986,7 @@ pub mod store_and_forward {
     #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
     #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
     #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
-    #[derive(Clone, Copy, PartialEq, ::prost::Message)]
+    #[derive(Clone, Copy, PartialEq, Eq, Hash, ::prost::Message)]
     pub struct History {
         ///
         /// Number of that will be sent to the client
@@ -8007,7 +8007,7 @@ pub mod store_and_forward {
     #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
     #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
     #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
-    #[derive(Clone, Copy, PartialEq, ::prost::Message)]
+    #[derive(Clone, Copy, PartialEq, Eq, Hash, ::prost::Message)]
     pub struct Heartbeat {
         ///
         /// Period in seconds that the heartbeat is sent out that will be sent to the client
@@ -8141,7 +8141,7 @@ pub mod store_and_forward {
     #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
     #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
     #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
-    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    #[derive(Clone, PartialEq, Eq, Hash, ::prost::Oneof)]
     pub enum Variant {
         ///
         /// TODO: REPLACE
