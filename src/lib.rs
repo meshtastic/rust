@@ -1,6 +1,9 @@
 //! A Rust library for communicating with and configuring Meshtastic devices.
+#[cfg(feature = "tokio")]
 pub(crate) mod connections;
+#[cfg(feature = "tokio")]
 pub(crate) mod errors_internal;
+#[cfg(feature = "tokio")]
 pub(crate) mod utils_internal;
 
 /// A re-export of the `prost::Message` trait, which is required to call the `encode`
@@ -27,6 +30,7 @@ pub use prost::Message;
 /// to the full set of API sender methods.
 ///
 /// To disconnect from the radio, the user can call the `disconnect` method at any time.
+#[cfg(feature = "tokio")]
 pub mod api {
     pub use crate::connections::stream_api::state;
     pub use crate::connections::stream_api::ConnectedStreamApi;
@@ -37,6 +41,7 @@ pub mod api {
 /// This module contains the global `Error` type of the library. This enum implements
 /// `std::error::Error`, `std::fmt::Display`, and `std::fmt::Debug`. This enum is used to
 /// represent all errors that can occur within the library.
+#[cfg(feature = "tokio")]
 pub mod errors {
     pub use crate::errors_internal::Error;
 }
@@ -61,6 +66,7 @@ pub mod errors {
 ///
 /// The `PacketReceiver` type defines the type of the tokio channel that is used to receive decoded packets from the radio.
 /// This is intended to simplify the complexity of the underlying channel type.
+#[cfg(feature = "tokio")]
 pub mod packet {
     pub use crate::connections::handlers::CLIENT_HEARTBEAT_INTERVAL;
     pub use crate::connections::PacketDestination;
@@ -112,6 +118,7 @@ pub mod ts {
 /// These methods are intended for use by more advanced users.
 ///
 /// The `stream` module contains helper methods that are used to build connection stream instances.
+#[cfg(feature = "tokio")]
 pub mod utils {
     pub use crate::utils_internal::DEFAULT_DTR_PIN_STATE;
     pub use crate::utils_internal::DEFAULT_RTS_PIN_STATE;
@@ -165,6 +172,7 @@ pub mod utils {
 /// The `EncodedToRadioPacketWithHeader` struct is a wrapper around a `Vec<u8>` value that
 /// represents the payload data of a packet that is intended to be sent to the radio. This
 /// struct includes the required packet header, and can be sent to the radio.
+#[cfg(feature = "tokio")]
 pub mod types {
     pub use crate::connections::wrappers::encoded_data::EncodedMeshPacketData;
     pub use crate::connections::wrappers::encoded_data::EncodedToRadioPacket;
