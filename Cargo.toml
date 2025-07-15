@@ -20,7 +20,7 @@ default = ["serde"]
 gen = ["dep:prost-build", "dep:protoc-bin-vendored", "dep:walkdir"]
 
 serde = ["dep:serde", "dep:serde_json"]
-ts-gen = ["gen", "serde", "dep:specta", "dep:specta-typescript"]
+ts-gen = ["serde", "dep:specta", "dep:specta-typescript"]
 bluetooth-le = ["dep:uuid", "dep:btleplug", "dep:futures", "dep:bluez-async"]
 
 [lints.rust]
