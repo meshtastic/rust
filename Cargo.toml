@@ -20,7 +20,7 @@ default = ["serde"]
 gen = ["dep:prost-build", "dep:protoc-bin-vendored", "dep:walkdir"]
 
 serde = ["dep:serde", "dep:serde_json"]
-ts-gen = ["gen", "serde", "dep:specta"]
+ts-gen = ["gen", "serde", "dep:specta", "dep:specta-typescript"]
 bluetooth-le = ["dep:uuid", "dep:btleplug", "dep:futures", "dep:bluez-async"]
 
 [lints.rust]
@@ -57,7 +57,12 @@ tokio-util = "0.7.13"
 prost = "0.14"
 log = "0.4.25"
 
-specta = { git = "https://github.com/ajmcquilkin/specta.git", rev = "6a8731d", optional = true, features = ["chrono"], version = "=1.0.3" }
+specta = { git = "https://github.com/specta-rs/specta.git", rev = "b596ef0", optional = true, features = [
+    "derive",
+    "export",
+    "chrono",
+] }
+specta-typescript = { git = "https://github.com/specta-rs/specta.git", rev = "b596ef0", optional = true }
 serde = { version = "1.0", features = ["derive"], optional = true }
 serde_json = { version = "1.0", optional = true }
 thiserror = "2.0.11"
