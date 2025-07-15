@@ -70,8 +70,7 @@ impl StreamBuffer {
     /// }
     /// ```
     pub fn process_incoming_bytes(&mut self, message: IncomingStreamData) {
-        let message = message.data();
-        self.buffer.append(Vec::from(message).as_mut());
+        self.buffer.extend_from_slice(message.as_ref());
 
         // While there are still bytes in the buffer and processing isn't completed,
         // continue processing the buffer
@@ -170,16 +169,15 @@ impl StreamBuffer {
             });
         }
 
-        let framing_index = StreamBuffer::shift_buffer_to_first_valid_header(&mut self.buffer)?;
+        self.shift_buffer_to_first_valid_header()?;
 
         // Note: the framing index should always be 0 at this point, keeping for clarity
-        let incoming_packet_data_size = self.get_data_size_from_header(framing_index)?;
+        let incoming_packet_data_size = self.get_data_size_from_header()?;
 
-        self.validate_packet_in_buffer(incoming_packet_data_size, framing_index)?;
+        self.validate_packet_in_buffer(incoming_packet_data_size)?;
 
         // Get packet data, excluding magic bytes
-        let packet_data =
-            self.extract_packet_from_buffer(incoming_packet_data_size, framing_index)?;
+        let packet_data = self.extract_packet_from_buffer(incoming_packet_data_size)?;
 
         // Attempt to decode the current packet
         let decoded_packet = protobufs::FromRadio::decode(packet_data.as_slice())?;
@@ -187,38 +185,18 @@ impl StreamBuffer {
         Ok(decoded_packet)
     }
 
-    fn shift_buffer_to_first_valid_header(
-        buffer: &mut Vec<u8>,
-    ) -> Result<usize, StreamBufferError> {
-        let mut framing_index = StreamBuffer::find_framing_index_or_clear_buffer(buffer)?;
+    fn shift_buffer_to_first_valid_header(&mut self) -> Result<(), StreamBufferError> {
+        let framing_index = Self::find_framing_index(&self.buffer).ok_or_else(|| {
+            self.buffer.clear(); // Clear buffer since no packets exist
+            StreamBufferError::MissingHeaderBytes
+        })?;
 
         if framing_index != 0 {
             debug!("Found framing byte at index {framing_index}, shifting buffer");
-
-            buffer.drain(0..framing_index);
-
-            log::trace!("Buffer after shifting: {buffer:?}");
-
-            framing_index = StreamBuffer::find_framing_index_or_clear_buffer(buffer)?;
+            self.buffer.drain(0..framing_index);
+            trace!("Buffer after shifting: {:?}", self.buffer);
         }
-
-        trace!("Returning framing index: {framing_index}");
-
-        Ok(framing_index)
-    }
-
-    fn find_framing_index_or_clear_buffer(
-        buffer: &mut Vec<u8>,
-    ) -> Result<usize, StreamBufferError> {
-        let framing_index = match StreamBuffer::find_framing_index(buffer)? {
-            Some(idx) => idx,
-            None => {
-                buffer.clear(); // Clear buffer since no packets exist
-                return Err(StreamBufferError::MissingHeaderBytes);
-            }
-        };
-
-        Ok(framing_index)
+        Ok(())
     }
 
     // All valid packets start with the sequence [0x94 0xc3 size_msb size_lsb], where
@@ -226,24 +204,19 @@ impl StreamBuffer {
     // We need to also validate that, if the 0x94 is found and not at the end of the
     // buffer, that the next byte is 0xc3
     // Note that the maximum packet size currently stands at 240 bytes, meaning an MSB is not needed
-    fn find_framing_index(buffer: &mut [u8]) -> Result<Option<usize>, StreamBufferError> {
+    fn find_framing_index(buffer: &[u8]) -> Option<usize> {
         // Not possible to have a two-byte sequence in a buffer with less than two bytes
         // Vec::windows will also panic if the buffer is empty
         if buffer.len() < 2 {
-            return Ok(None);
+            return None;
         }
 
-        let framing_index = buffer.windows(2).position(|b| b == [0x94, 0xc3]);
-
-        Ok(framing_index)
+        buffer.windows(2).position(|b| b == [0x94, 0xc3])
     }
 
-    fn get_data_size_from_header(
-        &mut self,
-        framing_index: usize,
-    ) -> Result<usize, StreamBufferError> {
+    fn get_data_size_from_header(&mut self) -> Result<usize, StreamBufferError> {
         // Get the "framing byte" after the start of the packet header, or fail if not found
-        let found_framing_byte = match self.buffer.get(framing_index + 1) {
+        let found_framing_byte = match self.buffer.get(1) {
             Some(val) => val.to_owned(),
             None => {
                 debug!("Could not find framing byte, waiting for more data");
@@ -287,7 +260,6 @@ impl StreamBuffer {
     fn validate_packet_in_buffer(
         &mut self,
         packet_data_size: usize,
-        framing_index: usize,
     ) -> Result<(), StreamBufferError> {
         if self.buffer.len() < PACKET_HEADER_SIZE + packet_data_size {
             return Err(StreamBufferError::IncompletePacket {
@@ -296,7 +268,7 @@ impl StreamBuffer {
             });
         }
 
-        let packet_data_start_index = framing_index + PACKET_HEADER_SIZE;
+        let packet_data_start_index = PACKET_HEADER_SIZE;
         let mut packet_data_end_index = packet_data_start_index + packet_data_size;
 
         // In the event that the last byte is 0x94, we need to account for the possibility of
@@ -312,10 +284,9 @@ impl StreamBuffer {
         //     packet_data_start_index + packet_data_size
         // );
 
-        let mut packet_buffer =
-            self.buffer[packet_data_start_index..packet_data_end_index].to_vec();
+        let packet_buffer = self.buffer[packet_data_start_index..packet_data_end_index].to_vec();
 
-        let next_packet_start_index = StreamBuffer::find_framing_index(&mut packet_buffer)?
+        let next_packet_start_index = StreamBuffer::find_framing_index(&packet_buffer)
             // We need to re-normalize to the original buffer since we're working with a sub-slice
             .map(|idx| idx + packet_data_start_index);
 
@@ -334,7 +305,6 @@ impl StreamBuffer {
     fn extract_packet_from_buffer(
         &mut self,
         packet_data_size: usize,
-        framing_index: usize,
     ) -> Result<Vec<u8>, StreamBufferError> {
         if self.buffer.len() < packet_data_size {
             return Err(StreamBufferError::IncompletePacket {
@@ -343,8 +313,8 @@ impl StreamBuffer {
             });
         }
 
-        let packet_start_index = framing_index;
-        let packet_end_index = framing_index + PACKET_HEADER_SIZE + packet_data_size;
+        let packet_start_index = 0;
+        let packet_end_index = PACKET_HEADER_SIZE + packet_data_size;
 
         // Extract packet with header before removing header
         let mut packet_data_with_header: Vec<u8> = self
