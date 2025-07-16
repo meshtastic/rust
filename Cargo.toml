@@ -29,20 +29,23 @@ missing_docs = "warn"
 
 [[example]]
 name = "basic_serial"
+required-features = ["tokio"]
 
 [[example]]
 name = "basic_tcp"
+required-features = ["tokio"]
 
 [[example]]
 name = "message_filtering"
+required-features = ["tokio"]
 
 [[example]]
 name = "generate_typescript_types"
-required-features = ["ts-gen"]
+required-features = ["ts-gen", "tokio"]
 
 [[example]]
 name = "basic_ble"
-required-features = ["bluetooth-le"]
+required-features = ["bluetooth-le", "tokio"]
 
 [build-dependencies]
 prost-build = { version = "0.14", optional = true }
