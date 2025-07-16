@@ -6,6 +6,7 @@ jobs:
     strategy:
       matrix:
         os: [macos-latest, ubuntu-latest, windows-latest]
+        features: ["--all-features", "--no-default-features"]
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout
@@ -23,13 +24,13 @@ jobs:
           rustup override set 1.76
           rustup component add rustfmt
       - name: cargo check
-        run: cargo check
+        run: cargo check ${{ matrix.features }}
       - name: cargo fmt
-        run: cargo fmt --all -- --check
+        run: cargo fmt --all -- --check ${{ matrix.features }}
       - name: cargo clippy
         run: |
           rustup override set 1.80
           rustup component add clippy
-          cargo clippy -- -D warnings
+          cargo clippy -- -D warnings ${{ matrix.features }}
       - name: cargo test
-        run: cargo +1.76.0 test --all-features
+        run: cargo +1.76.0 test ${{ matrix.features }}
