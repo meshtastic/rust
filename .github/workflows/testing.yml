@@ -31,6 +31,6 @@ jobs:
         run: |
           rustup override set 1.80
           rustup component add clippy
-          cargo clippy -- -D warnings ${{ matrix.features }}
+          cargo clippy -- -D warnings
       - name: cargo test
         run: cargo +1.76.0 test ${{ matrix.features }}
