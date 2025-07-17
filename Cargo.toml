@@ -8,7 +8,7 @@ categories = ["embedded", "config", "encoding"]
 authors = ["Adam McQuilkin"]
 readme = "README.md"
 license = "GPL-3.0"
-version = "0.1.7"
+version = "0.1.6"
 rust-version = "1.76"
 edition = "2021"
 
