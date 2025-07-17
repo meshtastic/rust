@@ -16,32 +16,36 @@ edition = "2021"
 doctest = false
 
 [features]
-default = ["serde"]
+default = ["serde", "tokio"]
 gen = ["dep:prost-build", "dep:protoc-bin-vendored", "dep:walkdir"]
 
 serde = ["dep:serde", "dep:serde_json"]
 ts-gen = ["serde", "dep:specta", "dep:specta-typescript"]
 bluetooth-le = ["dep:uuid", "dep:btleplug", "dep:futures", "dep:bluez-async"]
+tokio = ["dep:tokio", "dep:tokio-serial", "dep:tokio-util"]
 
 [lints.rust]
 missing_docs = "warn"
 
 [[example]]
 name = "basic_serial"
+required-features = ["tokio"]
 
 [[example]]
 name = "basic_tcp"
+required-features = ["tokio"]
 
 [[example]]
 name = "message_filtering"
+required-features = ["tokio"]
 
 [[example]]
 name = "generate_typescript_types"
-required-features = ["ts-gen"]
+required-features = ["ts-gen", "tokio"]
 
 [[example]]
 name = "basic_ble"
-required-features = ["bluetooth-le"]
+required-features = ["bluetooth-le", "tokio"]
 
 [build-dependencies]
 prost-build = { version = "0.14", optional = true }
@@ -51,9 +55,9 @@ walkdir = { version = "2.5.0", optional = true }
 [dependencies]
 futures-util = "0.3.31"
 rand = "0.9.0"
-tokio = { version = "1.43.0", features = ["full"] }
-tokio-serial = "5.4.5"
-tokio-util = "0.7.13"
+tokio = { version = "1.43.0", features = ["full"], optional = true }
+tokio-serial = { version = "5.4.5", optional = true }
+tokio-util = { version = "0.7.13", optional = true }
 prost = "0.14"
 log = "0.4.25"
 
