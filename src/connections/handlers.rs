@@ -2,7 +2,7 @@ use crate::errors_internal::{Error, InternalChannelError, InternalStreamError};
 use crate::protobufs;
 use crate::types::EncodedToRadioPacketWithHeader;
 use crate::utils::format_data_packet;
-use log::{debug, error, trace, warn};
+use log::{debug, error, trace};
 use prost::Message;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::spawn;
@@ -36,7 +36,7 @@ where
                 Ok(())
             }
             e = handle => {
-                error!("Read handler unexpectedly terminated: {e:#?}");
+                debug!("Read handler unexpectedly terminated: {e:#?}");
                 e
             }
         }
@@ -58,7 +58,7 @@ where
         let mut buffer = [0u8; 1024];
         match read_stream.read(&mut buffer).await {
             Ok(0) => {
-                warn!("read_stream has reached EOF");
+                trace!("read_stream has reached EOF");
                 return Err(Error::InternalStreamError(InternalStreamError::Eof));
             }
             Ok(n) => {
