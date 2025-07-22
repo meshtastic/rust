@@ -58,11 +58,6 @@ pub mod encoded_data {
             IncomingStreamData(data)
         }
 
-        /// Returns a reference to the `Vec<u8>` data contained within the `IncomingStreamData` struct.
-        pub fn data(&self) -> &[u8] {
-            &self.0
-        }
-
         /// Returns a copy of the `Vec<u8>` data contained within the `IncomingStreamData` struct.
         pub fn data_vec(&self) -> Vec<u8> {
             self.0.clone()
@@ -78,6 +73,12 @@ pub mod encoded_data {
     impl From<&[u8]> for IncomingStreamData {
         fn from(value: &[u8]) -> Self {
             IncomingStreamData(value.to_vec())
+        }
+    }
+
+    impl AsRef<[u8]> for IncomingStreamData {
+        fn as_ref(&self) -> &[u8] {
+            &self.0
         }
     }
 
