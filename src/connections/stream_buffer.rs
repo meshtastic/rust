@@ -171,7 +171,7 @@ impl StreamBuffer {
 
         self.shift_buffer_to_first_valid_header()?;
 
-        // Note: the framing index should always be 0 at this point, keeping for clarity
+        // Note: the framing index is always 0 at this point
         let incoming_packet_data_size = self.get_data_size_from_header()?;
 
         self.validate_packet_in_buffer(incoming_packet_data_size)?;
