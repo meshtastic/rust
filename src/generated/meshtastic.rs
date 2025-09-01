@@ -230,6 +230,24 @@ pub struct DeviceUiConfig {
     /// 8 integers for screen calibration data
     #[prost(bytes = "vec", tag = "14")]
     pub calibration_data: ::prost::alloc::vec::Vec<u8>,
+    ///
+    /// Map related data
+    #[prost(message, optional, tag = "15")]
+    pub map_data: ::core::option::Option<Map>,
+    ///
+    /// Compass mode
+    #[prost(enumeration = "CompassMode", tag = "16")]
+    pub compass_mode: i32,
+    ///
+    /// RGB color for BaseUI
+    /// 0xRRGGBB format, e.g. 0xFF0000 for red
+    #[prost(uint32, tag = "17")]
+    pub screen_rgb_color: u32,
+    ///
+    /// Clockface analog style
+    /// true for analog clockface, false for digital clockface
+    #[prost(bool, tag = "18")]
+    pub is_clockface_analog: bool,
 }
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
@@ -290,6 +308,80 @@ pub struct NodeHighlight {
     /// Highlight nodes by matching name string
     #[prost(string, tag = "5")]
     pub node_name: ::prost::alloc::string::String,
+}
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
+#[cfg_attr(feature = "ts-gen", derive(specta::Type))]
+#[derive(Clone, Copy, PartialEq, Eq, Hash, ::prost::Message)]
+pub struct GeoPoint {
+    ///
+    /// Zoom level
+    #[prost(int32, tag = "1")]
+    pub zoom: i32,
+    ///
+    /// Coordinate: latitude
+    #[prost(int32, tag = "2")]
+    pub latitude: i32,
+    ///
+    /// Coordinate: longitude
+    #[prost(int32, tag = "3")]
+    pub longitude: i32,
+}
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
+#[cfg_attr(feature = "ts-gen", derive(specta::Type))]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
+pub struct Map {
+    ///
+    /// Home coordinates
+    #[prost(message, optional, tag = "1")]
+    pub home: ::core::option::Option<GeoPoint>,
+    ///
+    /// Map tile style
+    #[prost(string, tag = "2")]
+    pub style: ::prost::alloc::string::String,
+    ///
+    /// Map scroll follows GPS
+    #[prost(bool, tag = "3")]
+    pub follow_gps: bool,
+}
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
+#[cfg_attr(feature = "ts-gen", derive(specta::Type))]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+#[repr(i32)]
+pub enum CompassMode {
+    ///
+    /// Compass with dynamic ring and heading
+    Dynamic = 0,
+    ///
+    /// Compass with fixed ring and heading
+    FixedRing = 1,
+    ///
+    /// Compass with heading and freeze option
+    FreezeHeading = 2,
+}
+impl CompassMode {
+    /// String value of the enum field names used in the ProtoBuf definition.
+    ///
+    /// The values are not transformed in any way and thus are considered stable
+    /// (if the ProtoBuf definition does not change) and safe for programmatic use.
+    pub fn as_str_name(&self) -> &'static str {
+        match self {
+            Self::Dynamic => "DYNAMIC",
+            Self::FixedRing => "FIXED_RING",
+            Self::FreezeHeading => "FREEZE_HEADING",
+        }
+    }
+    /// Creates an enum from field names used in the ProtoBuf definition.
+    pub fn from_str_name(value: &str) -> ::core::option::Option<Self> {
+        match value {
+            "DYNAMIC" => Some(Self::Dynamic),
+            "FIXED_RING" => Some(Self::FixedRing),
+            "FREEZE_HEADING" => Some(Self::FreezeHeading),
+            _ => None,
+        }
+    }
 }
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
@@ -386,6 +478,12 @@ pub enum Language {
     /// Slovenian
     Slovenian = 15,
     ///
+    /// Ukrainian
+    Ukrainian = 16,
+    ///
+    /// Bulgarian
+    Bulgarian = 17,
+    ///
     /// Simplified Chinese (experimental)
     SimplifiedChinese = 30,
     ///
@@ -415,6 +513,8 @@ impl Language {
             Self::Greek => "GREEK",
             Self::Norwegian => "NORWEGIAN",
             Self::Slovenian => "SLOVENIAN",
+            Self::Ukrainian => "UKRAINIAN",
+            Self::Bulgarian => "BULGARIAN",
             Self::SimplifiedChinese => "SIMPLIFIED_CHINESE",
             Self::TraditionalChinese => "TRADITIONAL_CHINESE",
         }
@@ -438,6 +538,8 @@ impl Language {
             "GREEK" => Some(Self::Greek),
             "NORWEGIAN" => Some(Self::Norwegian),
             "SLOVENIAN" => Some(Self::Slovenian),
+            "UKRAINIAN" => Some(Self::Ukrainian),
+            "BULGARIAN" => Some(Self::Bulgarian),
             "SIMPLIFIED_CHINESE" => Some(Self::SimplifiedChinese),
             "TRADITIONAL_CHINESE" => Some(Self::TraditionalChinese),
             _ => None,
@@ -515,6 +617,11 @@ pub mod config {
         /// If true, disable the default blinking LED (LED_PIN) behavior on the device
         #[prost(bool, tag = "12")]
         pub led_heartbeat_disabled: bool,
+        ///
+        /// Controls buzzer behavior for audio feedback
+        /// Defaults to ENABLED
+        #[prost(enumeration = "device_config::BuzzerMode", tag = "13")]
+        pub buzzer_mode: i32,
     }
     /// Nested message and enum types in `DeviceConfig`.
     pub mod device_config {
@@ -706,6 +813,73 @@ pub mod config {
                     "KNOWN_ONLY" => Some(Self::KnownOnly),
                     "NONE" => Some(Self::None),
                     "CORE_PORTNUMS_ONLY" => Some(Self::CorePortnumsOnly),
+                    _ => None,
+                }
+            }
+        }
+        ///
+        /// Defines buzzer behavior for audio feedback
+        #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+        #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
+        #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
+        #[derive(
+            Clone,
+            Copy,
+            Debug,
+            PartialEq,
+            Eq,
+            Hash,
+            PartialOrd,
+            Ord,
+            ::prost::Enumeration
+        )]
+        #[repr(i32)]
+        pub enum BuzzerMode {
+            ///
+            /// Default behavior.
+            /// Buzzer is enabled for all audio feedback including button presses and alerts.
+            AllEnabled = 0,
+            ///
+            /// Disabled.
+            /// All buzzer audio feedback is disabled.
+            Disabled = 1,
+            ///
+            /// Notifications Only.
+            /// Buzzer is enabled only for notifications and alerts, but not for button presses.
+            /// External notification config determines the specifics of the notification behavior.
+            NotificationsOnly = 2,
+            ///
+            /// Non-notification system buzzer tones only.
+            /// Buzzer is enabled only for non-notification tones such as button presses, startup, shutdown, but not for alerts.
+            SystemOnly = 3,
+            ///
+            /// Direct Message notifications only.
+            /// Buzzer is enabled only for direct messages and alerts, but not for button presses.
+            /// External notification config determines the specifics of the notification behavior.
+            DirectMsgOnly = 4,
+        }
+        impl BuzzerMode {
+            /// String value of the enum field names used in the ProtoBuf definition.
+            ///
+            /// The values are not transformed in any way and thus are considered stable
+            /// (if the ProtoBuf definition does not change) and safe for programmatic use.
+            pub fn as_str_name(&self) -> &'static str {
+                match self {
+                    Self::AllEnabled => "ALL_ENABLED",
+                    Self::Disabled => "DISABLED",
+                    Self::NotificationsOnly => "NOTIFICATIONS_ONLY",
+                    Self::SystemOnly => "SYSTEM_ONLY",
+                    Self::DirectMsgOnly => "DIRECT_MSG_ONLY",
+                }
+            }
+            /// Creates an enum from field names used in the ProtoBuf definition.
+            pub fn from_str_name(value: &str) -> ::core::option::Option<Self> {
+                match value {
+                    "ALL_ENABLED" => Some(Self::AllEnabled),
+                    "DISABLED" => Some(Self::Disabled),
+                    "NOTIFICATIONS_ONLY" => Some(Self::NotificationsOnly),
+                    "SYSTEM_ONLY" => Some(Self::SystemOnly),
+                    "DIRECT_MSG_ONLY" => Some(Self::DirectMsgOnly),
                     _ => None,
                 }
             }
@@ -1007,7 +1181,7 @@ pub mod config {
         #[prost(string, tag = "4")]
         pub wifi_psk: ::prost::alloc::string::String,
         ///
-        /// NTP server to use if WiFi is conneced, defaults to `0.pool.ntp.org`
+        /// NTP server to use if WiFi is conneced, defaults to `meshtastic.pool.ntp.org`
         #[prost(string, tag = "5")]
         pub ntp_server: ::prost::alloc::string::String,
         ///
@@ -1030,6 +1204,10 @@ pub mod config {
         /// Flags for enabling/disabling network protocols
         #[prost(uint32, tag = "10")]
         pub enabled_protocols: u32,
+        ///
+        /// Enable/Disable ipv6 support
+        #[prost(bool, tag = "11")]
+        pub ipv6_enabled: bool,
     }
     /// Nested message and enum types in `NetworkConfig`.
     pub mod network_config {
@@ -1157,7 +1335,9 @@ pub mod config {
         #[prost(uint32, tag = "1")]
         pub screen_on_secs: u32,
         ///
+        /// Deprecated in 2.7.4: Unused
         /// How the GPS coordinates are formatted on the OLED screen.
+        #[deprecated]
         #[prost(enumeration = "display_config::GpsCoordinateFormat", tag = "2")]
         pub gps_format: i32,
         ///
@@ -1168,6 +1348,7 @@ pub mod config {
         ///
         /// If this is set, the displayed compass will always point north. if unset, the old behaviour
         /// (top of display is heading direction) is used.
+        #[deprecated]
         #[prost(bool, tag = "4")]
         pub compass_north_top: bool,
         ///
@@ -1342,17 +1523,20 @@ pub mod config {
         #[repr(i32)]
         pub enum OledType {
             ///
-            /// Default / Auto
+            /// Default / Autodetect
             OledAuto = 0,
             ///
-            /// Default / Auto
+            /// Default / Autodetect
             OledSsd1306 = 1,
             ///
-            /// Default / Auto
+            /// Default / Autodetect
             OledSh1106 = 2,
             ///
-            /// Can not be auto detected but set by proto. Used for 128x128 screens
+            /// Can not be auto detected but set by proto. Used for 128x64 screens
             OledSh1107 = 3,
+            ///
+            /// Can not be auto detected but set by proto. Used for 128x128 screens
+            OledSh1107128128 = 4,
         }
         impl OledType {
             /// String value of the enum field names used in the ProtoBuf definition.
@@ -1365,6 +1549,7 @@ pub mod config {
                     Self::OledSsd1306 => "OLED_SSD1306",
                     Self::OledSh1106 => "OLED_SH1106",
                     Self::OledSh1107 => "OLED_SH1107",
+                    Self::OledSh1107128128 => "OLED_SH1107_128_128",
                 }
             }
             /// Creates an enum from field names used in the ProtoBuf definition.
@@ -1374,6 +1559,7 @@ pub mod config {
                     "OLED_SSD1306" => Some(Self::OledSsd1306),
                     "OLED_SH1106" => Some(Self::OledSh1106),
                     "OLED_SH1107" => Some(Self::OledSh1107),
+                    "OLED_SH1107_128_128" => Some(Self::OledSh1107128128),
                     _ => None,
                 }
             }
@@ -1700,6 +1886,21 @@ pub mod config {
             ///
             /// Philippines 915mhz
             Ph915 = 21,
+            ///
+            /// Australia / New Zealand 433MHz
+            Anz433 = 22,
+            ///
+            /// Kazakhstan 433MHz
+            Kz433 = 23,
+            ///
+            /// Kazakhstan 863MHz
+            Kz863 = 24,
+            ///
+            /// Nepal 865MHz
+            Np865 = 25,
+            ///
+            /// Brazil 902MHz
+            Br902 = 26,
         }
         impl RegionCode {
             /// String value of the enum field names used in the ProtoBuf definition.
@@ -1730,6 +1931,11 @@ pub mod config {
                     Self::Ph433 => "PH_433",
                     Self::Ph868 => "PH_868",
                     Self::Ph915 => "PH_915",
+                    Self::Anz433 => "ANZ_433",
+                    Self::Kz433 => "KZ_433",
+                    Self::Kz863 => "KZ_863",
+                    Self::Np865 => "NP_865",
+                    Self::Br902 => "BR_902",
                 }
             }
             /// Creates an enum from field names used in the ProtoBuf definition.
@@ -1757,6 +1963,11 @@ pub mod config {
                     "PH_433" => Some(Self::Ph433),
                     "PH_868" => Some(Self::Ph868),
                     "PH_915" => Some(Self::Ph915),
+                    "ANZ_433" => Some(Self::Anz433),
+                    "KZ_433" => Some(Self::Kz433),
+                    "KZ_863" => Some(Self::Kz863),
+                    "NP_865" => Some(Self::Np865),
+                    "BR_902" => Some(Self::Br902),
                     _ => None,
                 }
             }
@@ -2197,6 +2408,10 @@ pub mod module_config {
         /// Bits of precision for the location sent (default of 32 is full precision).
         #[prost(uint32, tag = "2")]
         pub position_precision: u32,
+        ///
+        /// Whether we have opted-in to report our location to the map
+        #[prost(bool, tag = "3")]
+        pub should_report_location: bool,
     }
     ///
     /// RemoteHardwareModule Config
@@ -2627,6 +2842,12 @@ pub mod module_config {
             Caltopo = 5,
             /// Ecowitt WS85 weather station
             Ws85 = 6,
+            /// VE.Direct is a serial protocol used by Victron Energy products
+            /// <https://beta.ivc.no/wiki/index.php/Victron_VE_Direct_DIY_Cable>
+            VeDirect = 7,
+            /// Used to configure and view some parameters of MeshSolar.
+            /// <https://heltec.org/project/meshsolar/>
+            MsConfig = 8,
         }
         impl SerialMode {
             /// String value of the enum field names used in the ProtoBuf definition.
@@ -2642,6 +2863,8 @@ pub mod module_config {
                     Self::Nmea => "NMEA",
                     Self::Caltopo => "CALTOPO",
                     Self::Ws85 => "WS85",
+                    Self::VeDirect => "VE_DIRECT",
+                    Self::MsConfig => "MS_CONFIG",
                 }
             }
             /// Creates an enum from field names used in the ProtoBuf definition.
@@ -2654,6 +2877,8 @@ pub mod module_config {
                     "NMEA" => Some(Self::Nmea),
                     "CALTOPO" => Some(Self::Caltopo),
                     "WS85" => Some(Self::Ws85),
+                    "VE_DIRECT" => Some(Self::VeDirect),
+                    "MS_CONFIG" => Some(Self::MsConfig),
                     _ => None,
                 }
             }
@@ -2897,11 +3122,13 @@ pub mod module_config {
         pub updown1_enabled: bool,
         ///
         /// Enable/disable CannedMessageModule.
+        #[deprecated]
         #[prost(bool, tag = "9")]
         pub enabled: bool,
         ///
         /// Input event origin accepted by the canned message module.
         /// Can be e.g. "rotEnc1", "upDownEnc1", "scanAndSelect", "cardkb", "serialkb", or keyword "_any"
+        #[deprecated]
         #[prost(string, tag = "10")]
         pub allow_input_source: ::prost::alloc::string::String,
         ///
@@ -3219,6 +3446,9 @@ pub enum PortNum {
     /// Same as Text Message but used for critical alerts.
     AlertApp = 11,
     ///
+    /// Module/port for handling key verification requests.
+    KeyVerificationApp = 12,
+    ///
     /// Provides a 'ping' service that replies to any packet it receives.
     /// Also serves as a small example module.
     /// ENCODING: ASCII Plaintext
@@ -3287,6 +3517,15 @@ pub enum PortNum {
     /// PowerStress based monitoring support (for automated power consumption testing)
     PowerstressApp = 74,
     ///
+    /// Reticulum Network Stack Tunnel App
+    /// ENCODING: Fragmented RNS Packet. Handled by Meshtastic RNS interface
+    ReticulumTunnelApp = 76,
+    ///
+    /// App for transporting Cayenne Low Power Payload, popular for LoRaWAN sensor nodes. Offers ability to send
+    /// arbitrary telemetry over meshtastic that is not covered by telemetry.proto
+    /// ENCODING: CayenneLLP
+    CayenneApp = 77,
+    ///
     /// Private applications should use portnums >= 256.
     /// To simplify initial development and testing you can use "PRIVATE_APP"
     /// in your code without needing to rebuild protobuf files (via [regen-protos.sh](<https://github.com/meshtastic/firmware/blob/master/bin/regen-protos.sh>))
@@ -3318,6 +3557,7 @@ impl PortNum {
             Self::AudioApp => "AUDIO_APP",
             Self::DetectionSensorApp => "DETECTION_SENSOR_APP",
             Self::AlertApp => "ALERT_APP",
+            Self::KeyVerificationApp => "KEY_VERIFICATION_APP",
             Self::ReplyApp => "REPLY_APP",
             Self::IpTunnelApp => "IP_TUNNEL_APP",
             Self::PaxcounterApp => "PAXCOUNTER_APP",
@@ -3332,6 +3572,8 @@ impl PortNum {
             Self::AtakPlugin => "ATAK_PLUGIN",
             Self::MapReportApp => "MAP_REPORT_APP",
             Self::PowerstressApp => "POWERSTRESS_APP",
+            Self::ReticulumTunnelApp => "RETICULUM_TUNNEL_APP",
+            Self::CayenneApp => "CAYENNE_APP",
             Self::PrivateApp => "PRIVATE_APP",
             Self::AtakForwarder => "ATAK_FORWARDER",
             Self::Max => "MAX",
@@ -3352,6 +3594,7 @@ impl PortNum {
             "AUDIO_APP" => Some(Self::AudioApp),
             "DETECTION_SENSOR_APP" => Some(Self::DetectionSensorApp),
             "ALERT_APP" => Some(Self::AlertApp),
+            "KEY_VERIFICATION_APP" => Some(Self::KeyVerificationApp),
             "REPLY_APP" => Some(Self::ReplyApp),
             "IP_TUNNEL_APP" => Some(Self::IpTunnelApp),
             "PAXCOUNTER_APP" => Some(Self::PaxcounterApp),
@@ -3366,6 +3609,8 @@ impl PortNum {
             "ATAK_PLUGIN" => Some(Self::AtakPlugin),
             "MAP_REPORT_APP" => Some(Self::MapReportApp),
             "POWERSTRESS_APP" => Some(Self::PowerstressApp),
+            "RETICULUM_TUNNEL_APP" => Some(Self::ReticulumTunnelApp),
+            "CAYENNE_APP" => Some(Self::CayenneApp),
             "PRIVATE_APP" => Some(Self::PrivateApp),
             "ATAK_FORWARDER" => Some(Self::AtakForwarder),
             "MAX" => Some(Self::Max),
@@ -3490,6 +3735,14 @@ pub struct EnvironmentMetrics {
     /// Rainfall in the last 24 hours in mm
     #[prost(float, optional, tag = "20")]
     pub rainfall_24h: ::core::option::Option<f32>,
+    ///
+    /// Soil moisture measured (% 1-100)
+    #[prost(uint32, optional, tag = "21")]
+    pub soil_moisture: ::core::option::Option<u32>,
+    ///
+    /// Soil temperature measured (*C)
+    #[prost(float, optional, tag = "22")]
+    pub soil_temperature: ::core::option::Option<f32>,
 }
 ///
 /// Power Metrics (voltage / current / etc)
@@ -3522,66 +3775,154 @@ pub struct PowerMetrics {
     /// Current (Ch3)
     #[prost(float, optional, tag = "6")]
     pub ch3_current: ::core::option::Option<f32>,
+    ///
+    /// Voltage (Ch4)
+    #[prost(float, optional, tag = "7")]
+    pub ch4_voltage: ::core::option::Option<f32>,
+    ///
+    /// Current (Ch4)
+    #[prost(float, optional, tag = "8")]
+    pub ch4_current: ::core::option::Option<f32>,
+    ///
+    /// Voltage (Ch5)
+    #[prost(float, optional, tag = "9")]
+    pub ch5_voltage: ::core::option::Option<f32>,
+    ///
+    /// Current (Ch5)
+    #[prost(float, optional, tag = "10")]
+    pub ch5_current: ::core::option::Option<f32>,
+    ///
+    /// Voltage (Ch6)
+    #[prost(float, optional, tag = "11")]
+    pub ch6_voltage: ::core::option::Option<f32>,
+    ///
+    /// Current (Ch6)
+    #[prost(float, optional, tag = "12")]
+    pub ch6_current: ::core::option::Option<f32>,
+    ///
+    /// Voltage (Ch7)
+    #[prost(float, optional, tag = "13")]
+    pub ch7_voltage: ::core::option::Option<f32>,
+    ///
+    /// Current (Ch7)
+    #[prost(float, optional, tag = "14")]
+    pub ch7_current: ::core::option::Option<f32>,
+    ///
+    /// Voltage (Ch8)
+    #[prost(float, optional, tag = "15")]
+    pub ch8_voltage: ::core::option::Option<f32>,
+    ///
+    /// Current (Ch8)
+    #[prost(float, optional, tag = "16")]
+    pub ch8_current: ::core::option::Option<f32>,
 }
 ///
 /// Air quality metrics
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
 #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
-#[derive(Clone, Copy, PartialEq, Eq, Hash, ::prost::Message)]
+#[derive(Clone, Copy, PartialEq, ::prost::Message)]
 pub struct AirQualityMetrics {
     ///
-    /// Concentration Units Standard PM1.0
+    /// Concentration Units Standard PM1.0 in ug/m3
     #[prost(uint32, optional, tag = "1")]
     pub pm10_standard: ::core::option::Option<u32>,
     ///
-    /// Concentration Units Standard PM2.5
+    /// Concentration Units Standard PM2.5 in ug/m3
     #[prost(uint32, optional, tag = "2")]
     pub pm25_standard: ::core::option::Option<u32>,
     ///
-    /// Concentration Units Standard PM10.0
+    /// Concentration Units Standard PM10.0 in ug/m3
     #[prost(uint32, optional, tag = "3")]
     pub pm100_standard: ::core::option::Option<u32>,
     ///
-    /// Concentration Units Environmental PM1.0
+    /// Concentration Units Environmental PM1.0 in ug/m3
     #[prost(uint32, optional, tag = "4")]
     pub pm10_environmental: ::core::option::Option<u32>,
     ///
-    /// Concentration Units Environmental PM2.5
+    /// Concentration Units Environmental PM2.5 in ug/m3
     #[prost(uint32, optional, tag = "5")]
     pub pm25_environmental: ::core::option::Option<u32>,
     ///
-    /// Concentration Units Environmental PM10.0
+    /// Concentration Units Environmental PM10.0 in ug/m3
     #[prost(uint32, optional, tag = "6")]
     pub pm100_environmental: ::core::option::Option<u32>,
     ///
-    /// 0.3um Particle Count
+    /// 0.3um Particle Count in #/0.1l
     #[prost(uint32, optional, tag = "7")]
     pub particles_03um: ::core::option::Option<u32>,
     ///
-    /// 0.5um Particle Count
+    /// 0.5um Particle Count in #/0.1l
     #[prost(uint32, optional, tag = "8")]
     pub particles_05um: ::core::option::Option<u32>,
     ///
-    /// 1.0um Particle Count
+    /// 1.0um Particle Count in #/0.1l
     #[prost(uint32, optional, tag = "9")]
     pub particles_10um: ::core::option::Option<u32>,
     ///
-    /// 2.5um Particle Count
+    /// 2.5um Particle Count in #/0.1l
     #[prost(uint32, optional, tag = "10")]
     pub particles_25um: ::core::option::Option<u32>,
     ///
-    /// 5.0um Particle Count
+    /// 5.0um Particle Count in #/0.1l
     #[prost(uint32, optional, tag = "11")]
     pub particles_50um: ::core::option::Option<u32>,
     ///
-    /// 10.0um Particle Count
+    /// 10.0um Particle Count in #/0.1l
     #[prost(uint32, optional, tag = "12")]
     pub particles_100um: ::core::option::Option<u32>,
     ///
-    /// 10.0um Particle Count
+    /// CO2 concentration in ppm
     #[prost(uint32, optional, tag = "13")]
     pub co2: ::core::option::Option<u32>,
+    ///
+    /// CO2 sensor temperature in degC
+    #[prost(float, optional, tag = "14")]
+    pub co2_temperature: ::core::option::Option<f32>,
+    ///
+    /// CO2 sensor relative humidity in %
+    #[prost(float, optional, tag = "15")]
+    pub co2_humidity: ::core::option::Option<f32>,
+    ///
+    /// Formaldehyde sensor formaldehyde concentration in ppb
+    #[prost(float, optional, tag = "16")]
+    pub form_formaldehyde: ::core::option::Option<f32>,
+    ///
+    /// Formaldehyde sensor relative humidity in %RH
+    #[prost(float, optional, tag = "17")]
+    pub form_humidity: ::core::option::Option<f32>,
+    ///
+    /// Formaldehyde sensor temperature in degrees Celsius
+    #[prost(float, optional, tag = "18")]
+    pub form_temperature: ::core::option::Option<f32>,
+    ///
+    /// Concentration Units Standard PM4.0 in ug/m3
+    #[prost(uint32, optional, tag = "19")]
+    pub pm40_standard: ::core::option::Option<u32>,
+    ///
+    /// 4.0um Particle Count in #/0.1l
+    #[prost(uint32, optional, tag = "20")]
+    pub particles_40um: ::core::option::Option<u32>,
+    ///
+    /// PM Sensor Temperature
+    #[prost(float, optional, tag = "21")]
+    pub pm_temperature: ::core::option::Option<f32>,
+    ///
+    /// PM Sensor humidity
+    #[prost(float, optional, tag = "22")]
+    pub pm_humidity: ::core::option::Option<f32>,
+    ///
+    /// PM Sensor VOC Index
+    #[prost(float, optional, tag = "23")]
+    pub pm_voc_idx: ::core::option::Option<f32>,
+    ///
+    /// PM Sensor NOx Index
+    #[prost(float, optional, tag = "24")]
+    pub pm_nox_idx: ::core::option::Option<f32>,
+    ///
+    /// Typical Particle Size in um
+    #[prost(float, optional, tag = "25")]
+    pub particles_tps: ::core::option::Option<f32>,
 }
 ///
 /// Local device mesh statistics
@@ -3636,6 +3977,14 @@ pub struct LocalStats {
     /// This will always be zero for ROUTERs/REPEATERs. If this number is high, some other node(s) is/are relaying faster than you.
     #[prost(uint32, tag = "11")]
     pub num_tx_relay_canceled: u32,
+    ///
+    /// Number of bytes used in the heap
+    #[prost(uint32, tag = "12")]
+    pub heap_total_bytes: u32,
+    ///
+    /// Number of bytes free in the heap
+    #[prost(uint32, tag = "13")]
+    pub heap_free_bytes: u32,
 }
 ///
 /// Health telemetry metrics
@@ -3658,17 +4007,62 @@ pub struct HealthMetrics {
     pub temperature: ::core::option::Option<f32>,
 }
 ///
+/// Linux host metrics
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
+#[cfg_attr(feature = "ts-gen", derive(specta::Type))]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
+pub struct HostMetrics {
+    ///
+    /// Host system uptime
+    #[prost(uint32, tag = "1")]
+    pub uptime_seconds: u32,
+    ///
+    /// Host system free memory
+    #[prost(uint64, tag = "2")]
+    pub freemem_bytes: u64,
+    ///
+    /// Host system disk space free for /
+    #[prost(uint64, tag = "3")]
+    pub diskfree1_bytes: u64,
+    ///
+    /// Secondary system disk space free
+    #[prost(uint64, optional, tag = "4")]
+    pub diskfree2_bytes: ::core::option::Option<u64>,
+    ///
+    /// Tertiary disk space free
+    #[prost(uint64, optional, tag = "5")]
+    pub diskfree3_bytes: ::core::option::Option<u64>,
+    ///
+    /// Host system one minute load in 1/100ths
+    #[prost(uint32, tag = "6")]
+    pub load1: u32,
+    ///
+    /// Host system five minute load  in 1/100ths
+    #[prost(uint32, tag = "7")]
+    pub load5: u32,
+    ///
+    /// Host system fifteen minute load  in 1/100ths
+    #[prost(uint32, tag = "8")]
+    pub load15: u32,
+    ///
+    /// Optional User-provided string for arbitrary host system information
+    /// that doesn't make sense as a dedicated entry.
+    #[prost(string, optional, tag = "9")]
+    pub user_string: ::core::option::Option<::prost::alloc::string::String>,
+}
+///
 /// Types of Measurements the telemetry module is equipped to handle
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
 #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
-#[derive(Clone, Copy, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Telemetry {
     ///
     /// Seconds since 1970 - or 0 for unknown/unset
     #[prost(fixed32, tag = "1")]
     pub time: u32,
-    #[prost(oneof = "telemetry::Variant", tags = "2, 3, 4, 5, 6, 7")]
+    #[prost(oneof = "telemetry::Variant", tags = "2, 3, 4, 5, 6, 7, 8")]
     pub variant: ::core::option::Option<telemetry::Variant>,
 }
 /// Nested message and enum types in `Telemetry`.
@@ -3676,7 +4070,7 @@ pub mod telemetry {
     #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
     #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
     #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
-    #[derive(Clone, Copy, PartialEq, ::prost::Oneof)]
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
     pub enum Variant {
         ///
         /// Key native device metrics such as battery level
@@ -3702,6 +4096,10 @@ pub mod telemetry {
         /// Health telemetry metrics
         #[prost(message, tag = "7")]
         HealthMetrics(super::HealthMetrics),
+        ///
+        /// Linux host metrics
+        #[prost(message, tag = "8")]
+        HostMetrics(super::HostMetrics),
     }
 }
 ///
@@ -3836,6 +4234,33 @@ pub enum TelemetrySensorType {
     ///
     /// DFRobot Gravity tipping bucket rain gauge
     DfrobotRain = 35,
+    ///
+    /// Infineon DPS310 High accuracy pressure and temperature
+    Dps310 = 36,
+    ///
+    /// RAKWireless RAK12035 Soil Moisture Sensor Module
+    Rak12035 = 37,
+    ///
+    /// MAX17261 lipo battery gauge
+    Max17261 = 38,
+    ///
+    /// PCT2075 Temperature Sensor
+    Pct2075 = 39,
+    ///
+    /// ADS1X15 ADC
+    Ads1x15 = 40,
+    ///
+    /// ADS1X15 ADC_ALT
+    Ads1x15Alt = 41,
+    ///
+    /// Sensirion SFA30 Formaldehyde sensor
+    Sfa30 = 42,
+    ///
+    /// SEN5X PM SENSORS
+    Sen5x = 43,
+    ///
+    /// TSL2561 light sensor
+    Tsl2561 = 44,
 }
 impl TelemetrySensorType {
     /// String value of the enum field names used in the ProtoBuf definition.
@@ -3880,6 +4305,15 @@ impl TelemetrySensorType {
             Self::Radsens => "RADSENS",
             Self::Ina226 => "INA226",
             Self::DfrobotRain => "DFROBOT_RAIN",
+            Self::Dps310 => "DPS310",
+            Self::Rak12035 => "RAK12035",
+            Self::Max17261 => "MAX17261",
+            Self::Pct2075 => "PCT2075",
+            Self::Ads1x15 => "ADS1X15",
+            Self::Ads1x15Alt => "ADS1X15_ALT",
+            Self::Sfa30 => "SFA30",
+            Self::Sen5x => "SEN5X",
+            Self::Tsl2561 => "TSL2561",
         }
     }
     /// Creates an enum from field names used in the ProtoBuf definition.
@@ -3921,6 +4355,15 @@ impl TelemetrySensorType {
             "RADSENS" => Some(Self::Radsens),
             "INA226" => Some(Self::Ina226),
             "DFROBOT_RAIN" => Some(Self::DfrobotRain),
+            "DPS310" => Some(Self::Dps310),
+            "RAK12035" => Some(Self::Rak12035),
+            "MAX17261" => Some(Self::Max17261),
+            "PCT2075" => Some(Self::Pct2075),
+            "ADS1X15" => Some(Self::Ads1x15),
+            "ADS1X15_ALT" => Some(Self::Ads1x15Alt),
+            "SFA30" => Some(Self::Sfa30),
+            "SEN5X" => Some(Self::Sen5x),
+            "TSL2561" => Some(Self::Tsl2561),
             _ => None,
         }
     }
@@ -4308,6 +4751,10 @@ pub struct User {
     /// This is sent out to other nodes on the mesh to allow them to compute a shared secret key.
     #[prost(bytes = "vec", tag = "8")]
     pub public_key: ::prost::alloc::vec::Vec<u8>,
+    ///
+    /// Whether or not the node can be messaged
+    #[prost(bool, optional, tag = "9")]
+    pub is_unmessagable: ::core::option::Option<bool>,
 }
 ///
 /// A message used in a traceroute
@@ -4414,6 +4861,10 @@ pub mod routing {
         ///
         /// Admin packet sent using PKC, but not from a public key on the admin key list
         AdminPublicKeyUnauthorized = 37,
+        ///
+        /// Airtime fairness rate limit exceeded for a packet
+        /// This typically enforced per portnum and is used to prevent a single node from monopolizing airtime
+        RateLimitExceeded = 38,
     }
     impl Error {
         /// String value of the enum field names used in the ProtoBuf definition.
@@ -4438,6 +4889,7 @@ pub mod routing {
                 Self::PkiUnknownPubkey => "PKI_UNKNOWN_PUBKEY",
                 Self::AdminBadSessionKey => "ADMIN_BAD_SESSION_KEY",
                 Self::AdminPublicKeyUnauthorized => "ADMIN_PUBLIC_KEY_UNAUTHORIZED",
+                Self::RateLimitExceeded => "RATE_LIMIT_EXCEEDED",
             }
         }
         /// Creates an enum from field names used in the ProtoBuf definition.
@@ -4459,6 +4911,7 @@ pub mod routing {
                 "PKI_UNKNOWN_PUBKEY" => Some(Self::PkiUnknownPubkey),
                 "ADMIN_BAD_SESSION_KEY" => Some(Self::AdminBadSessionKey),
                 "ADMIN_PUBLIC_KEY_UNAUTHORIZED" => Some(Self::AdminPublicKeyUnauthorized),
+                "RATE_LIMIT_EXCEEDED" => Some(Self::RateLimitExceeded),
                 _ => None,
             }
         }
@@ -4538,6 +4991,27 @@ pub struct Data {
     /// Bitfield for extra flags. First use is to indicate that user approves the packet being uploaded to MQTT.
     #[prost(uint32, optional, tag = "9")]
     pub bitfield: ::core::option::Option<u32>,
+}
+///
+/// The actual over-the-mesh message doing KeyVerification
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
+#[cfg_attr(feature = "ts-gen", derive(specta::Type))]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
+pub struct KeyVerification {
+    ///
+    /// random value Selected by the requesting node
+    #[prost(uint64, tag = "1")]
+    pub nonce: u64,
+    ///
+    /// The final authoritative hash, only to be sent by NodeA at the end of the handshake
+    #[prost(bytes = "vec", tag = "2")]
+    pub hash1: ::prost::alloc::vec::Vec<u8>,
+    ///
+    /// The intermediary hash (actually derived from hash1),
+    /// sent from NodeB to NodeA in response to the initial message.
+    #[prost(bytes = "vec", tag = "3")]
+    pub hash2: ::prost::alloc::vec::Vec<u8>,
 }
 ///
 /// Waypoint message, used to share arbitrary locations across the mesh
@@ -4740,6 +5214,10 @@ pub struct MeshPacket {
     /// Set by the firmware internally, clients are not supposed to set this.
     #[prost(uint32, tag = "20")]
     pub tx_after: u32,
+    ///
+    /// Indicates which transport mechanism this packet arrived over
+    #[prost(enumeration = "mesh_packet::TransportMechanism", tag = "21")]
+    pub transport_mechanism: i32,
     #[prost(oneof = "mesh_packet::PayloadVariant", tags = "4, 5")]
     pub payload_variant: ::core::option::Option<mesh_packet::PayloadVariant>,
 }
@@ -4901,6 +5379,81 @@ pub mod mesh_packet {
             }
         }
     }
+    ///
+    /// Enum to identify which transport mechanism this packet arrived over
+    #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+    #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
+    #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
+    #[derive(
+        Clone,
+        Copy,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash,
+        PartialOrd,
+        Ord,
+        ::prost::Enumeration
+    )]
+    #[repr(i32)]
+    pub enum TransportMechanism {
+        ///
+        /// The default case is that the node generated a packet itself
+        TransportInternal = 0,
+        ///
+        /// Arrived via the primary LoRa radio
+        TransportLora = 1,
+        ///
+        /// Arrived via a secondary LoRa radio
+        TransportLoraAlt1 = 2,
+        ///
+        /// Arrived via a tertiary LoRa radio
+        TransportLoraAlt2 = 3,
+        ///
+        /// Arrived via a quaternary LoRa radio
+        TransportLoraAlt3 = 4,
+        ///
+        /// Arrived via an MQTT connection
+        TransportMqtt = 5,
+        ///
+        /// Arrived via Multicast UDP
+        TransportMulticastUdp = 6,
+        ///
+        /// Arrived via API connection
+        TransportApi = 7,
+    }
+    impl TransportMechanism {
+        /// String value of the enum field names used in the ProtoBuf definition.
+        ///
+        /// The values are not transformed in any way and thus are considered stable
+        /// (if the ProtoBuf definition does not change) and safe for programmatic use.
+        pub fn as_str_name(&self) -> &'static str {
+            match self {
+                Self::TransportInternal => "TRANSPORT_INTERNAL",
+                Self::TransportLora => "TRANSPORT_LORA",
+                Self::TransportLoraAlt1 => "TRANSPORT_LORA_ALT1",
+                Self::TransportLoraAlt2 => "TRANSPORT_LORA_ALT2",
+                Self::TransportLoraAlt3 => "TRANSPORT_LORA_ALT3",
+                Self::TransportMqtt => "TRANSPORT_MQTT",
+                Self::TransportMulticastUdp => "TRANSPORT_MULTICAST_UDP",
+                Self::TransportApi => "TRANSPORT_API",
+            }
+        }
+        /// Creates an enum from field names used in the ProtoBuf definition.
+        pub fn from_str_name(value: &str) -> ::core::option::Option<Self> {
+            match value {
+                "TRANSPORT_INTERNAL" => Some(Self::TransportInternal),
+                "TRANSPORT_LORA" => Some(Self::TransportLora),
+                "TRANSPORT_LORA_ALT1" => Some(Self::TransportLoraAlt1),
+                "TRANSPORT_LORA_ALT2" => Some(Self::TransportLoraAlt2),
+                "TRANSPORT_LORA_ALT3" => Some(Self::TransportLoraAlt3),
+                "TRANSPORT_MQTT" => Some(Self::TransportMqtt),
+                "TRANSPORT_MULTICAST_UDP" => Some(Self::TransportMulticastUdp),
+                "TRANSPORT_API" => Some(Self::TransportApi),
+                _ => None,
+            }
+        }
+    }
     #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
     #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
     #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
@@ -4986,6 +5539,12 @@ pub struct NodeInfo {
     /// Persists between NodeDB internal clean ups
     #[prost(bool, tag = "11")]
     pub is_ignored: bool,
+    ///
+    /// True if node public key has been verified.
+    /// Persists between NodeDB internal clean ups
+    /// LSB 0 of the bitfield
+    #[prost(bool, tag = "12")]
+    pub is_key_manually_verified: bool,
 }
 ///
 /// Unique local debugging info for this node
@@ -5019,6 +5578,15 @@ pub struct MyNodeInfo {
     /// The PlatformIO environment used to build this firmware
     #[prost(string, tag = "13")]
     pub pio_env: ::prost::alloc::string::String,
+    ///
+    /// The indicator for whether this device is running event firmware and which
+    #[prost(enumeration = "FirmwareEdition", tag = "14")]
+    pub firmware_edition: i32,
+    ///
+    /// The number of nodes in the nodedb.
+    /// This is used by the phone to know how many NodeInfo packets to expect on want_config
+    #[prost(uint32, tag = "15")]
+    pub nodedb_count: u32,
 }
 ///
 /// Debug output from the device.
@@ -5271,7 +5839,74 @@ pub struct ClientNotification {
     /// The message body of the notification
     #[prost(string, tag = "4")]
     pub message: ::prost::alloc::string::String,
+    #[prost(oneof = "client_notification::PayloadVariant", tags = "11, 12, 13, 14, 15")]
+    pub payload_variant: ::core::option::Option<client_notification::PayloadVariant>,
 }
+/// Nested message and enum types in `ClientNotification`.
+pub mod client_notification {
+    #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+    #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
+    #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
+    #[derive(Clone, PartialEq, Eq, Hash, ::prost::Oneof)]
+    pub enum PayloadVariant {
+        #[prost(message, tag = "11")]
+        KeyVerificationNumberInform(super::KeyVerificationNumberInform),
+        #[prost(message, tag = "12")]
+        KeyVerificationNumberRequest(super::KeyVerificationNumberRequest),
+        #[prost(message, tag = "13")]
+        KeyVerificationFinal(super::KeyVerificationFinal),
+        #[prost(message, tag = "14")]
+        DuplicatedPublicKey(super::DuplicatedPublicKey),
+        #[prost(message, tag = "15")]
+        LowEntropyKey(super::LowEntropyKey),
+    }
+}
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
+#[cfg_attr(feature = "ts-gen", derive(specta::Type))]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
+pub struct KeyVerificationNumberInform {
+    #[prost(uint64, tag = "1")]
+    pub nonce: u64,
+    #[prost(string, tag = "2")]
+    pub remote_longname: ::prost::alloc::string::String,
+    #[prost(uint32, tag = "3")]
+    pub security_number: u32,
+}
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
+#[cfg_attr(feature = "ts-gen", derive(specta::Type))]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
+pub struct KeyVerificationNumberRequest {
+    #[prost(uint64, tag = "1")]
+    pub nonce: u64,
+    #[prost(string, tag = "2")]
+    pub remote_longname: ::prost::alloc::string::String,
+}
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
+#[cfg_attr(feature = "ts-gen", derive(specta::Type))]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
+pub struct KeyVerificationFinal {
+    #[prost(uint64, tag = "1")]
+    pub nonce: u64,
+    #[prost(string, tag = "2")]
+    pub remote_longname: ::prost::alloc::string::String,
+    #[prost(bool, tag = "3")]
+    pub is_sender: bool,
+    #[prost(string, tag = "4")]
+    pub verification_characters: ::prost::alloc::string::String,
+}
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
+#[cfg_attr(feature = "ts-gen", derive(specta::Type))]
+#[derive(Clone, Copy, PartialEq, Eq, Hash, ::prost::Message)]
+pub struct DuplicatedPublicKey {}
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
+#[cfg_attr(feature = "ts-gen", derive(specta::Type))]
+#[derive(Clone, Copy, PartialEq, Eq, Hash, ::prost::Message)]
+pub struct LowEntropyKey {}
 ///
 /// Individual File info for the device
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -5473,7 +6108,12 @@ pub struct DeviceMetadata {
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
 #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
 #[derive(Clone, Copy, PartialEq, Eq, Hash, ::prost::Message)]
-pub struct Heartbeat {}
+pub struct Heartbeat {
+    ///
+    /// The nonce of the heartbeat message
+    #[prost(uint32, tag = "1")]
+    pub nonce: u32,
+}
 ///
 /// RemoteHardwarePins associated with a node
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -5859,6 +6499,73 @@ pub enum HardwareModel {
     /// <https://www.loraitalia.it>
     Meshlink = 87,
     ///
+    /// Seeed XIAO nRF52840 + Wio SX1262 kit
+    XiaoNrf52Kit = 88,
+    ///
+    /// Elecrow ThinkNode M1 & M2
+    /// <https://www.elecrow.com/wiki/ThinkNode-M1_Transceiver_Device(Meshtastic>)_Power_By_nRF52840.html
+    /// <https://www.elecrow.com/wiki/ThinkNode-M2_Transceiver_Device(Meshtastic>)_Power_By_NRF52840.html (this actually uses ESP32-S3)
+    ThinknodeM1 = 89,
+    ThinknodeM2 = 90,
+    ///
+    /// Lilygo T-ETH-Elite
+    TEthElite = 91,
+    ///
+    /// Heltec HRI-3621 industrial probe
+    HeltecSensorHub = 92,
+    ///
+    /// Reserved Fried Chicken ID for future use
+    ReservedFriedChicken = 93,
+    ///
+    /// Heltec Magnetic Power Bank with Meshtastic compatible
+    HeltecMeshPocket = 94,
+    ///
+    /// Seeed Solar Node
+    SeeedSolarNode = 95,
+    ///
+    /// NomadStar Meteor Pro <https://nomadstar.ch/>
+    NomadstarMeteorPro = 96,
+    ///
+    /// Elecrow CrowPanel Advance models, ESP32-S3 and TFT with SX1262 radio plugin
+    Crowpanel = 97,
+    ///
+    /// Lilygo LINK32 board with sensors
+    Link32 = 98,
+    ///
+    /// Seeed Tracker L1
+    SeeedWioTrackerL1 = 99,
+    ///
+    /// Seeed Tracker L1 EINK driver
+    SeeedWioTrackerL1Eink = 100,
+    ///
+    /// Reserved ID for future and past use
+    QwantzTinyArms = 101,
+    ///
+    /// Lilygo T-Deck Pro
+    TDeckPro = 102,
+    ///
+    /// Lilygo TLora Pager
+    TLoraPager = 103,
+    ///
+    /// GAT562 Mesh Trial Tracker
+    Gat562MeshTrialTracker = 104,
+    ///
+    /// RAKwireless WisMesh Tag
+    WismeshTag = 105,
+    ///
+    /// RAKwireless WisBlock Core RAK3312 <https://docs.rakwireless.com/product-categories/wisduo/rak3112-module/overview/>
+    Rak3312 = 106,
+    ///
+    /// Elecrow ThinkNode M5 <https://www.elecrow.com/wiki/ThinkNode_M5_Meshtastic_LoRa_Signal_Transceiver_ESP32-S3.html>
+    ThinknodeM5 = 107,
+    ///
+    /// MeshSolar is an integrated power management and communication solution designed for outdoor low-power devices.
+    /// <https://heltec.org/project/meshsolar/>
+    HeltecMeshSolar = 108,
+    ///
+    /// Lilygo T-Echo Lite
+    TEchoLite = 109,
+    ///
     /// ------------------------------------------------------------------------------------------------------------------------------------------
     /// Reserved ID For developing private Ports. These will show up in live traffic sparsely, so we can use a high number. Keep it within 8 bits.
     /// ------------------------------------------------------------------------------------------------------------------------------------------
@@ -5959,6 +6666,28 @@ impl HardwareModel {
             Self::Routastic => "ROUTASTIC",
             Self::MeshTab => "MESH_TAB",
             Self::Meshlink => "MESHLINK",
+            Self::XiaoNrf52Kit => "XIAO_NRF52_KIT",
+            Self::ThinknodeM1 => "THINKNODE_M1",
+            Self::ThinknodeM2 => "THINKNODE_M2",
+            Self::TEthElite => "T_ETH_ELITE",
+            Self::HeltecSensorHub => "HELTEC_SENSOR_HUB",
+            Self::ReservedFriedChicken => "RESERVED_FRIED_CHICKEN",
+            Self::HeltecMeshPocket => "HELTEC_MESH_POCKET",
+            Self::SeeedSolarNode => "SEEED_SOLAR_NODE",
+            Self::NomadstarMeteorPro => "NOMADSTAR_METEOR_PRO",
+            Self::Crowpanel => "CROWPANEL",
+            Self::Link32 => "LINK_32",
+            Self::SeeedWioTrackerL1 => "SEEED_WIO_TRACKER_L1",
+            Self::SeeedWioTrackerL1Eink => "SEEED_WIO_TRACKER_L1_EINK",
+            Self::QwantzTinyArms => "QWANTZ_TINY_ARMS",
+            Self::TDeckPro => "T_DECK_PRO",
+            Self::TLoraPager => "T_LORA_PAGER",
+            Self::Gat562MeshTrialTracker => "GAT562_MESH_TRIAL_TRACKER",
+            Self::WismeshTag => "WISMESH_TAG",
+            Self::Rak3312 => "RAK3312",
+            Self::ThinknodeM5 => "THINKNODE_M5",
+            Self::HeltecMeshSolar => "HELTEC_MESH_SOLAR",
+            Self::TEchoLite => "T_ECHO_LITE",
             Self::PrivateHw => "PRIVATE_HW",
         }
     }
@@ -6053,6 +6782,28 @@ impl HardwareModel {
             "ROUTASTIC" => Some(Self::Routastic),
             "MESH_TAB" => Some(Self::MeshTab),
             "MESHLINK" => Some(Self::Meshlink),
+            "XIAO_NRF52_KIT" => Some(Self::XiaoNrf52Kit),
+            "THINKNODE_M1" => Some(Self::ThinknodeM1),
+            "THINKNODE_M2" => Some(Self::ThinknodeM2),
+            "T_ETH_ELITE" => Some(Self::TEthElite),
+            "HELTEC_SENSOR_HUB" => Some(Self::HeltecSensorHub),
+            "RESERVED_FRIED_CHICKEN" => Some(Self::ReservedFriedChicken),
+            "HELTEC_MESH_POCKET" => Some(Self::HeltecMeshPocket),
+            "SEEED_SOLAR_NODE" => Some(Self::SeeedSolarNode),
+            "NOMADSTAR_METEOR_PRO" => Some(Self::NomadstarMeteorPro),
+            "CROWPANEL" => Some(Self::Crowpanel),
+            "LINK_32" => Some(Self::Link32),
+            "SEEED_WIO_TRACKER_L1" => Some(Self::SeeedWioTrackerL1),
+            "SEEED_WIO_TRACKER_L1_EINK" => Some(Self::SeeedWioTrackerL1Eink),
+            "QWANTZ_TINY_ARMS" => Some(Self::QwantzTinyArms),
+            "T_DECK_PRO" => Some(Self::TDeckPro),
+            "T_LORA_PAGER" => Some(Self::TLoraPager),
+            "GAT562_MESH_TRIAL_TRACKER" => Some(Self::Gat562MeshTrialTracker),
+            "WISMESH_TAG" => Some(Self::WismeshTag),
+            "RAK3312" => Some(Self::Rak3312),
+            "THINKNODE_M5" => Some(Self::ThinknodeM5),
+            "HELTEC_MESH_SOLAR" => Some(Self::HeltecMeshSolar),
+            "T_ECHO_LITE" => Some(Self::TEchoLite),
             "PRIVATE_HW" => Some(Self::PrivateHw),
             _ => None,
         }
@@ -6200,6 +6951,67 @@ impl CriticalErrorCode {
     }
 }
 ///
+/// Enum to indicate to clients whether this firmware is a special firmware build, like an event.
+/// The first 16 values are reserved for non-event special firmwares, like the Smart Citizen use case.
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
+#[cfg_attr(feature = "ts-gen", derive(specta::Type))]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+#[repr(i32)]
+pub enum FirmwareEdition {
+    ///
+    /// Vanilla firmware
+    Vanilla = 0,
+    ///
+    /// Firmware for use in the Smart Citizen environmental monitoring network
+    SmartCitizen = 1,
+    ///
+    /// Open Sauce, the maker conference held yearly in CA
+    OpenSauce = 16,
+    ///
+    /// DEFCON, the yearly hacker conference
+    Defcon = 17,
+    ///
+    /// Burning Man, the yearly hippie gathering in the desert
+    BurningMan = 18,
+    ///
+    /// Hamvention, the Dayton amateur radio convention
+    Hamvention = 19,
+    ///
+    /// Placeholder for DIY and unofficial events
+    DiyEdition = 127,
+}
+impl FirmwareEdition {
+    /// String value of the enum field names used in the ProtoBuf definition.
+    ///
+    /// The values are not transformed in any way and thus are considered stable
+    /// (if the ProtoBuf definition does not change) and safe for programmatic use.
+    pub fn as_str_name(&self) -> &'static str {
+        match self {
+            Self::Vanilla => "VANILLA",
+            Self::SmartCitizen => "SMART_CITIZEN",
+            Self::OpenSauce => "OPEN_SAUCE",
+            Self::Defcon => "DEFCON",
+            Self::BurningMan => "BURNING_MAN",
+            Self::Hamvention => "HAMVENTION",
+            Self::DiyEdition => "DIY_EDITION",
+        }
+    }
+    /// Creates an enum from field names used in the ProtoBuf definition.
+    pub fn from_str_name(value: &str) -> ::core::option::Option<Self> {
+        match value {
+            "VANILLA" => Some(Self::Vanilla),
+            "SMART_CITIZEN" => Some(Self::SmartCitizen),
+            "OPEN_SAUCE" => Some(Self::OpenSauce),
+            "DEFCON" => Some(Self::Defcon),
+            "BURNING_MAN" => Some(Self::BurningMan),
+            "HAMVENTION" => Some(Self::Hamvention),
+            "DIY_EDITION" => Some(Self::DiyEdition),
+            _ => None,
+        }
+    }
+}
+///
 /// Enum for modules excluded from a device's configuration.
 /// Each value represents a ModuleConfigType that can be toggled as excluded
 /// by setting its corresponding bit in the `excluded_modules` bitmask field.
@@ -6251,6 +7063,12 @@ pub enum ExcludedModules {
     ///
     /// Paxcounter module
     PaxcounterConfig = 4096,
+    ///
+    /// Bluetooth config (not technically a module, but used to indicate bluetooth capabilities)
+    BluetoothConfig = 8192,
+    ///
+    /// Network config (not technically a module, but used to indicate network capabilities)
+    NetworkConfig = 16384,
 }
 impl ExcludedModules {
     /// String value of the enum field names used in the ProtoBuf definition.
@@ -6273,6 +7091,8 @@ impl ExcludedModules {
             Self::AmbientlightingConfig => "AMBIENTLIGHTING_CONFIG",
             Self::DetectionsensorConfig => "DETECTIONSENSOR_CONFIG",
             Self::PaxcounterConfig => "PAXCOUNTER_CONFIG",
+            Self::BluetoothConfig => "BLUETOOTH_CONFIG",
+            Self::NetworkConfig => "NETWORK_CONFIG",
         }
     }
     /// Creates an enum from field names used in the ProtoBuf definition.
@@ -6292,6 +7112,8 @@ impl ExcludedModules {
             "AMBIENTLIGHTING_CONFIG" => Some(Self::AmbientlightingConfig),
             "DETECTIONSENSOR_CONFIG" => Some(Self::DetectionsensorConfig),
             "PAXCOUNTER_CONFIG" => Some(Self::PaxcounterConfig),
+            "BLUETOOTH_CONFIG" => Some(Self::BluetoothConfig),
+            "NETWORK_CONFIG" => Some(Self::NetworkConfig),
             _ => None,
         }
     }
@@ -6315,12 +7137,36 @@ pub struct AdminMessage {
     /// TODO: REPLACE
     #[prost(
         oneof = "admin_message::PayloadVariant",
-        tags = "1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 64, 65, 94, 95, 96, 97, 98, 99, 100"
+        tags = "1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 64, 65, 66, 67, 94, 95, 96, 97, 98, 99, 100"
     )]
     pub payload_variant: ::core::option::Option<admin_message::PayloadVariant>,
 }
 /// Nested message and enum types in `AdminMessage`.
 pub mod admin_message {
+    ///
+    /// Input event message to be sent to the node.
+    #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+    #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
+    #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
+    #[derive(Clone, Copy, PartialEq, Eq, Hash, ::prost::Message)]
+    pub struct InputEvent {
+        ///
+        /// The input event code
+        #[prost(uint32, tag = "1")]
+        pub event_code: u32,
+        ///
+        /// Keyboard character code
+        #[prost(uint32, tag = "2")]
+        pub kb_char: u32,
+        ///
+        /// The touch X coordinate
+        #[prost(uint32, tag = "3")]
+        pub touch_x: u32,
+        ///
+        /// The touch Y coordinate
+        #[prost(uint32, tag = "4")]
+        pub touch_y: u32,
+    }
     ///
     /// TODO: REPLACE
     #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -6364,7 +7210,7 @@ pub mod admin_message {
         /// TODO: REPLACE
         SecurityConfig = 7,
         ///
-        ///
+        /// Session key config
         SessionkeyConfig = 8,
         ///
         /// device-ui config
@@ -6506,6 +7352,49 @@ pub mod admin_message {
             }
         }
     }
+    #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+    #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
+    #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
+    #[derive(
+        Clone,
+        Copy,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash,
+        PartialOrd,
+        Ord,
+        ::prost::Enumeration
+    )]
+    #[repr(i32)]
+    pub enum BackupLocation {
+        ///
+        /// Backup to the internal flash
+        Flash = 0,
+        ///
+        /// Backup to the SD card
+        Sd = 1,
+    }
+    impl BackupLocation {
+        /// String value of the enum field names used in the ProtoBuf definition.
+        ///
+        /// The values are not transformed in any way and thus are considered stable
+        /// (if the ProtoBuf definition does not change) and safe for programmatic use.
+        pub fn as_str_name(&self) -> &'static str {
+            match self {
+                Self::Flash => "FLASH",
+                Self::Sd => "SD",
+            }
+        }
+        /// Creates an enum from field names used in the ProtoBuf definition.
+        pub fn from_str_name(value: &str) -> ::core::option::Option<Self> {
+            match value {
+                "FLASH" => Some(Self::Flash),
+                "SD" => Some(Self::Sd),
+                _ => None,
+            }
+        }
+    }
     ///
     /// TODO: REPLACE
     #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -6604,6 +7493,23 @@ pub mod admin_message {
         #[prost(uint32, tag = "23")]
         SetScale(u32),
         ///
+        /// Backup the node's preferences
+        #[prost(enumeration = "BackupLocation", tag = "24")]
+        BackupPreferences(i32),
+        ///
+        /// Restore the node's preferences
+        #[prost(enumeration = "BackupLocation", tag = "25")]
+        RestorePreferences(i32),
+        ///
+        /// Remove backups of the node's preferences
+        #[prost(enumeration = "BackupLocation", tag = "26")]
+        RemoveBackupPreferences(i32),
+        ///
+        /// Send an input event to the node.
+        /// This is used to trigger physical input events like button presses, touch events, etc.
+        #[prost(message, tag = "27")]
+        SendInputEvent(InputEvent),
+        ///
         /// Set the owner for this node
         #[prost(message, tag = "32")]
         SetOwner(super::User),
@@ -6686,6 +7592,14 @@ pub mod admin_message {
         #[prost(bool, tag = "65")]
         CommitEditSettings(bool),
         ///
+        /// Add a contact (User) to the nodedb
+        #[prost(message, tag = "66")]
+        AddContact(super::SharedContact),
+        ///
+        /// Initiate or respond to a key verification request
+        #[prost(message, tag = "67")]
+        KeyVerification(super::KeyVerificationAdmin),
+        ///
         /// Tell the node to factory reset config everything; all device state and configuration will be returned to factory defaults and BLE bonds will be cleared.
         #[prost(int32, tag = "94")]
         FactoryResetDevice(i32),
@@ -6754,6 +7668,105 @@ pub struct NodeRemoteHardwarePinsResponse {
     /// Nodes and their respective remote hardware GPIO pins
     #[prost(message, repeated, tag = "1")]
     pub node_remote_hardware_pins: ::prost::alloc::vec::Vec<NodeRemoteHardwarePin>,
+}
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
+#[cfg_attr(feature = "ts-gen", derive(specta::Type))]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
+pub struct SharedContact {
+    ///
+    /// The node number of the contact
+    #[prost(uint32, tag = "1")]
+    pub node_num: u32,
+    ///
+    /// The User of the contact
+    #[prost(message, optional, tag = "2")]
+    pub user: ::core::option::Option<User>,
+    ///
+    /// Add this contact to the blocked / ignored list
+    #[prost(bool, tag = "3")]
+    pub should_ignore: bool,
+}
+///
+/// This message is used by a client to initiate or complete a key verification
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
+#[cfg_attr(feature = "ts-gen", derive(specta::Type))]
+#[derive(Clone, Copy, PartialEq, Eq, Hash, ::prost::Message)]
+pub struct KeyVerificationAdmin {
+    #[prost(enumeration = "key_verification_admin::MessageType", tag = "1")]
+    pub message_type: i32,
+    ///
+    /// The nodenum we're requesting
+    #[prost(uint32, tag = "2")]
+    pub remote_nodenum: u32,
+    ///
+    /// The nonce is used to track the connection
+    #[prost(uint64, tag = "3")]
+    pub nonce: u64,
+    ///
+    /// The 4 digit code generated by the remote node, and communicated outside the mesh
+    #[prost(uint32, optional, tag = "4")]
+    pub security_number: ::core::option::Option<u32>,
+}
+/// Nested message and enum types in `KeyVerificationAdmin`.
+pub mod key_verification_admin {
+    ///
+    /// Three stages of this request.
+    #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+    #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
+    #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
+    #[derive(
+        Clone,
+        Copy,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash,
+        PartialOrd,
+        Ord,
+        ::prost::Enumeration
+    )]
+    #[repr(i32)]
+    pub enum MessageType {
+        ///
+        /// This is the first stage, where a client initiates
+        InitiateVerification = 0,
+        ///
+        /// After the nonce has been returned over the mesh, the client prompts for the security number
+        /// And uses this message to provide it to the node.
+        ProvideSecurityNumber = 1,
+        ///
+        /// Once the user has compared the verification message, this message notifies the node.
+        DoVerify = 2,
+        ///
+        /// This is the cancel path, can be taken at any point
+        DoNotVerify = 3,
+    }
+    impl MessageType {
+        /// String value of the enum field names used in the ProtoBuf definition.
+        ///
+        /// The values are not transformed in any way and thus are considered stable
+        /// (if the ProtoBuf definition does not change) and safe for programmatic use.
+        pub fn as_str_name(&self) -> &'static str {
+            match self {
+                Self::InitiateVerification => "INITIATE_VERIFICATION",
+                Self::ProvideSecurityNumber => "PROVIDE_SECURITY_NUMBER",
+                Self::DoVerify => "DO_VERIFY",
+                Self::DoNotVerify => "DO_NOT_VERIFY",
+            }
+        }
+        /// Creates an enum from field names used in the ProtoBuf definition.
+        pub fn from_str_name(value: &str) -> ::core::option::Option<Self> {
+            match value {
+                "INITIATE_VERIFICATION" => Some(Self::InitiateVerification),
+                "PROVIDE_SECURITY_NUMBER" => Some(Self::ProvideSecurityNumber),
+                "DO_VERIFY" => Some(Self::DoVerify),
+                "DO_NOT_VERIFY" => Some(Self::DoNotVerify),
+                _ => None,
+            }
+        }
+    }
 }
 ///
 /// This is the most compact possible representation for a set of channels.
@@ -7333,6 +8346,10 @@ pub struct UserLite {
     /// This is sent out to other nodes on the mesh to allow them to compute a shared secret key.
     #[prost(bytes = "vec", tag = "7")]
     pub public_key: ::prost::alloc::vec::Vec<u8>,
+    ///
+    /// Whether or not the node can be messaged
+    #[prost(bool, optional, tag = "9")]
+    pub is_unmessagable: ::core::option::Option<bool>,
 }
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
@@ -7391,6 +8408,11 @@ pub struct NodeInfoLite {
     /// Last byte of the node number of the node that should be used as the next hop to reach this node.
     #[prost(uint32, tag = "12")]
     pub next_hop: u32,
+    ///
+    /// Bitfield for storing booleans.
+    /// LSB 0 is_key_manually_verified
+    #[prost(uint32, tag = "13")]
+    pub bitfield: u32,
 }
 ///
 /// This message is never sent over the wire, but it is used for serializing DB
@@ -7450,10 +8472,22 @@ pub struct DeviceState {
     /// The mesh's nodes with their available gpio pins for RemoteHardware module
     #[prost(message, repeated, tag = "13")]
     pub node_remote_hardware_pins: ::prost::alloc::vec::Vec<NodeRemoteHardwarePin>,
+}
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
+#[cfg_attr(feature = "ts-gen", derive(specta::Type))]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct NodeDatabase {
+    ///
+    /// A version integer used to invalidate old save files when we make
+    /// incompatible changes This integer is set at build time and is private to
+    /// NodeDB.cpp in the device code.
+    #[prost(uint32, tag = "1")]
+    pub version: u32,
     ///
     /// New lite version of NodeDB to decrease memory footprint
-    #[prost(message, repeated, tag = "14")]
-    pub node_db_lite: ::prost::alloc::vec::Vec<NodeInfoLite>,
+    #[prost(message, repeated, tag = "2")]
+    pub nodes: ::prost::alloc::vec::Vec<NodeInfoLite>,
 }
 ///
 /// The on-disk saved channels
@@ -7472,6 +8506,149 @@ pub struct ChannelFile {
     /// NodeDB.cpp in the device code.
     #[prost(uint32, tag = "2")]
     pub version: u32,
+}
+///
+/// The on-disk backup of the node's preferences
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
+#[cfg_attr(feature = "ts-gen", derive(specta::Type))]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct BackupPreferences {
+    ///
+    /// The version of the backup
+    #[prost(uint32, tag = "1")]
+    pub version: u32,
+    ///
+    /// The timestamp of the backup (if node has time)
+    #[prost(fixed32, tag = "2")]
+    pub timestamp: u32,
+    ///
+    /// The node's configuration
+    #[prost(message, optional, tag = "3")]
+    pub config: ::core::option::Option<LocalConfig>,
+    ///
+    /// The node's module configuration
+    #[prost(message, optional, tag = "4")]
+    pub module_config: ::core::option::Option<LocalModuleConfig>,
+    ///
+    /// The node's channels
+    #[prost(message, optional, tag = "5")]
+    pub channels: ::core::option::Option<ChannelFile>,
+    ///
+    /// The node's user (owner) information
+    #[prost(message, optional, tag = "6")]
+    pub owner: ::core::option::Option<User>,
+}
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
+#[cfg_attr(feature = "ts-gen", derive(specta::Type))]
+#[derive(Clone, Copy, PartialEq, ::prost::Message)]
+pub struct SensorData {
+    /// The message type
+    #[prost(enumeration = "MessageType", tag = "1")]
+    pub r#type: i32,
+    /// The sensor data, either as a float or an uint32
+    #[prost(oneof = "sensor_data::Data", tags = "2, 3")]
+    pub data: ::core::option::Option<sensor_data::Data>,
+}
+/// Nested message and enum types in `SensorData`.
+pub mod sensor_data {
+    /// The sensor data, either as a float or an uint32
+    #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+    #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
+    #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
+    #[derive(Clone, Copy, PartialEq, ::prost::Oneof)]
+    pub enum Data {
+        #[prost(float, tag = "2")]
+        FloatValue(f32),
+        #[prost(uint32, tag = "3")]
+        Uint32Value(u32),
+    }
+}
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
+#[cfg_attr(feature = "ts-gen", derive(specta::Type))]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct InterdeviceMessage {
+    /// The message data
+    #[prost(oneof = "interdevice_message::Data", tags = "1, 2")]
+    pub data: ::core::option::Option<interdevice_message::Data>,
+}
+/// Nested message and enum types in `InterdeviceMessage`.
+pub mod interdevice_message {
+    /// The message data
+    #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+    #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
+    #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum Data {
+        #[prost(string, tag = "1")]
+        Nmea(::prost::alloc::string::String),
+        #[prost(message, tag = "2")]
+        Sensor(super::SensorData),
+    }
+}
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
+#[cfg_attr(feature = "ts-gen", derive(specta::Type))]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+#[repr(i32)]
+pub enum MessageType {
+    Ack = 0,
+    /// in ms
+    CollectInterval = 160,
+    /// duration ms
+    BeepOn = 161,
+    /// cancel prematurely
+    BeepOff = 162,
+    Shutdown = 163,
+    PowerOn = 164,
+    Scd41Temp = 176,
+    Scd41Humidity = 177,
+    Scd41Co2 = 178,
+    Aht20Temp = 179,
+    Aht20Humidity = 180,
+    TvocIndex = 181,
+}
+impl MessageType {
+    /// String value of the enum field names used in the ProtoBuf definition.
+    ///
+    /// The values are not transformed in any way and thus are considered stable
+    /// (if the ProtoBuf definition does not change) and safe for programmatic use.
+    pub fn as_str_name(&self) -> &'static str {
+        match self {
+            Self::Ack => "ACK",
+            Self::CollectInterval => "COLLECT_INTERVAL",
+            Self::BeepOn => "BEEP_ON",
+            Self::BeepOff => "BEEP_OFF",
+            Self::Shutdown => "SHUTDOWN",
+            Self::PowerOn => "POWER_ON",
+            Self::Scd41Temp => "SCD41_TEMP",
+            Self::Scd41Humidity => "SCD41_HUMIDITY",
+            Self::Scd41Co2 => "SCD41_CO2",
+            Self::Aht20Temp => "AHT20_TEMP",
+            Self::Aht20Humidity => "AHT20_HUMIDITY",
+            Self::TvocIndex => "TVOC_INDEX",
+        }
+    }
+    /// Creates an enum from field names used in the ProtoBuf definition.
+    pub fn from_str_name(value: &str) -> ::core::option::Option<Self> {
+        match value {
+            "ACK" => Some(Self::Ack),
+            "COLLECT_INTERVAL" => Some(Self::CollectInterval),
+            "BEEP_ON" => Some(Self::BeepOn),
+            "BEEP_OFF" => Some(Self::BeepOff),
+            "SHUTDOWN" => Some(Self::Shutdown),
+            "POWER_ON" => Some(Self::PowerOn),
+            "SCD41_TEMP" => Some(Self::Scd41Temp),
+            "SCD41_HUMIDITY" => Some(Self::Scd41Humidity),
+            "SCD41_CO2" => Some(Self::Scd41Co2),
+            "AHT20_TEMP" => Some(Self::Aht20Temp),
+            "AHT20_HUMIDITY" => Some(Self::Aht20Humidity),
+            "TVOC_INDEX" => Some(Self::TvocIndex),
+            _ => None,
+        }
+    }
 }
 ///
 /// This message wraps a MeshPacket with extra metadata about the sender and how it arrived.
@@ -7556,6 +8733,11 @@ pub struct MapReport {
     /// Number of online nodes (heard in the last 2 hours) this node has in its list that were received locally (not via MQTT)
     #[prost(uint32, tag = "13")]
     pub num_online_local_nodes: u32,
+    ///
+    /// User has opted in to share their location (map report) with the mqtt server
+    /// Controlled by map_report.should_report_location
+    #[prost(bool, tag = "14")]
+    pub has_opted_report_location: bool,
 }
 ///
 /// TODO: REPLACE
