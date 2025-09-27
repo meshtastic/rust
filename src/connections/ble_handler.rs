@@ -241,7 +241,7 @@ impl BleHandler {
         Self::parse_u32(data)
     }
 
-    pub async fn notifications(&self) -> Result<BoxStream<u32>, Error> {
+    pub async fn notifications(&self) -> Result<BoxStream<'_, u32>, Error> {
         self.radio
             .subscribe(&self.fromnum_char)
             .await
@@ -263,7 +263,7 @@ impl BleHandler {
         )))
     }
 
-    pub async fn adapter_events(&self) -> Result<BoxStream<AdapterEvent>, Error> {
+    pub async fn adapter_events(&self) -> Result<BoxStream<'_, AdapterEvent>, Error> {
         let stream = self
             .adapter
             .events()
