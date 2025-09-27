@@ -16,3 +16,6 @@ Cargo.lock
 # Nanopb protobufs aren't necessary for the project
 # its name _.rs because there's no package name in the source file
 src/generated/_.rs
+
+#i RustRover IDE files
+.idea
