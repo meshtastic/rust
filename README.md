@@ -3,7 +3,7 @@
 ## Overview
 
 Meshtastic.rs is a crate that allows you to interact with Meshtastic devices in Rust. This crate is designed
-to be used on a desktop environment, and currently supports connecting to radios via USB serial and TCP.
+to be used on a desktop environment and currently supports connecting to radios via USB serial and TCP.
 
 This crate is designed to be used within the tokio asynchronous runtime.
 
@@ -39,6 +39,7 @@ these examples using the following commands:
 ```bash
 cargo run --example basic_tcp
 cargo run --example basic_serial
+cargo run --features="bluetooth-le tokio" --example basic_ble
 ```
 
 ### TCP Example
@@ -147,10 +148,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 This example requires a powered and flashed Meshtastic radio with BLE enabled. You need to pair it first using your operating system utilities. PIN might be needed.
 
 > [!NOTE]
-> You need `bluetooth-le` feature enabled for Bluetooth low energy support.
+> You need `bluetooth-le` feature enabled for Bluetooth low-energy support.
 
 ```rust
-/// This example connects via Bluetooth LE to the radio, and prints out all received packets.
+/// This example connects via Bluetooth LE to the radio and prints out all received packets.
 extern crate meshtastic;
 
 use std::io::{self, BufRead};
