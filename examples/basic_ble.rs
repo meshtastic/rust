@@ -1,4 +1,4 @@
-//! This example connects via Bluetooth LE to the radio, and prints out all received packets.
+//! This example connects via Bluetooth LE to the radio and prints out all received packets.
 extern crate meshtastic;
 
 use std::io::{self, BufRead};
