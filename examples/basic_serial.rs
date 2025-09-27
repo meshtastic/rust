@@ -1,4 +1,4 @@
-//! This example connects to a radio via serial, and prints out all received packets.
+//! This example connects to a radio via serial and prints out all received packets.
 //! This example requires a powered and flashed Meshtastic radio.
 //! https://meshtastic.org/docs/supported-hardware
 extern crate meshtastic;
@@ -24,7 +24,7 @@ fn setup_logger() -> Result<(), fern::InitError> {
             ))
         })
         .level(log::LevelFilter::Trace)
-        .chain(std::io::stdout())
+        .chain(io::stdout())
         .apply()?;
 
     Ok(())
@@ -55,7 +55,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let config_id = utils::generate_rand_id();
     let stream_api = stream_api.configure(config_id).await?;
 
-    // This loop can be broken with ctrl+c, or by disconnecting
+    // This loop can be broken with ctrl+c or by disconnecting
     // the attached serial port.
     while let Some(decoded) = decoded_listener.recv().await {
         println!("Received: {:?}", decoded);
@@ -63,8 +63,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Note that in this specific example, this will only be called when
     // the radio is disconnected, as the above loop will never exit.
-    // Typically you would allow the user to manually kill the loop,
-    // for example with tokio::select!.
+    // Typically, you would allow the user to manually kill the loop,
+    // for example, with tokio::select!.
     let _stream_api = stream_api.disconnect().await?;
 
     Ok(())

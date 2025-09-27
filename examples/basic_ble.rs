@@ -38,8 +38,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Note that in this specific example, this will only be called when
     // the radio is disconnected, as the above loop will never exit.
-    // Typically you would allow the user to manually kill the loop,
-    // for example with tokio::select!.
+    // Typically, you would allow the user to manually kill the loop,
+    // for example, with tokio::select!.
     let _stream_api = stream_api.disconnect().await?;
 
     Ok(())
