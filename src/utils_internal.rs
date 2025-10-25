@@ -203,9 +203,10 @@ pub async fn build_tcp_stream(
     Ok(StreamHandle::from_stream(stream))
 }
 
-/// A helper method to list the names of all reachable Meshtstic Bluetooth radios. This method is
-/// intended to be used to select a valid Bluetooth radio, then to pass that device ID to the
-/// `build_ble_stream` method.
+/// A helper method to list the names of all reachable Meshtastic Bluetooth radios.
+///
+/// This method is intended to be used to select a valid Bluetooth radio, then to pass that device
+/// MAC address to the `build_ble_stream` method.
 ///
 /// # Arguments
 ///
@@ -213,13 +214,14 @@ pub async fn build_tcp_stream(
 ///
 /// # Returns
 ///
-/// A vector of Bluetooth devices identified by BleId which contains a name and a MAC address.
+/// A vector of Bluetooth devices identified by a MAC address and optionally also a name.
 ///
 /// # Examples
 ///
 /// ```
 /// let ble_devices = utils::available_ble_devices().await.unwrap();
 /// println!("Available Meshtastic BLE devices: {:?}", ble_devices);
+/// let stream = build_ble_stream(&ble_devices[0].1.into(), Duration::from_secs(10)).await;
 /// ```
 ///
 /// # Errors
