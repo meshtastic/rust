@@ -54,6 +54,8 @@ walkdir = { version = "2.5.0", optional = true }
 
 [dependencies]
 futures-util = "0.3.31"
+#TODO: remove indexmap after moving to rust 1.84+. It's listed here only to lock the version.
+indexmap = "=2.11.0"
 rand = "0.9.0"
 tokio = { version = "1.43.0", features = ["full"], optional = true }
 tokio-serial = { version = "5.4.5", optional = true }
