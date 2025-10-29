@@ -6,6 +6,7 @@ use btleplug::platform::{Adapter, Manager, Peripheral};
 use futures::stream::StreamExt;
 use futures_util::stream::BoxStream;
 use log::error;
+use serde::{Deserialize, Serialize};
 use std::fmt::Display;
 use std::future;
 use std::str::FromStr;
@@ -87,7 +88,7 @@ impl Display for BleId {
 }
 
 /// A Meshtastic device discovered via Bluetooth LE.
-#[derive(Clone, PartialEq, Eq, Debug)]
+#[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
 pub struct BleDevice {
     /// The broadcast name of the device.
     pub name: Option<String>,
