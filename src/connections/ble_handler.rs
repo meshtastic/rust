@@ -7,6 +7,7 @@ use futures::stream::StreamExt;
 use futures_util::stream::BoxStream;
 use log::error;
 use serde::{Deserialize, Serialize};
+use std::borrow::Cow;
 use std::fmt::Display;
 use std::future;
 use std::str::FromStr;
@@ -41,7 +42,7 @@ pub enum RadioMessage {
 }
 
 /// Bluetooth Low Energy ID, used to filter available devices.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum BleId {
     /// A Meshtastic device identified by its broadcast name.
     Name(String),
@@ -72,6 +73,15 @@ impl BleId {
     }
 }
 
+impl TryFrom<u64> for BleId {
+    type Error = Error;
+
+    fn try_from(value: u64) -> Result<Self, Self::Error> {
+        let mac_address = BDAddr::try_from(value)?;
+        Ok(Self::MacAddress(mac_address))
+    }
+}
+
 impl From<BDAddr> for BleId {
     fn from(mac: BDAddr) -> Self {
         BleId::MacAddress(mac)
@@ -94,6 +104,30 @@ pub struct BleDevice {
     pub name: Option<String>,
     /// The MAC address of the device.
     pub mac_address: BDAddr,
+}
+
+impl<'a> From<BleId> for Cow<'a, BleId> {
+    fn from(ble_id: BleId) -> Self {
+        Cow::Owned(ble_id)
+    }
+}
+
+impl<'a> From<&'a BleId> for Cow<'a, BleId> {
+    fn from(ble_id: &'a BleId) -> Self {
+        Cow::Borrowed(ble_id)
+    }
+}
+
+impl<'a> From<&BleDevice> for Cow<'a, BleId> {
+    fn from(device: &BleDevice) -> Self {
+        Cow::Owned(device.mac_address.into())
+    }
+}
+
+impl<'a> From<BleDevice> for Cow<'a, BleId> {
+    fn from(device: BleDevice) -> Self {
+        Cow::Owned(device.mac_address.into())
+    }
 }
 
 impl BleHandler {
@@ -348,5 +382,39 @@ impl BleHandler {
             }
             future::ready(None)
         })))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_ble_id_to_cow() {
+        let ble_id_name = BleId::from_name("TestDevice");
+        let cow_from_ref: Cow<'_, BleId> = (&ble_id_name).into();
+        assert_eq!(*cow_from_ref, ble_id_name);
+
+        let cow_from_owned: Cow<'_, BleId> = ble_id_name.into();
+        assert!(matches!(cow_from_owned, Cow::Owned(_)));
+
+        let ble_id_mac = BleId::try_from(0x001122334455).unwrap();
+        let cow_from_owned_mac: Cow<'_, BleId> = ble_id_mac.clone().into();
+        assert_eq!(*cow_from_owned_mac, ble_id_mac);
+    }
+
+    #[test]
+    fn test_ble_device_to_cow() {
+        let ble_device = BleDevice {
+            name: None,
+            mac_address: BDAddr::try_from(0x001122334455).unwrap(),
+        };
+
+        let cow_from_ble_device_ref: Cow<'_, BleId> = (&ble_device).into();
+        let ble_id_mac = BleId::try_from(0x001122334455).unwrap();
+        assert_eq!(*cow_from_ble_device_ref, ble_id_mac);
+
+        let cow_from_ble_device_owned: Cow<'_, BleId> = ble_device.into();
+        assert_eq!(*cow_from_ble_device_owned, ble_id_mac);
     }
 }

@@ -70,6 +70,11 @@ pub enum Error {
     /// An error indicating that the library failed when performing an operation on an internal data channel.
     #[error(transparent)]
     InternalChannelError(#[from] InternalChannelError),
+
+    /// An error indicating MAC address parse error
+    #[cfg(feature = "bluetooth-le")]
+    #[error(transparent)]
+    MacAddressParseError(#[from] btleplug::api::ParseBDAddrError),
 }
 
 /// An enum that defines the possible internal errors that can occur within the library when handling streams.
