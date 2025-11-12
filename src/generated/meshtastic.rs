@@ -5111,7 +5111,11 @@ pub struct MeshPacket {
     #[prost(fixed32, tag = "1")]
     pub from: u32,
     ///
-    /// The (immediate) destination for this packet
+    /// The (immediate) destination for this packet.
+    /// If the value is u32::MAX, this indicates that the packet was not destined for a specific
+    /// node, but for a channel as indicated by the value of `channel` below.
+    /// If the value is not u32MAX, this indicates that the packet was destined for a specific
+    /// node (i.e. a kind of "Direct Message" to this node) and not broadcast on a channel.
     #[prost(fixed32, tag = "2")]
     pub to: u32,
     ///
