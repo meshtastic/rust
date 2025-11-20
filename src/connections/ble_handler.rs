@@ -12,6 +12,7 @@ use std::fmt::Display;
 use std::future;
 use std::str::FromStr;
 use std::time::Duration;
+use tokio::sync::OnceCell;
 use uuid::Uuid;
 
 use crate::errors_internal::{BleConnectionError, Error, InternalStreamError};
@@ -22,6 +23,9 @@ const MSH_SERVICE: Uuid = Uuid::from_u128(0x6ba1b218_15a8_461f_9fa8_5dcae273eafd
 const FROMRADIO: Uuid = Uuid::from_u128(0x2c55e69e_4993_11ed_b878_0242ac120002);
 const TORADIO: Uuid = Uuid::from_u128(0xf75c76d2_129e_4dad_a1dd_7866124401e7);
 const FROMNUM: Uuid = Uuid::from_u128(0xed9da18c_a800_4f66_a670_aa7547e34453);
+
+// We store all Bluetooth adapters in a OnceCell.
+static ADAPTERS: OnceCell<Vec<Adapter>> = OnceCell::const_new();
 
 pub struct BleHandler {
     radio: Peripheral,
@@ -174,10 +178,17 @@ impl BleHandler {
             source: Box::new(e),
             description: "Failed to scan for BLE devices".to_owned(),
         };
-        let manager = Manager::new().await.map_err(scan_error_fn)?;
-        let adapters = manager.adapters().await.map_err(scan_error_fn)?;
+
+        let adapters = ADAPTERS
+            .get_or_try_init(|| async {
+                let manager = Manager::new().await.map_err(scan_error_fn)?;
+                //This call spawns a new never-ending thread, so we have to call it just once.
+                manager.adapters().await.map_err(scan_error_fn)
+            })
+            .await?;
+
         let mut available_peripherals = Vec::new();
-        for adapter in &adapters {
+        for adapter in adapters {
             let peripherals = Self::scan_peripherals(adapter, scan_duration).await;
             match peripherals {
                 Err(e) => {
