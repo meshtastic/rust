@@ -7862,7 +7862,7 @@ pub struct GeoChat {
 }
 ///
 /// ATAK Group
-/// <__group role='Team Member' name='Cyan'/>
+/// `<__group role='Team Member' name='Cyan'/>`
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
 #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
@@ -7880,7 +7880,7 @@ pub struct Group {
 }
 ///
 /// ATAK EUD Status
-/// <status battery='100' />
+/// `<status battery='100' />`
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
 #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
@@ -7893,7 +7893,7 @@ pub struct Status {
 }
 ///
 /// ATAK Contact
-/// <contact endpoint='0.0.0.0:4242:tcp' phone='+12345678' callsign='FALKE'/>
+/// `<contact endpoint='0.0.0.0:4242:tcp' phone='+12345678' callsign='FALKE'/>`
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
 #[cfg_attr(feature = "ts-gen", derive(specta::Type))]

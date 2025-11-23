@@ -1,3 +1,5 @@
+#![cfg_attr(docsrs, feature(doc_cfg))]
+
 //! A Rust library for communicating with and configuring Meshtastic devices.
 #[cfg(feature = "tokio")]
 pub(crate) mod connections;

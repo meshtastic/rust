@@ -15,7 +15,7 @@ use crate::connections::stream_buffer::StreamBuffer;
 use super::wrappers::encoded_data::IncomingStreamData;
 
 /// Interval for sending heartbeat packets to the radio (in seconds).
-/// Needs to be less than this: https://github.com/meshtastic/firmware/blob/eb372c190ec82366998c867acc609a418130d842/src/SerialConsole.cpp#L8
+/// Needs to be less than this: <https://github.com/meshtastic/firmware/blob/eb372c190ec82366998c867acc609a418130d842/src/SerialConsole.cpp#L8>
 pub const CLIENT_HEARTBEAT_INTERVAL: u64 = 5 * 60; // 5 minutes
 
 pub fn spawn_read_handler<R>(

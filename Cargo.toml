@@ -3,6 +3,7 @@ name = "meshtastic"
 description = "A Rust library for communicating with and configuring Meshtastic devices."
 homepage = "https://meshtastic.org/"
 repository = "https://github.com/meshtastic/rust"
+documentation = "https://docs.rs/heapless"
 keywords = ["meshtastic", "mesh", "lora", "tcp", "serial"]
 categories = ["embedded", "config", "encoding"]
 authors = ["Adam McQuilkin"]
@@ -83,3 +84,7 @@ bluez-async = { version = "=0.8.0", optional = true }
 [dev-dependencies]
 fern = { version = "0.7.1", features = ["colored"] }
 humantime = "2.1.0"
+
+[package.metadata.docs.rs]
+features = ["bluetooth-le"]
+rustdoc-args = ["--cfg", "docsrs"]
