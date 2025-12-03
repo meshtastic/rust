@@ -75,11 +75,8 @@ uuid = { version = "1.12.1", optional = true }
 btleplug = { version = "0.11.7", optional = true, features = ["serde"] }
 futures = { version = "0.3.31", optional = true }
 
-#TODO: drop pinning of the bluez-async version once we move the MSRV to 1.84 and we can use
-#MSRV-aware resolver instead of this hack. See
-#https://blog.rust-lang.org/2025/01/09/Rust-1.84.0/#cargo-considers-rust-versions-for-dependency-version-selection
 [target.'cfg(target_os = "linux")'.dependencies]
-bluez-async = { version = "=0.8.0", optional = true }
+bluez-async = { version = "0.8.2", optional = true }
 
 [dev-dependencies]
 fern = { version = "0.7.1", features = ["colored"] }
