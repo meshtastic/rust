@@ -88,10 +88,10 @@ pub struct ModuleSettings {
     #[prost(uint32, tag = "1")]
     pub position_precision: u32,
     ///
-    /// Controls whether or not the phone / clients should mute the current channel
+    /// Controls whether or not the client / device should mute the current channel
     /// Useful for noisy public channels you don't necessarily want to disable
     #[prost(bool, tag = "2")]
-    pub is_client_muted: bool,
+    pub is_muted: bool,
 }
 ///
 /// A pair of a channel number, mode and the (sharable) settings for that channel
@@ -248,6 +248,91 @@ pub struct DeviceUiConfig {
     /// true for analog clockface, false for digital clockface
     #[prost(bool, tag = "18")]
     pub is_clockface_analog: bool,
+    ///
+    /// How the GPS coordinates are formatted on the OLED screen.
+    #[prost(enumeration = "device_ui_config::GpsCoordinateFormat", tag = "19")]
+    pub gps_format: i32,
+}
+/// Nested message and enum types in `DeviceUIConfig`.
+pub mod device_ui_config {
+    ///
+    /// How the GPS coordinates are displayed on the OLED screen.
+    #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+    #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
+    #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
+    #[derive(
+        Clone,
+        Copy,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash,
+        PartialOrd,
+        Ord,
+        ::prost::Enumeration
+    )]
+    #[repr(i32)]
+    pub enum GpsCoordinateFormat {
+        ///
+        /// GPS coordinates are displayed in the normal decimal degrees format:
+        /// DD.DDDDDD DDD.DDDDDD
+        Dec = 0,
+        ///
+        /// GPS coordinates are displayed in the degrees minutes seconds format:
+        /// DD°MM'SS"C DDD°MM'SS"C, where C is the compass point representing the locations quadrant
+        Dms = 1,
+        ///
+        /// Universal Transverse Mercator format:
+        /// ZZB EEEEEE NNNNNNN, where Z is zone, B is band, E is easting, N is northing
+        Utm = 2,
+        ///
+        /// Military Grid Reference System format:
+        /// ZZB CD EEEEE NNNNN, where Z is zone, B is band, C is the east 100k square, D is the north 100k square,
+        /// E is easting, N is northing
+        Mgrs = 3,
+        ///
+        /// Open Location Code (aka Plus Codes).
+        Olc = 4,
+        ///
+        /// Ordnance Survey Grid Reference (the National Grid System of the UK).
+        /// Format: AB EEEEE NNNNN, where A is the east 100k square, B is the north 100k square,
+        /// E is the easting, N is the northing
+        Osgr = 5,
+        ///
+        /// Maidenhead Locator System
+        /// Described here: <https://en.wikipedia.org/wiki/Maidenhead_Locator_System>
+        Mls = 6,
+    }
+    impl GpsCoordinateFormat {
+        /// String value of the enum field names used in the ProtoBuf definition.
+        ///
+        /// The values are not transformed in any way and thus are considered stable
+        /// (if the ProtoBuf definition does not change) and safe for programmatic use.
+        pub fn as_str_name(&self) -> &'static str {
+            match self {
+                Self::Dec => "DEC",
+                Self::Dms => "DMS",
+                Self::Utm => "UTM",
+                Self::Mgrs => "MGRS",
+                Self::Olc => "OLC",
+                Self::Osgr => "OSGR",
+                Self::Mls => "MLS",
+            }
+        }
+        /// Creates an enum from field names used in the ProtoBuf definition.
+        pub fn from_str_name(value: &str) -> ::core::option::Option<Self> {
+            match value {
+                "DEC" => Some(Self::Dec),
+                "DMS" => Some(Self::Dms),
+                "UTM" => Some(Self::Utm),
+                "MGRS" => Some(Self::Mgrs),
+                "OLC" => Some(Self::Olc),
+                "OSGR" => Some(Self::Osgr),
+                "MLS" => Some(Self::Mls),
+                _ => None,
+            }
+        }
+    }
 }
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
@@ -484,6 +569,12 @@ pub enum Language {
     /// Bulgarian
     Bulgarian = 17,
     ///
+    /// Czech
+    Czech = 18,
+    ///
+    /// Danish
+    Danish = 19,
+    ///
     /// Simplified Chinese (experimental)
     SimplifiedChinese = 30,
     ///
@@ -515,6 +606,8 @@ impl Language {
             Self::Slovenian => "SLOVENIAN",
             Self::Ukrainian => "UKRAINIAN",
             Self::Bulgarian => "BULGARIAN",
+            Self::Czech => "CZECH",
+            Self::Danish => "DANISH",
             Self::SimplifiedChinese => "SIMPLIFIED_CHINESE",
             Self::TraditionalChinese => "TRADITIONAL_CHINESE",
         }
@@ -540,6 +633,8 @@ impl Language {
             "SLOVENIAN" => Some(Self::Slovenian),
             "UKRAINIAN" => Some(Self::Ukrainian),
             "BULGARIAN" => Some(Self::Bulgarian),
+            "CZECH" => Some(Self::Czech),
+            "DANISH" => Some(Self::Danish),
             "SIMPLIFIED_CHINESE" => Some(Self::SimplifiedChinese),
             "TRADITIONAL_CHINESE" => Some(Self::TraditionalChinese),
             _ => None,
@@ -656,11 +751,14 @@ pub mod config {
             ///    The wifi radio and the oled screen will be put to sleep.
             ///    This mode may still potentially have higher power usage due to it's preference in message rebroadcasting on the mesh.
             Router = 2,
+            #[deprecated]
             RouterClient = 3,
             ///
             /// Description: Infrastructure node for extending network coverage by relaying messages with minimal overhead. Not visible in Nodes list.
             /// Technical Details: Mesh packets will simply be rebroadcasted over this node. Nodes configured with this role will not originate NodeInfo, Position, Telemetry
             ///    or any other packet type. They will simply rebroadcast any mesh packets on the same frequency, channel num, spread factor, and coding rate.
+            /// Deprecated in v2.7.11 because it creates "holes" in the mesh rebroadcast chain.
+            #[deprecated]
             Repeater = 4,
             ///
             /// Description: Broadcasts GPS position packets as priority.
@@ -706,6 +804,12 @@ pub mod config {
             ///     but should not be given priority over other routers in order to avoid unnecessaraily
             ///     consuming hops.
             RouterLate = 11,
+            ///
+            /// Description: Treats packets from or to favorited nodes as ROUTER_LATE, and all other packets as CLIENT.
+            /// Technical Details: Used for stronger attic/roof nodes to distribute messages more widely
+            ///     from weaker, indoor, or less-well-positioned nodes. Recommended for users with multiple nodes
+            ///     where one CLIENT_BASE acts as a more powerful base station, such as an attic/roof node.
+            ClientBase = 12,
         }
         impl Role {
             /// String value of the enum field names used in the ProtoBuf definition.
@@ -717,7 +821,9 @@ pub mod config {
                     Self::Client => "CLIENT",
                     Self::ClientMute => "CLIENT_MUTE",
                     Self::Router => "ROUTER",
+                    #[allow(deprecated)]
                     Self::RouterClient => "ROUTER_CLIENT",
+                    #[allow(deprecated)]
                     Self::Repeater => "REPEATER",
                     Self::Tracker => "TRACKER",
                     Self::Sensor => "SENSOR",
@@ -726,6 +832,7 @@ pub mod config {
                     Self::LostAndFound => "LOST_AND_FOUND",
                     Self::TakTracker => "TAK_TRACKER",
                     Self::RouterLate => "ROUTER_LATE",
+                    Self::ClientBase => "CLIENT_BASE",
                 }
             }
             /// Creates an enum from field names used in the ProtoBuf definition.
@@ -734,8 +841,8 @@ pub mod config {
                     "CLIENT" => Some(Self::Client),
                     "CLIENT_MUTE" => Some(Self::ClientMute),
                     "ROUTER" => Some(Self::Router),
-                    "ROUTER_CLIENT" => Some(Self::RouterClient),
-                    "REPEATER" => Some(Self::Repeater),
+                    "ROUTER_CLIENT" => Some(#[allow(deprecated)] Self::RouterClient),
+                    "REPEATER" => Some(#[allow(deprecated)] Self::Repeater),
                     "TRACKER" => Some(Self::Tracker),
                     "SENSOR" => Some(Self::Sensor),
                     "TAK" => Some(Self::Tak),
@@ -743,6 +850,7 @@ pub mod config {
                     "LOST_AND_FOUND" => Some(Self::LostAndFound),
                     "TAK_TRACKER" => Some(Self::TakTracker),
                     "ROUTER_LATE" => Some(Self::RouterLate),
+                    "CLIENT_BASE" => Some(Self::ClientBase),
                     _ => None,
                 }
             }
@@ -1338,7 +1446,10 @@ pub mod config {
         /// Deprecated in 2.7.4: Unused
         /// How the GPS coordinates are formatted on the OLED screen.
         #[deprecated]
-        #[prost(enumeration = "display_config::GpsCoordinateFormat", tag = "2")]
+        #[prost(
+            enumeration = "display_config::DeprecatedGpsCoordinateFormat",
+            tag = "2"
+        )]
         pub gps_format: i32,
         ///
         /// Automatically toggles to the next page on the screen like a carousel, based the specified interval in seconds.
@@ -1384,11 +1495,20 @@ pub mod config {
         /// If true, the device will display the time in 12-hour format on screen.
         #[prost(bool, tag = "12")]
         pub use_12h_clock: bool,
+        ///
+        /// If false (default), the device will use short names for various display screens.
+        /// If true, node names will show in long format
+        #[prost(bool, tag = "13")]
+        pub use_long_node_name: bool,
+        ///
+        /// If true, the device will display message bubbles on screen.
+        #[prost(bool, tag = "14")]
+        pub enable_message_bubbles: bool,
     }
     /// Nested message and enum types in `DisplayConfig`.
     pub mod display_config {
         ///
-        /// How the GPS coordinates are displayed on the OLED screen.
+        /// Deprecated in 2.7.4: Unused
         #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
         #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
         #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
@@ -1404,57 +1524,23 @@ pub mod config {
             ::prost::Enumeration
         )]
         #[repr(i32)]
-        pub enum GpsCoordinateFormat {
-            ///
-            /// GPS coordinates are displayed in the normal decimal degrees format:
-            /// DD.DDDDDD DDD.DDDDDD
-            Dec = 0,
-            ///
-            /// GPS coordinates are displayed in the degrees minutes seconds format:
-            /// DD°MM'SS"C DDD°MM'SS"C, where C is the compass point representing the locations quadrant
-            Dms = 1,
-            ///
-            /// Universal Transverse Mercator format:
-            /// ZZB EEEEEE NNNNNNN, where Z is zone, B is band, E is easting, N is northing
-            Utm = 2,
-            ///
-            /// Military Grid Reference System format:
-            /// ZZB CD EEEEE NNNNN, where Z is zone, B is band, C is the east 100k square, D is the north 100k square,
-            /// E is easting, N is northing
-            Mgrs = 3,
-            ///
-            /// Open Location Code (aka Plus Codes).
-            Olc = 4,
-            ///
-            /// Ordnance Survey Grid Reference (the National Grid System of the UK).
-            /// Format: AB EEEEE NNNNN, where A is the east 100k square, B is the north 100k square,
-            /// E is the easting, N is the northing
-            Osgr = 5,
+        pub enum DeprecatedGpsCoordinateFormat {
+            Unused = 0,
         }
-        impl GpsCoordinateFormat {
+        impl DeprecatedGpsCoordinateFormat {
             /// String value of the enum field names used in the ProtoBuf definition.
             ///
             /// The values are not transformed in any way and thus are considered stable
             /// (if the ProtoBuf definition does not change) and safe for programmatic use.
             pub fn as_str_name(&self) -> &'static str {
                 match self {
-                    Self::Dec => "DEC",
-                    Self::Dms => "DMS",
-                    Self::Utm => "UTM",
-                    Self::Mgrs => "MGRS",
-                    Self::Olc => "OLC",
-                    Self::Osgr => "OSGR",
+                    Self::Unused => "UNUSED",
                 }
             }
             /// Creates an enum from field names used in the ProtoBuf definition.
             pub fn from_str_name(value: &str) -> ::core::option::Option<Self> {
                 match value {
-                    "DEC" => Some(Self::Dec),
-                    "DMS" => Some(Self::Dms),
-                    "UTM" => Some(Self::Utm),
-                    "MGRS" => Some(Self::Mgrs),
-                    "OLC" => Some(Self::Olc),
-                    "OSGR" => Some(Self::Osgr),
+                    "UNUSED" => Some(Self::Unused),
                     _ => None,
                 }
             }
@@ -1996,10 +2082,13 @@ pub mod config {
             LongFast = 0,
             ///
             /// Long Range - Slow
+            /// Deprecated in 2.7: Unpopular slow preset.
+            #[deprecated]
             LongSlow = 1,
             ///
             /// Very Long Range - Slow
             /// Deprecated in 2.5: Works only with txco and is unusably slow
+            #[deprecated]
             VeryLongSlow = 2,
             ///
             /// Medium Range - Slow
@@ -2021,6 +2110,10 @@ pub mod config {
             /// This is the fastest preset and the only one with 500kHz bandwidth.
             /// It is not legal to use in all regions due to this wider bandwidth.
             ShortTurbo = 8,
+            ///
+            /// Long Range - Turbo
+            /// This preset performs similarly to LongFast, but with 500Khz bandwidth.
+            LongTurbo = 9,
         }
         impl ModemPreset {
             /// String value of the enum field names used in the ProtoBuf definition.
@@ -2030,7 +2123,9 @@ pub mod config {
             pub fn as_str_name(&self) -> &'static str {
                 match self {
                     Self::LongFast => "LONG_FAST",
+                    #[allow(deprecated)]
                     Self::LongSlow => "LONG_SLOW",
+                    #[allow(deprecated)]
                     Self::VeryLongSlow => "VERY_LONG_SLOW",
                     Self::MediumSlow => "MEDIUM_SLOW",
                     Self::MediumFast => "MEDIUM_FAST",
@@ -2038,20 +2133,22 @@ pub mod config {
                     Self::ShortFast => "SHORT_FAST",
                     Self::LongModerate => "LONG_MODERATE",
                     Self::ShortTurbo => "SHORT_TURBO",
+                    Self::LongTurbo => "LONG_TURBO",
                 }
             }
             /// Creates an enum from field names used in the ProtoBuf definition.
             pub fn from_str_name(value: &str) -> ::core::option::Option<Self> {
                 match value {
                     "LONG_FAST" => Some(Self::LongFast),
-                    "LONG_SLOW" => Some(Self::LongSlow),
-                    "VERY_LONG_SLOW" => Some(Self::VeryLongSlow),
+                    "LONG_SLOW" => Some(#[allow(deprecated)] Self::LongSlow),
+                    "VERY_LONG_SLOW" => Some(#[allow(deprecated)] Self::VeryLongSlow),
                     "MEDIUM_SLOW" => Some(Self::MediumSlow),
                     "MEDIUM_FAST" => Some(Self::MediumFast),
                     "SHORT_SLOW" => Some(Self::ShortSlow),
                     "SHORT_FAST" => Some(Self::ShortFast),
                     "LONG_MODERATE" => Some(Self::LongModerate),
                     "SHORT_TURBO" => Some(Self::ShortTurbo),
+                    "LONG_TURBO" => Some(Self::LongTurbo),
                     _ => None,
                 }
             }
@@ -2325,7 +2422,7 @@ pub struct ModuleConfig {
     /// TODO: REPLACE
     #[prost(
         oneof = "module_config::PayloadVariant",
-        tags = "1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13"
+        tags = "1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15"
     )]
     pub payload_variant: ::core::option::Option<module_config::PayloadVariant>,
 }
@@ -2689,6 +2786,71 @@ pub mod module_config {
         pub ble_threshold: i32,
     }
     ///
+    /// Config for the Traffic Management module.
+    /// Provides packet inspection and traffic shaping to help reduce channel utilization
+    #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+    #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
+    #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
+    #[derive(Clone, Copy, PartialEq, Eq, Hash, ::prost::Message)]
+    pub struct TrafficManagementConfig {
+        ///
+        /// Master enable for traffic management module
+        #[prost(bool, tag = "1")]
+        pub enabled: bool,
+        ///
+        /// Enable position deduplication to drop redundant position broadcasts
+        #[prost(bool, tag = "2")]
+        pub position_dedup_enabled: bool,
+        ///
+        /// Number of bits of precision for position deduplication (0-32)
+        #[prost(uint32, tag = "3")]
+        pub position_precision_bits: u32,
+        ///
+        /// Minimum interval in seconds between position updates from the same node
+        #[prost(uint32, tag = "4")]
+        pub position_min_interval_secs: u32,
+        ///
+        /// Enable direct response to NodeInfo requests from local cache
+        #[prost(bool, tag = "5")]
+        pub nodeinfo_direct_response: bool,
+        ///
+        /// Minimum hop distance from requestor before responding to NodeInfo requests
+        #[prost(uint32, tag = "6")]
+        pub nodeinfo_direct_response_max_hops: u32,
+        ///
+        /// Enable per-node rate limiting to throttle chatty nodes
+        #[prost(bool, tag = "7")]
+        pub rate_limit_enabled: bool,
+        ///
+        /// Time window in seconds for rate limiting calculations
+        #[prost(uint32, tag = "8")]
+        pub rate_limit_window_secs: u32,
+        ///
+        /// Maximum packets allowed per node within the rate limit window
+        #[prost(uint32, tag = "9")]
+        pub rate_limit_max_packets: u32,
+        ///
+        /// Enable dropping of unknown/undecryptable packets per rate_limit_window_secs
+        #[prost(bool, tag = "10")]
+        pub drop_unknown_enabled: bool,
+        ///
+        /// Number of unknown packets before dropping from a node
+        #[prost(uint32, tag = "11")]
+        pub unknown_packet_threshold: u32,
+        ///
+        /// Set hop_limit to 0 for relayed telemetry broadcasts (own packets unaffected)
+        #[prost(bool, tag = "12")]
+        pub exhaust_hop_telemetry: bool,
+        ///
+        /// Set hop_limit to 0 for relayed position broadcasts (own packets unaffected)
+        #[prost(bool, tag = "13")]
+        pub exhaust_hop_position: bool,
+        ///
+        /// Preserve hop_limit for router-to-router traffic
+        #[prost(bool, tag = "14")]
+        pub router_preserve_hops: bool,
+    }
+    ///
     /// Serial Config
     #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
     #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
@@ -2848,6 +3010,12 @@ pub mod module_config {
             /// Used to configure and view some parameters of MeshSolar.
             /// <https://heltec.org/project/meshsolar/>
             MsConfig = 8,
+            /// Logs mesh traffic to the serial pins, ideal for logging via openLog or similar.
+            ///
+            /// includes other packets
+            Log = 9,
+            /// only text (channel & DM)
+            Logtext = 10,
         }
         impl SerialMode {
             /// String value of the enum field names used in the ProtoBuf definition.
@@ -2865,6 +3033,8 @@ pub mod module_config {
                     Self::Ws85 => "WS85",
                     Self::VeDirect => "VE_DIRECT",
                     Self::MsConfig => "MS_CONFIG",
+                    Self::Log => "LOG",
+                    Self::Logtext => "LOGTEXT",
                 }
             }
             /// Creates an enum from field names used in the ProtoBuf definition.
@@ -2879,6 +3049,8 @@ pub mod module_config {
                     "WS85" => Some(Self::Ws85),
                     "VE_DIRECT" => Some(Self::VeDirect),
                     "MS_CONFIG" => Some(Self::MsConfig),
+                    "LOG" => Some(Self::Log),
+                    "LOGTEXT" => Some(Self::Logtext),
                     _ => None,
                 }
             }
@@ -3015,6 +3187,11 @@ pub mod module_config {
         /// ESP32 Only
         #[prost(bool, tag = "3")]
         pub save: bool,
+        ///
+        /// Bool indicating that the node should cleanup / destroy it's RangeTest.csv file.
+        /// ESP32 Only
+        #[prost(bool, tag = "4")]
+        pub clear_on_reboot: bool,
     }
     ///
     /// Configuration for both device and environment metrics
@@ -3080,6 +3257,15 @@ pub mod module_config {
         /// Enable/Disable the health telemetry module on-device display
         #[prost(bool, tag = "13")]
         pub health_screen_enabled: bool,
+        ///
+        /// Enable/Disable the device telemetry module to send metrics to the mesh
+        /// Note: We will still send telemtry to the connected phone / client every minute over the API
+        #[prost(bool, tag = "14")]
+        pub device_telemetry_enabled: bool,
+        ///
+        /// Enable/Disable the air quality telemetry measurement module on-device display
+        #[prost(bool, tag = "15")]
+        pub air_quality_screen_enabled: bool,
     }
     ///
     /// Canned Messages Module Config
@@ -3245,6 +3431,18 @@ pub mod module_config {
         pub blue: u32,
     }
     ///
+    /// StatusMessage config - Allows setting a status message for a node to periodically rebroadcast
+    #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+    #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
+    #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
+    #[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
+    pub struct StatusMessageConfig {
+        ///
+        /// The actual status string
+        #[prost(string, tag = "1")]
+        pub node_status: ::prost::alloc::string::String,
+    }
+    ///
     /// TODO: REPLACE
     #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
     #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
@@ -3303,6 +3501,14 @@ pub mod module_config {
         /// TODO: REPLACE
         #[prost(message, tag = "13")]
         Paxcounter(PaxcounterConfig),
+        ///
+        /// TODO: REPLACE
+        #[prost(message, tag = "14")]
+        Statusmessage(StatusMessageConfig),
+        ///
+        /// Traffic management module config for mesh network optimization
+        #[prost(message, tag = "15")]
+        TrafficManagement(TrafficManagementConfig),
     }
 }
 ///
@@ -3462,6 +3668,18 @@ pub enum PortNum {
     /// ENCODING: protobuf
     PaxcounterApp = 34,
     ///
+    /// Store and Forward++ module included in the firmware
+    /// ENCODING: protobuf
+    /// This module is specifically for Native Linux nodes, and provides a Git-style
+    /// chain of messages.
+    StoreForwardPlusplusApp = 35,
+    ///
+    /// Node Status module
+    /// ENCODING: protobuf
+    /// This module allows setting an extra string of status for a node.
+    /// Broadcasts on change and on a timer, possibly once a day.
+    NodeStatusApp = 36,
+    ///
     /// Provides a hardware serial interface to send and receive from the Meshtastic network.
     /// Connect to the RX/TX pins of a device with 38400 8N1. Packets received from the Meshtastic
     /// network is forwarded to the RX pin while sending a packet to TX will go out to the Mesh network.
@@ -3561,6 +3779,8 @@ impl PortNum {
             Self::ReplyApp => "REPLY_APP",
             Self::IpTunnelApp => "IP_TUNNEL_APP",
             Self::PaxcounterApp => "PAXCOUNTER_APP",
+            Self::StoreForwardPlusplusApp => "STORE_FORWARD_PLUSPLUS_APP",
+            Self::NodeStatusApp => "NODE_STATUS_APP",
             Self::SerialApp => "SERIAL_APP",
             Self::StoreForwardApp => "STORE_FORWARD_APP",
             Self::RangeTestApp => "RANGE_TEST_APP",
@@ -3598,6 +3818,8 @@ impl PortNum {
             "REPLY_APP" => Some(Self::ReplyApp),
             "IP_TUNNEL_APP" => Some(Self::IpTunnelApp),
             "PAXCOUNTER_APP" => Some(Self::PaxcounterApp),
+            "STORE_FORWARD_PLUSPLUS_APP" => Some(Self::StoreForwardPlusplusApp),
+            "NODE_STATUS_APP" => Some(Self::NodeStatusApp),
             "SERIAL_APP" => Some(Self::SerialApp),
             "STORE_FORWARD_APP" => Some(Self::StoreForwardApp),
             "RANGE_TEST_APP" => Some(Self::RangeTestApp),
@@ -3985,6 +4207,50 @@ pub struct LocalStats {
     /// Number of bytes free in the heap
     #[prost(uint32, tag = "13")]
     pub heap_free_bytes: u32,
+    ///
+    /// Number of packets that were dropped because the transmit queue was full.
+    #[prost(uint32, tag = "14")]
+    pub num_tx_dropped: u32,
+    ///
+    /// Noise floor value measured in dBm
+    #[prost(int32, tag = "15")]
+    pub noise_floor: i32,
+}
+///
+/// Traffic management statistics for mesh network optimization
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
+#[cfg_attr(feature = "ts-gen", derive(specta::Type))]
+#[derive(Clone, Copy, PartialEq, Eq, Hash, ::prost::Message)]
+pub struct TrafficManagementStats {
+    ///
+    /// Total number of packets inspected by traffic management
+    #[prost(uint32, tag = "1")]
+    pub packets_inspected: u32,
+    ///
+    /// Number of position packets dropped due to deduplication
+    #[prost(uint32, tag = "2")]
+    pub position_dedup_drops: u32,
+    ///
+    /// Number of NodeInfo requests answered from cache
+    #[prost(uint32, tag = "3")]
+    pub nodeinfo_cache_hits: u32,
+    ///
+    /// Number of packets dropped due to rate limiting
+    #[prost(uint32, tag = "4")]
+    pub rate_limit_drops: u32,
+    ///
+    /// Number of unknown/undecryptable packets dropped
+    #[prost(uint32, tag = "5")]
+    pub unknown_packet_drops: u32,
+    ///
+    /// Number of packets with hop_limit exhausted for local-only broadcast
+    #[prost(uint32, tag = "6")]
+    pub hop_exhausted_packets: u32,
+    ///
+    /// Number of times router hop preservation was applied
+    #[prost(uint32, tag = "7")]
+    pub router_hops_preserved: u32,
 }
 ///
 /// Health telemetry metrics
@@ -4062,7 +4328,7 @@ pub struct Telemetry {
     /// Seconds since 1970 - or 0 for unknown/unset
     #[prost(fixed32, tag = "1")]
     pub time: u32,
-    #[prost(oneof = "telemetry::Variant", tags = "2, 3, 4, 5, 6, 7, 8")]
+    #[prost(oneof = "telemetry::Variant", tags = "2, 3, 4, 5, 6, 7, 8, 9")]
     pub variant: ::core::option::Option<telemetry::Variant>,
 }
 /// Nested message and enum types in `Telemetry`.
@@ -4100,6 +4366,10 @@ pub mod telemetry {
         /// Linux host metrics
         #[prost(message, tag = "8")]
         HostMetrics(super::HostMetrics),
+        ///
+        /// Traffic management statistics
+        #[prost(message, tag = "9")]
+        TrafficManagementStats(super::TrafficManagementStats),
     }
 }
 ///
@@ -4117,6 +4387,38 @@ pub struct Nau7802Config {
     /// The calibration factor for the NAU7802
     #[prost(float, tag = "2")]
     pub calibration_factor: f32,
+}
+///
+/// SEN5X State, for saving to flash
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
+#[cfg_attr(feature = "ts-gen", derive(specta::Type))]
+#[derive(Clone, Copy, PartialEq, Eq, Hash, ::prost::Message)]
+pub struct Sen5xState {
+    ///
+    /// Last cleaning time for SEN5X
+    #[prost(uint32, tag = "1")]
+    pub last_cleaning_time: u32,
+    ///
+    /// Last cleaning time for SEN5X - valid flag
+    #[prost(bool, tag = "2")]
+    pub last_cleaning_valid: bool,
+    ///
+    /// Config flag for one-shot mode (see admin.proto)
+    #[prost(bool, tag = "3")]
+    pub one_shot_mode: bool,
+    ///
+    /// Last VOC state time for SEN55
+    #[prost(uint32, optional, tag = "4")]
+    pub voc_state_time: ::core::option::Option<u32>,
+    ///
+    /// Last VOC state validity flag for SEN55
+    #[prost(bool, optional, tag = "5")]
+    pub voc_state_valid: ::core::option::Option<bool>,
+    ///
+    /// VOC state array (8x uint8t) for SEN55
+    #[prost(fixed64, optional, tag = "6")]
+    pub voc_state_array: ::core::option::Option<u64>,
 }
 ///
 /// Supported I2C Sensors for telemetry in Meshtastic
@@ -4261,6 +4563,18 @@ pub enum TelemetrySensorType {
     ///
     /// TSL2561 light sensor
     Tsl2561 = 44,
+    ///
+    /// BH1750 light sensor
+    Bh1750 = 45,
+    ///
+    /// HDC1080 Temperature and Humidity Sensor
+    Hdc1080 = 46,
+    ///
+    /// STH21 Temperature and R. Humidity sensor
+    Sht21 = 47,
+    ///
+    /// Sensirion STC31 CO2 sensor
+    Stc31 = 48,
 }
 impl TelemetrySensorType {
     /// String value of the enum field names used in the ProtoBuf definition.
@@ -4314,6 +4628,10 @@ impl TelemetrySensorType {
             Self::Sfa30 => "SFA30",
             Self::Sen5x => "SEN5X",
             Self::Tsl2561 => "TSL2561",
+            Self::Bh1750 => "BH1750",
+            Self::Hdc1080 => "HDC1080",
+            Self::Sht21 => "SHT21",
+            Self::Stc31 => "STC31",
         }
     }
     /// Creates an enum from field names used in the ProtoBuf definition.
@@ -4364,6 +4682,10 @@ impl TelemetrySensorType {
             "SFA30" => Some(Self::Sfa30),
             "SEN5X" => Some(Self::Sen5x),
             "TSL2561" => Some(Self::Tsl2561),
+            "BH1750" => Some(Self::Bh1750),
+            "HDC1080" => Some(Self::Hdc1080),
+            "SHT21" => Some(Self::Sht21),
+            "STC31" => Some(Self::Stc31),
             _ => None,
         }
     }
@@ -4865,6 +5187,10 @@ pub mod routing {
         /// Airtime fairness rate limit exceeded for a packet
         /// This typically enforced per portnum and is used to prevent a single node from monopolizing airtime
         RateLimitExceeded = 38,
+        ///
+        /// PKI encryption failed, due to no public key for the remote node
+        /// This is different from PKI_UNKNOWN_PUBKEY which indicates a failure upon receiving a packet
+        PkiSendFailPublicKey = 39,
     }
     impl Error {
         /// String value of the enum field names used in the ProtoBuf definition.
@@ -4890,6 +5216,7 @@ pub mod routing {
                 Self::AdminBadSessionKey => "ADMIN_BAD_SESSION_KEY",
                 Self::AdminPublicKeyUnauthorized => "ADMIN_PUBLIC_KEY_UNAUTHORIZED",
                 Self::RateLimitExceeded => "RATE_LIMIT_EXCEEDED",
+                Self::PkiSendFailPublicKey => "PKI_SEND_FAIL_PUBLIC_KEY",
             }
         }
         /// Creates an enum from field names used in the ProtoBuf definition.
@@ -4912,6 +5239,7 @@ pub mod routing {
                 "ADMIN_BAD_SESSION_KEY" => Some(Self::AdminBadSessionKey),
                 "ADMIN_PUBLIC_KEY_UNAUTHORIZED" => Some(Self::AdminPublicKeyUnauthorized),
                 "RATE_LIMIT_EXCEEDED" => Some(Self::RateLimitExceeded),
+                "PKI_SEND_FAIL_PUBLIC_KEY" => Some(Self::PkiSendFailPublicKey),
                 _ => None,
             }
         }
@@ -5014,6 +5342,122 @@ pub struct KeyVerification {
     pub hash2: ::prost::alloc::vec::Vec<u8>,
 }
 ///
+/// The actual over-the-mesh message doing store and forward++
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
+#[cfg_attr(feature = "ts-gen", derive(specta::Type))]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
+pub struct StoreForwardPlusPlus {
+    ///
+    /// Which message type is this
+    #[prost(enumeration = "store_forward_plus_plus::SfppMessageType", tag = "1")]
+    pub sfpp_message_type: i32,
+    ///
+    /// The hash of the specific message
+    #[prost(bytes = "vec", tag = "2")]
+    pub message_hash: ::prost::alloc::vec::Vec<u8>,
+    ///
+    /// The hash of a link on a chain
+    #[prost(bytes = "vec", tag = "3")]
+    pub commit_hash: ::prost::alloc::vec::Vec<u8>,
+    ///
+    /// the root hash of a chain
+    #[prost(bytes = "vec", tag = "4")]
+    pub root_hash: ::prost::alloc::vec::Vec<u8>,
+    ///
+    /// The encrypted bytes from a message
+    #[prost(bytes = "vec", tag = "5")]
+    pub message: ::prost::alloc::vec::Vec<u8>,
+    ///
+    /// Message ID of the contained message
+    #[prost(uint32, tag = "6")]
+    pub encapsulated_id: u32,
+    ///
+    /// Destination of the contained message
+    #[prost(uint32, tag = "7")]
+    pub encapsulated_to: u32,
+    ///
+    /// Sender of the contained message
+    #[prost(uint32, tag = "8")]
+    pub encapsulated_from: u32,
+    ///
+    /// The receive time of the message in question
+    #[prost(uint32, tag = "9")]
+    pub encapsulated_rxtime: u32,
+    ///
+    /// Used in a LINK_REQUEST to specify the message X spots back from head
+    #[prost(uint32, tag = "10")]
+    pub chain_count: u32,
+}
+/// Nested message and enum types in `StoreForwardPlusPlus`.
+pub mod store_forward_plus_plus {
+    ///
+    /// Enum of message types
+    #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+    #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
+    #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
+    #[derive(
+        Clone,
+        Copy,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash,
+        PartialOrd,
+        Ord,
+        ::prost::Enumeration
+    )]
+    #[repr(i32)]
+    pub enum SfppMessageType {
+        ///
+        /// Send an announcement of the canonical tip of a chain
+        CanonAnnounce = 0,
+        ///
+        /// Query whether a specific link is on the chain
+        ChainQuery = 1,
+        ///
+        /// Request the next link in the chain
+        LinkRequest = 3,
+        ///
+        /// Provide a link to add to the chain
+        LinkProvide = 4,
+        ///
+        /// If we must fragment, send the first half
+        LinkProvideFirsthalf = 5,
+        ///
+        /// If we must fragment, send the second half
+        LinkProvideSecondhalf = 6,
+    }
+    impl SfppMessageType {
+        /// String value of the enum field names used in the ProtoBuf definition.
+        ///
+        /// The values are not transformed in any way and thus are considered stable
+        /// (if the ProtoBuf definition does not change) and safe for programmatic use.
+        pub fn as_str_name(&self) -> &'static str {
+            match self {
+                Self::CanonAnnounce => "CANON_ANNOUNCE",
+                Self::ChainQuery => "CHAIN_QUERY",
+                Self::LinkRequest => "LINK_REQUEST",
+                Self::LinkProvide => "LINK_PROVIDE",
+                Self::LinkProvideFirsthalf => "LINK_PROVIDE_FIRSTHALF",
+                Self::LinkProvideSecondhalf => "LINK_PROVIDE_SECONDHALF",
+            }
+        }
+        /// Creates an enum from field names used in the ProtoBuf definition.
+        pub fn from_str_name(value: &str) -> ::core::option::Option<Self> {
+            match value {
+                "CANON_ANNOUNCE" => Some(Self::CanonAnnounce),
+                "CHAIN_QUERY" => Some(Self::ChainQuery),
+                "LINK_REQUEST" => Some(Self::LinkRequest),
+                "LINK_PROVIDE" => Some(Self::LinkProvide),
+                "LINK_PROVIDE_FIRSTHALF" => Some(Self::LinkProvideFirsthalf),
+                "LINK_PROVIDE_SECONDHALF" => Some(Self::LinkProvideSecondhalf),
+                _ => None,
+            }
+        }
+    }
+}
+///
 /// Waypoint message, used to share arbitrary locations across the mesh
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
@@ -5053,6 +5497,16 @@ pub struct Waypoint {
     /// Designator icon for the waypoint in the form of a unicode emoji
     #[prost(fixed32, tag = "8")]
     pub icon: u32,
+}
+///
+/// Message for node status
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
+#[cfg_attr(feature = "ts-gen", derive(specta::Type))]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
+pub struct StatusMessage {
+    #[prost(string, tag = "1")]
+    pub status: ::prost::alloc::string::String,
 }
 ///
 /// This message will be proxied over the PhoneAPI for the client to deliver to the MQTT server
@@ -5112,6 +5566,10 @@ pub struct MeshPacket {
     pub from: u32,
     ///
     /// The (immediate) destination for this packet
+    /// If the value is 4,294,967,295 (maximum value of an unsigned 32bit integer), this indicates that the packet was
+    /// not destined for a specific node, but for a channel as indicated by the value of `channel` below.
+    /// If the value is another, this indicates that the packet was destined for a specific
+    /// node (i.e. a kind of "Direct Message" to this node) and not broadcast on a channel.
     #[prost(fixed32, tag = "2")]
     pub to: u32,
     ///
@@ -5545,6 +6003,11 @@ pub struct NodeInfo {
     /// LSB 0 of the bitfield
     #[prost(bool, tag = "12")]
     pub is_key_manually_verified: bool,
+    ///
+    /// True if node has been muted
+    /// Persistes between NodeDB internal clean ups
+    #[prost(bool, tag = "13")]
+    pub is_muted: bool,
 }
 ///
 /// Unique local debugging info for this node
@@ -6314,8 +6777,8 @@ pub enum HardwareModel {
     /// ---------------------------------------------------------------------------
     LoraRelayV1 = 32,
     ///
-    /// TODO: REPLACE
-    Nrf52840dk = 33,
+    /// T-Echo Plus device from LilyGo
+    TEchoPlus = 33,
     ///
     /// TODO: REPLACE
     Ppr = 34,
@@ -6514,8 +6977,8 @@ pub enum HardwareModel {
     /// Heltec HRI-3621 industrial probe
     HeltecSensorHub = 92,
     ///
-    /// Reserved Fried Chicken ID for future use
-    ReservedFriedChicken = 93,
+    /// Muzi Works Muzi-Base device
+    MuziBase = 93,
     ///
     /// Heltec Magnetic Power Bank with Meshtastic compatible
     HeltecMeshPocket = 94,
@@ -6538,8 +7001,8 @@ pub enum HardwareModel {
     /// Seeed Tracker L1 EINK driver
     SeeedWioTrackerL1Eink = 100,
     ///
-    /// Reserved ID for future and past use
-    QwantzTinyArms = 101,
+    /// Muzi Works R1 Neo
+    MuziR1Neo = 101,
     ///
     /// Lilygo T-Deck Pro
     TDeckPro = 102,
@@ -6547,8 +7010,10 @@ pub enum HardwareModel {
     /// Lilygo TLora Pager
     TLoraPager = 103,
     ///
-    /// GAT562 Mesh Trial Tracker
-    Gat562MeshTrialTracker = 104,
+    /// M5Stack Reserved
+    ///
+    /// 0x68
+    M5stackReserved = 104,
     ///
     /// RAKwireless WisMesh Tag
     WismeshTag = 105,
@@ -6565,6 +7030,48 @@ pub enum HardwareModel {
     ///
     /// Lilygo T-Echo Lite
     TEchoLite = 109,
+    ///
+    /// New Heltec LoRA32 with ESP32-S3 CPU
+    HeltecV4 = 110,
+    ///
+    /// M5Stack C6L
+    M5stackC6l = 111,
+    ///
+    /// M5Stack Cardputer Adv
+    M5stackCardputerAdv = 112,
+    ///
+    /// ESP32S3 main controller with GPS and TFT screen.
+    HeltecWirelessTrackerV2 = 113,
+    ///
+    /// LilyGo T-Watch Ultra
+    TWatchUltra = 114,
+    ///
+    /// Elecrow ThinkNode M3
+    ThinknodeM3 = 115,
+    ///
+    /// RAK WISMESH_TAP_V2 with ESP32-S3 CPU
+    WismeshTapV2 = 116,
+    ///
+    /// RAK3401
+    Rak3401 = 117,
+    ///
+    /// RAK6421 Hat+
+    Rak6421 = 118,
+    ///
+    /// Elecrow ThinkNode M4
+    ThinknodeM4 = 119,
+    ///
+    /// Elecrow ThinkNode M6
+    ThinknodeM6 = 120,
+    ///
+    /// Elecrow Meshstick 1262
+    Meshstick1262 = 121,
+    ///
+    /// LilyGo T-Beam 1W
+    Tbeam1Watt = 122,
+    ///
+    /// LilyGo T5 S3 ePaper Pro (V1 and V2)
+    T5S3EpaperPro = 123,
     ///
     /// ------------------------------------------------------------------------------------------------------------------------------------------
     /// Reserved ID For developing private Ports. These will show up in live traffic sparsely, so we can use a high number. Keep it within 8 bits.
@@ -6611,7 +7118,7 @@ impl HardwareModel {
             Self::Rp2040Lora => "RP2040_LORA",
             Self::StationG2 => "STATION_G2",
             Self::LoraRelayV1 => "LORA_RELAY_V1",
-            Self::Nrf52840dk => "NRF52840DK",
+            Self::TEchoPlus => "T_ECHO_PLUS",
             Self::Ppr => "PPR",
             Self::Genieblocks => "GENIEBLOCKS",
             Self::Nrf52Unknown => "NRF52_UNKNOWN",
@@ -6671,7 +7178,7 @@ impl HardwareModel {
             Self::ThinknodeM2 => "THINKNODE_M2",
             Self::TEthElite => "T_ETH_ELITE",
             Self::HeltecSensorHub => "HELTEC_SENSOR_HUB",
-            Self::ReservedFriedChicken => "RESERVED_FRIED_CHICKEN",
+            Self::MuziBase => "MUZI_BASE",
             Self::HeltecMeshPocket => "HELTEC_MESH_POCKET",
             Self::SeeedSolarNode => "SEEED_SOLAR_NODE",
             Self::NomadstarMeteorPro => "NOMADSTAR_METEOR_PRO",
@@ -6679,15 +7186,29 @@ impl HardwareModel {
             Self::Link32 => "LINK_32",
             Self::SeeedWioTrackerL1 => "SEEED_WIO_TRACKER_L1",
             Self::SeeedWioTrackerL1Eink => "SEEED_WIO_TRACKER_L1_EINK",
-            Self::QwantzTinyArms => "QWANTZ_TINY_ARMS",
+            Self::MuziR1Neo => "MUZI_R1_NEO",
             Self::TDeckPro => "T_DECK_PRO",
             Self::TLoraPager => "T_LORA_PAGER",
-            Self::Gat562MeshTrialTracker => "GAT562_MESH_TRIAL_TRACKER",
+            Self::M5stackReserved => "M5STACK_RESERVED",
             Self::WismeshTag => "WISMESH_TAG",
             Self::Rak3312 => "RAK3312",
             Self::ThinknodeM5 => "THINKNODE_M5",
             Self::HeltecMeshSolar => "HELTEC_MESH_SOLAR",
             Self::TEchoLite => "T_ECHO_LITE",
+            Self::HeltecV4 => "HELTEC_V4",
+            Self::M5stackC6l => "M5STACK_C6L",
+            Self::M5stackCardputerAdv => "M5STACK_CARDPUTER_ADV",
+            Self::HeltecWirelessTrackerV2 => "HELTEC_WIRELESS_TRACKER_V2",
+            Self::TWatchUltra => "T_WATCH_ULTRA",
+            Self::ThinknodeM3 => "THINKNODE_M3",
+            Self::WismeshTapV2 => "WISMESH_TAP_V2",
+            Self::Rak3401 => "RAK3401",
+            Self::Rak6421 => "RAK6421",
+            Self::ThinknodeM4 => "THINKNODE_M4",
+            Self::ThinknodeM6 => "THINKNODE_M6",
+            Self::Meshstick1262 => "MESHSTICK_1262",
+            Self::Tbeam1Watt => "TBEAM_1_WATT",
+            Self::T5S3EpaperPro => "T5_S3_EPAPER_PRO",
             Self::PrivateHw => "PRIVATE_HW",
         }
     }
@@ -6727,7 +7248,7 @@ impl HardwareModel {
             "RP2040_LORA" => Some(Self::Rp2040Lora),
             "STATION_G2" => Some(Self::StationG2),
             "LORA_RELAY_V1" => Some(Self::LoraRelayV1),
-            "NRF52840DK" => Some(Self::Nrf52840dk),
+            "T_ECHO_PLUS" => Some(Self::TEchoPlus),
             "PPR" => Some(Self::Ppr),
             "GENIEBLOCKS" => Some(Self::Genieblocks),
             "NRF52_UNKNOWN" => Some(Self::Nrf52Unknown),
@@ -6787,7 +7308,7 @@ impl HardwareModel {
             "THINKNODE_M2" => Some(Self::ThinknodeM2),
             "T_ETH_ELITE" => Some(Self::TEthElite),
             "HELTEC_SENSOR_HUB" => Some(Self::HeltecSensorHub),
-            "RESERVED_FRIED_CHICKEN" => Some(Self::ReservedFriedChicken),
+            "MUZI_BASE" => Some(Self::MuziBase),
             "HELTEC_MESH_POCKET" => Some(Self::HeltecMeshPocket),
             "SEEED_SOLAR_NODE" => Some(Self::SeeedSolarNode),
             "NOMADSTAR_METEOR_PRO" => Some(Self::NomadstarMeteorPro),
@@ -6795,15 +7316,29 @@ impl HardwareModel {
             "LINK_32" => Some(Self::Link32),
             "SEEED_WIO_TRACKER_L1" => Some(Self::SeeedWioTrackerL1),
             "SEEED_WIO_TRACKER_L1_EINK" => Some(Self::SeeedWioTrackerL1Eink),
-            "QWANTZ_TINY_ARMS" => Some(Self::QwantzTinyArms),
+            "MUZI_R1_NEO" => Some(Self::MuziR1Neo),
             "T_DECK_PRO" => Some(Self::TDeckPro),
             "T_LORA_PAGER" => Some(Self::TLoraPager),
-            "GAT562_MESH_TRIAL_TRACKER" => Some(Self::Gat562MeshTrialTracker),
+            "M5STACK_RESERVED" => Some(Self::M5stackReserved),
             "WISMESH_TAG" => Some(Self::WismeshTag),
             "RAK3312" => Some(Self::Rak3312),
             "THINKNODE_M5" => Some(Self::ThinknodeM5),
             "HELTEC_MESH_SOLAR" => Some(Self::HeltecMeshSolar),
             "T_ECHO_LITE" => Some(Self::TEchoLite),
+            "HELTEC_V4" => Some(Self::HeltecV4),
+            "M5STACK_C6L" => Some(Self::M5stackC6l),
+            "M5STACK_CARDPUTER_ADV" => Some(Self::M5stackCardputerAdv),
+            "HELTEC_WIRELESS_TRACKER_V2" => Some(Self::HeltecWirelessTrackerV2),
+            "T_WATCH_ULTRA" => Some(Self::TWatchUltra),
+            "THINKNODE_M3" => Some(Self::ThinknodeM3),
+            "WISMESH_TAP_V2" => Some(Self::WismeshTapV2),
+            "RAK3401" => Some(Self::Rak3401),
+            "RAK6421" => Some(Self::Rak6421),
+            "THINKNODE_M4" => Some(Self::ThinknodeM4),
+            "THINKNODE_M6" => Some(Self::ThinknodeM6),
+            "MESHSTICK_1262" => Some(Self::Meshstick1262),
+            "TBEAM_1_WATT" => Some(Self::Tbeam1Watt),
+            "T5_S3_EPAPER_PRO" => Some(Self::T5S3EpaperPro),
             "PRIVATE_HW" => Some(Self::PrivateHw),
             _ => None,
         }
@@ -7137,7 +7672,7 @@ pub struct AdminMessage {
     /// TODO: REPLACE
     #[prost(
         oneof = "admin_message::PayloadVariant",
-        tags = "1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 64, 65, 66, 67, 94, 95, 96, 97, 98, 99, 100"
+        tags = "1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 64, 65, 66, 67, 94, 95, 96, 97, 98, 99, 100, 102, 103"
     )]
     pub payload_variant: ::core::option::Option<admin_message::PayloadVariant>,
 }
@@ -7166,6 +7701,24 @@ pub mod admin_message {
         /// The touch Y coordinate
         #[prost(uint32, tag = "4")]
         pub touch_y: u32,
+    }
+    ///
+    /// User is requesting an over the air update.
+    /// Node will reboot into the OTA loader
+    #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+    #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
+    #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
+    #[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
+    pub struct OtaEvent {
+        ///
+        /// Tell the node to reboot into OTA mode for firmware update via BLE or WiFi (ESP32 only for now)
+        #[prost(enumeration = "super::OtaMode", tag = "1")]
+        pub reboot_ota_mode: i32,
+        ///
+        /// A 32 byte hash of the OTA firmware.
+        /// Used to verify the integrity of the firmware before applying an update.
+        #[prost(bytes = "vec", tag = "2")]
+        pub ota_hash: ::prost::alloc::vec::Vec<u8>,
     }
     ///
     /// TODO: REPLACE
@@ -7309,6 +7862,12 @@ pub mod admin_message {
         ///
         /// TODO: REPLACE
         PaxcounterConfig = 12,
+        ///
+        /// TODO: REPLACE
+        StatusmessageConfig = 13,
+        ///
+        /// Traffic management module config
+        TrafficmanagementConfig = 14,
     }
     impl ModuleConfigType {
         /// String value of the enum field names used in the ProtoBuf definition.
@@ -7330,6 +7889,8 @@ pub mod admin_message {
                 Self::AmbientlightingConfig => "AMBIENTLIGHTING_CONFIG",
                 Self::DetectionsensorConfig => "DETECTIONSENSOR_CONFIG",
                 Self::PaxcounterConfig => "PAXCOUNTER_CONFIG",
+                Self::StatusmessageConfig => "STATUSMESSAGE_CONFIG",
+                Self::TrafficmanagementConfig => "TRAFFICMANAGEMENT_CONFIG",
             }
         }
         /// Creates an enum from field names used in the ProtoBuf definition.
@@ -7348,6 +7909,8 @@ pub mod admin_message {
                 "AMBIENTLIGHTING_CONFIG" => Some(Self::AmbientlightingConfig),
                 "DETECTIONSENSOR_CONFIG" => Some(Self::DetectionsensorConfig),
                 "PAXCOUNTER_CONFIG" => Some(Self::PaxcounterConfig),
+                "STATUSMESSAGE_CONFIG" => Some(Self::StatusmessageConfig),
+                "TRAFFICMANAGEMENT_CONFIG" => Some(Self::TrafficmanagementConfig),
                 _ => None,
             }
         }
@@ -7583,6 +8146,10 @@ pub mod admin_message {
         #[prost(uint32, tag = "48")]
         RemoveIgnoredNode(u32),
         ///
+        /// Set specified node-num to be muted
+        #[prost(uint32, tag = "49")]
+        ToggleMutedNode(u32),
+        ///
         /// Begins an edit transaction for config, module config, owner, and channel settings changes
         /// This will delay the standard *implicit* save to the file system and subsequent reboot behavior until committed (commit_edit_settings)
         #[prost(bool, tag = "64")]
@@ -7606,6 +8173,8 @@ pub mod admin_message {
         ///
         /// Tell the node to reboot into the OTA Firmware in this many seconds (or <0 to cancel reboot)
         /// Only Implemented for ESP32 Devices. This needs to be issued to send a new main firmware via bluetooth.
+        /// Deprecated in favor of reboot_ota_mode in 2.7.17
+        #[deprecated]
         #[prost(int32, tag = "95")]
         RebootOtaSeconds(i32),
         ///
@@ -7627,8 +8196,17 @@ pub mod admin_message {
         FactoryResetConfig(i32),
         ///
         /// Tell the node to reset the nodedb.
-        #[prost(int32, tag = "100")]
-        NodedbReset(i32),
+        /// When true, favorites are preserved through reset.
+        #[prost(bool, tag = "100")]
+        NodedbReset(bool),
+        ///
+        /// Tell the node to reset into the OTA Loader
+        #[prost(message, tag = "102")]
+        OtaRequest(OtaEvent),
+        ///
+        /// Parameters and sensor configuration
+        #[prost(message, tag = "103")]
+        SensorConfig(super::SensorConfig),
     }
 }
 ///
@@ -7686,6 +8264,10 @@ pub struct SharedContact {
     /// Add this contact to the blocked / ignored list
     #[prost(bool, tag = "3")]
     pub should_ignore: bool,
+    ///
+    /// Set the IS_KEY_MANUALLY_VERIFIED bit
+    #[prost(bool, tag = "4")]
+    pub manually_verified: bool,
 }
 ///
 /// This message is used by a client to initiate or complete a key verification
@@ -7765,6 +8347,108 @@ pub mod key_verification_admin {
                 "DO_NOT_VERIFY" => Some(Self::DoNotVerify),
                 _ => None,
             }
+        }
+    }
+}
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
+#[cfg_attr(feature = "ts-gen", derive(specta::Type))]
+#[derive(Clone, Copy, PartialEq, ::prost::Message)]
+pub struct SensorConfig {
+    ///
+    /// SCD4X CO2 Sensor configuration
+    #[prost(message, optional, tag = "1")]
+    pub scd4x_config: ::core::option::Option<Scd4xConfig>,
+    ///
+    /// SEN5X PM Sensor configuration
+    #[prost(message, optional, tag = "2")]
+    pub sen5x_config: ::core::option::Option<Sen5xConfig>,
+}
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
+#[cfg_attr(feature = "ts-gen", derive(specta::Type))]
+#[derive(Clone, Copy, PartialEq, ::prost::Message)]
+pub struct Scd4xConfig {
+    ///
+    /// Set Automatic self-calibration enabled
+    #[prost(bool, optional, tag = "1")]
+    pub set_asc: ::core::option::Option<bool>,
+    ///
+    /// Recalibration target CO2 concentration in ppm (FRC or ASC)
+    #[prost(uint32, optional, tag = "2")]
+    pub set_target_co2_conc: ::core::option::Option<u32>,
+    ///
+    /// Reference temperature in degC
+    #[prost(float, optional, tag = "3")]
+    pub set_temperature: ::core::option::Option<f32>,
+    ///
+    /// Altitude of sensor in meters above sea level. 0 - 3000m (overrides ambient pressure)
+    #[prost(uint32, optional, tag = "4")]
+    pub set_altitude: ::core::option::Option<u32>,
+    ///
+    /// Sensor ambient pressure in Pa. 70000 - 120000 Pa (overrides altitude)
+    #[prost(uint32, optional, tag = "5")]
+    pub set_ambient_pressure: ::core::option::Option<u32>,
+    ///
+    /// Perform a factory reset of the sensor
+    #[prost(bool, optional, tag = "6")]
+    pub factory_reset: ::core::option::Option<bool>,
+    ///
+    /// Power mode for sensor (true for low power, false for normal)
+    #[prost(bool, optional, tag = "7")]
+    pub set_power_mode: ::core::option::Option<bool>,
+}
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
+#[cfg_attr(feature = "ts-gen", derive(specta::Type))]
+#[derive(Clone, Copy, PartialEq, ::prost::Message)]
+pub struct Sen5xConfig {
+    ///
+    /// Reference temperature in degC
+    #[prost(float, optional, tag = "1")]
+    pub set_temperature: ::core::option::Option<f32>,
+    ///
+    /// One-shot mode (true for low power - one-shot mode, false for normal - continuous mode)
+    #[prost(bool, optional, tag = "2")]
+    pub set_one_shot_mode: ::core::option::Option<bool>,
+}
+///
+/// Firmware update mode for OTA updates
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
+#[cfg_attr(feature = "ts-gen", derive(specta::Type))]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+#[repr(i32)]
+pub enum OtaMode {
+    ///
+    /// Do not reboot into OTA mode
+    NoRebootOta = 0,
+    ///
+    /// Reboot into OTA mode for BLE firmware update
+    OtaBle = 1,
+    ///
+    /// Reboot into OTA mode for WiFi firmware update
+    OtaWifi = 2,
+}
+impl OtaMode {
+    /// String value of the enum field names used in the ProtoBuf definition.
+    ///
+    /// The values are not transformed in any way and thus are considered stable
+    /// (if the ProtoBuf definition does not change) and safe for programmatic use.
+    pub fn as_str_name(&self) -> &'static str {
+        match self {
+            Self::NoRebootOta => "NO_REBOOT_OTA",
+            Self::OtaBle => "OTA_BLE",
+            Self::OtaWifi => "OTA_WIFI",
+        }
+    }
+    /// Creates an enum from field names used in the ProtoBuf definition.
+    pub fn from_str_name(value: &str) -> ::core::option::Option<Self> {
+        match value {
+            "NO_REBOOT_OTA" => Some(Self::NoRebootOta),
+            "OTA_BLE" => Some(Self::OtaBle),
+            "OTA_WIFI" => Some(Self::OtaWifi),
+            _ => None,
         }
     }
 }
@@ -7862,7 +8546,7 @@ pub struct GeoChat {
 }
 ///
 /// ATAK Group
-/// `<__group role='Team Member' name='Cyan'/>`
+/// <__group role='Team Member' name='Cyan'/>
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
 #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
@@ -7880,7 +8564,7 @@ pub struct Group {
 }
 ///
 /// ATAK EUD Status
-/// `<status battery='100' />`
+/// <status battery='100' />
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
 #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
@@ -7893,7 +8577,7 @@ pub struct Status {
 }
 ///
 /// ATAK Contact
-/// `<contact endpoint='0.0.0.0:4242:tcp' phone='+12345678' callsign='FALKE'/>`
+/// <contact endpoint='0.0.0.0:4242:tcp' phone='+12345678' callsign='FALKE'/>
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
 #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
@@ -8225,6 +8909,16 @@ pub struct LocalModuleConfig {
     #[prost(message, optional, tag = "14")]
     pub paxcounter: ::core::option::Option<module_config::PaxcounterConfig>,
     ///
+    /// StatusMessage Config
+    #[prost(message, optional, tag = "15")]
+    pub statusmessage: ::core::option::Option<module_config::StatusMessageConfig>,
+    ///
+    /// The part of the config that is specific to the Traffic Management module
+    #[prost(message, optional, tag = "16")]
+    pub traffic_management: ::core::option::Option<
+        module_config::TrafficManagementConfig,
+    >,
+    ///
     /// A version integer used to invalidate old save files when we make
     /// incompatible changes This integer is set at build time and is private to
     /// NodeDB.cpp in the device code.
@@ -8411,6 +9105,7 @@ pub struct NodeInfoLite {
     ///
     /// Bitfield for storing booleans.
     /// LSB 0 is_key_manually_verified
+    /// LSB 1 is_muted
     #[prost(uint32, tag = "13")]
     pub bitfield: u32,
 }
