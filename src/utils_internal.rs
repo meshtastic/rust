@@ -351,7 +351,7 @@ where
 
     Ok(StreamHandle {
         stream: client,
-        join_handle: Some(handle),
+        join_handle: Some(handle.into()),
     })
 }
 

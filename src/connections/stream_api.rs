@@ -1,11 +1,9 @@
-use futures_util::future::join3;
 use log::trace;
 use prost::Message;
 use std::{fmt::Display, marker::PhantomData};
 use tokio::{
     io::{AsyncReadExt, AsyncWriteExt},
     sync::mpsc::UnboundedSender,
-    task::JoinHandle,
 };
 use tokio_util::sync::CancellationToken;
 
@@ -20,7 +18,7 @@ use super::{
     wrappers::{
         encoded_data::{EncodedMeshPacketData, EncodedToRadioPacket, IncomingStreamData},
         mesh_channel::MeshChannel,
-        NodeId,
+        AbortingJoinHandle, NodeId,
     },
     PacketDestination, PacketRouter,
 };
@@ -71,10 +69,13 @@ pub struct StreamApi;
 pub struct ConnectedStreamApi<State = state::Configured> {
     write_input_tx: UnboundedSender<EncodedToRadioPacketWithHeader>,
 
-    read_handle: JoinHandle<Result<(), Error>>,
-    write_handle: JoinHandle<Result<(), Error>>,
-    processing_handle: JoinHandle<Result<(), Error>>,
-    heartbeat_handle: JoinHandle<Result<(), Error>>,
+    read_handle: AbortingJoinHandle,
+    write_handle: AbortingJoinHandle,
+    processing_handle: AbortingJoinHandle,
+    heartbeat_handle: AbortingJoinHandle,
+    /// An optional handle to a background task that bridges data between a high-level
+    /// stream and a low-level transport (e.g. BLE).
+    bridge_handle: Option<AbortingJoinHandle>,
 
     cancellation_token: CancellationToken,
 
@@ -87,7 +88,7 @@ pub struct StreamHandle<T: AsyncReadExt + AsyncWriteExt + Send> {
     /// The underlying stream.
     pub stream: T,
     /// An optional join handle that processes data on the other side of the stream.
-    pub join_handle: Option<JoinHandle<Result<(), Error>>>,
+    pub join_handle: Option<AbortingJoinHandle>,
 }
 
 impl<T: AsyncReadExt + AsyncWriteExt + Send> StreamHandle<T> {
@@ -422,7 +423,7 @@ impl StreamApi {
     ///
     pub async fn connect<S>(
         self,
-        stream_handle: StreamHandle<S>,
+        mut stream_handle: StreamHandle<S>,
     ) -> (PacketReceiver, ConnectedStreamApi<state::Connected>)
     where
         S: AsyncReadExt + AsyncWriteExt + Send + 'static,
@@ -440,28 +441,28 @@ impl StreamApi {
 
         // Spawn worker threads with kill switch
 
+        let bridge_handle = stream_handle.join_handle.take();
         let (read_stream, write_stream) = tokio::io::split(stream_handle.stream);
         let cancellation_token = CancellationToken::new();
 
         let read_handle =
-            handlers::spawn_read_handler(cancellation_token.clone(), read_stream, read_output_tx);
+            handlers::spawn_read_handler(cancellation_token.clone(), read_stream, read_output_tx)
+                .into();
 
         let write_handle =
-            handlers::spawn_write_handler(cancellation_token.clone(), write_stream, write_input_rx);
+            handlers::spawn_write_handler(cancellation_token.clone(), write_stream, write_input_rx)
+                .into();
 
         let processing_handle = handlers::spawn_processing_handler(
             cancellation_token.clone(),
             read_output_rx,
             decoded_packet_tx,
-        );
+        )
+        .into();
 
         let heartbeat_handle =
-            handlers::spawn_heartbeat_handler(cancellation_token.clone(), write_input_tx.clone());
-
-        // Persist channels and kill switch to struct
-
-        let write_input_tx = write_input_tx;
-        let cancellation_token = cancellation_token;
+            handlers::spawn_heartbeat_handler(cancellation_token.clone(), write_input_tx.clone())
+                .into();
 
         // Return channel for receiving decoded packets
 
@@ -473,6 +474,7 @@ impl StreamApi {
                 write_handle,
                 processing_handle,
                 heartbeat_handle,
+                bridge_handle,
                 cancellation_token,
                 typestate: PhantomData,
             },
@@ -549,13 +551,14 @@ impl ConnectedStreamApi<state::Connected> {
             write_handle: self.write_handle,
             processing_handle: self.processing_handle,
             heartbeat_handle: self.heartbeat_handle,
+            bridge_handle: self.bridge_handle,
             cancellation_token: self.cancellation_token,
             typestate: PhantomData,
         })
     }
 }
 
-impl ConnectedStreamApi<state::Configured> {
+impl<State> ConnectedStreamApi<State> {
     /// A method to disconnect from a radio. This method will close all channels and
     /// join all worker threads. If connected via serial or TCP, this will also trigger
     /// the radio to terminate its current connection.
@@ -600,13 +603,23 @@ impl ConnectedStreamApi<state::Configured> {
 
         // Close worker threads
 
-        let (read_result, write_result, processing_result) =
-            join3(self.read_handle, self.write_handle, self.processing_handle).await;
+        let (read_result, write_result, processing_result, heartbeat_result) = tokio::join!(
+            self.read_handle,
+            self.write_handle,
+            self.processing_handle,
+            self.heartbeat_handle
+        );
+
+        if let Some(handle) = self.bridge_handle {
+            handle.abort();
+            let _ = handle.await;
+        }
 
         // Note: we only return the first error.
         read_result??;
         write_result??;
         processing_result??;
+        heartbeat_result??;
 
         trace!("Handlers fully disconnected");
 

@@ -1,3 +1,9 @@
+use std::ops::Deref;
+use std::pin::Pin;
+use std::task::{Context, Poll};
+
+use tokio::task::{JoinError, JoinHandle};
+
 use crate::errors_internal::Error;
 
 /// A helper struct representing the ID of a node in the mesh.
@@ -238,5 +244,76 @@ pub mod mesh_channel {
         fn from(channel: u32) -> Self {
             MeshChannel(channel)
         }
+    }
+}
+
+/// A wrapper around a [`JoinHandle`] that will automatically abort the underlying task
+/// when it is dropped.
+#[derive(Debug)]
+pub struct AbortingJoinHandle(JoinHandle<Result<(), Error>>);
+
+impl From<JoinHandle<Result<(), Error>>> for AbortingJoinHandle {
+    fn from(handle: JoinHandle<Result<(), Error>>) -> Self {
+        Self(handle)
+    }
+}
+
+impl Deref for AbortingJoinHandle {
+    type Target = JoinHandle<Result<(), Error>>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl Drop for AbortingJoinHandle {
+    fn drop(&mut self) {
+        self.0.abort();
+    }
+}
+
+impl std::future::Future for AbortingJoinHandle {
+    type Output = Result<Result<(), Error>, JoinError>;
+
+    fn poll(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
+        Pin::new(&mut self.0).poll(cx)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[tokio::test]
+    async fn test_aborting_join_handle() {
+        let (mut tx, rx) = tokio::sync::oneshot::channel::<()>();
+        let handle = tokio::spawn(async move {
+            let _rx = rx;
+            tokio::time::sleep(std::time::Duration::from_secs(60)).await;
+            Ok(())
+        });
+
+        let aborting_handle: AbortingJoinHandle = handle.into();
+        drop(aborting_handle);
+
+        // If the task was aborted, the receiver `rx` will be dropped, causing `tx.is_closed()` to
+        // become true.
+        tokio::time::timeout(std::time::Duration::from_secs(5), tx.closed())
+            .await
+            .expect("Task was not aborted within timeout");
+    }
+
+    #[tokio::test]
+    async fn test_aborting_join_handle_completion() {
+        let handle = tokio::spawn(async move {
+            tokio::time::sleep(std::time::Duration::from_millis(10)).await;
+            Ok(())
+        });
+
+        let aborting_handle: AbortingJoinHandle = handle.into();
+
+        let result = aborting_handle.await;
+        assert!(result.is_ok());
+        assert!(result.unwrap().is_ok());
     }
 }
