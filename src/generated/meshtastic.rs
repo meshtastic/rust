@@ -130,6 +130,7 @@ pub mod channel {
     #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
     #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
     #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
+    #[cfg_attr(feature = "strum", derive(strum::EnumCount, strum::EnumIter))]
     #[derive(
         Clone,
         Copy,
@@ -260,6 +261,7 @@ pub mod device_ui_config {
     #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
     #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
     #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
+    #[cfg_attr(feature = "strum", derive(strum::EnumCount, strum::EnumIter))]
     #[derive(
         Clone,
         Copy,
@@ -433,6 +435,7 @@ pub struct Map {
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
 #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
+#[cfg_attr(feature = "strum", derive(strum::EnumCount, strum::EnumIter))]
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
 #[repr(i32)]
 pub enum CompassMode {
@@ -471,6 +474,7 @@ impl CompassMode {
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
 #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
+#[cfg_attr(feature = "strum", derive(strum::EnumCount, strum::EnumIter))]
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
 #[repr(i32)]
 pub enum Theme {
@@ -511,6 +515,7 @@ impl Theme {
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
 #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
+#[cfg_attr(feature = "strum", derive(strum::EnumCount, strum::EnumIter))]
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
 #[repr(i32)]
 pub enum Language {
@@ -725,6 +730,7 @@ pub mod config {
         #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
         #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
         #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
+        #[cfg_attr(feature = "strum", derive(strum::EnumCount, strum::EnumIter))]
         #[derive(
             Clone,
             Copy,
@@ -860,6 +866,7 @@ pub mod config {
         #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
         #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
         #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
+        #[cfg_attr(feature = "strum", derive(strum::EnumCount, strum::EnumIter))]
         #[derive(
             Clone,
             Copy,
@@ -930,6 +937,7 @@ pub mod config {
         #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
         #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
         #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
+        #[cfg_attr(feature = "strum", derive(strum::EnumCount, strum::EnumIter))]
         #[derive(
             Clone,
             Copy,
@@ -1073,6 +1081,7 @@ pub mod config {
         #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
         #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
         #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
+        #[cfg_attr(feature = "strum", derive(strum::EnumCount, strum::EnumIter))]
         #[derive(
             Clone,
             Copy,
@@ -1165,6 +1174,7 @@ pub mod config {
         #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
         #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
         #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
+        #[cfg_attr(feature = "strum", derive(strum::EnumCount, strum::EnumIter))]
         #[derive(
             Clone,
             Copy,
@@ -1344,6 +1354,7 @@ pub mod config {
         #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
         #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
         #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
+        #[cfg_attr(feature = "strum", derive(strum::EnumCount, strum::EnumIter))]
         #[derive(
             Clone,
             Copy,
@@ -1389,6 +1400,7 @@ pub mod config {
         #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
         #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
         #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
+        #[cfg_attr(feature = "strum", derive(strum::EnumCount, strum::EnumIter))]
         #[derive(
             Clone,
             Copy,
@@ -1512,6 +1524,7 @@ pub mod config {
         #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
         #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
         #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
+        #[cfg_attr(feature = "strum", derive(strum::EnumCount, strum::EnumIter))]
         #[derive(
             Clone,
             Copy,
@@ -1550,6 +1563,7 @@ pub mod config {
         #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
         #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
         #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
+        #[cfg_attr(feature = "strum", derive(strum::EnumCount, strum::EnumIter))]
         #[derive(
             Clone,
             Copy,
@@ -1595,6 +1609,7 @@ pub mod config {
         #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
         #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
         #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
+        #[cfg_attr(feature = "strum", derive(strum::EnumCount, strum::EnumIter))]
         #[derive(
             Clone,
             Copy,
@@ -1653,6 +1668,7 @@ pub mod config {
         #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
         #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
         #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
+        #[cfg_attr(feature = "strum", derive(strum::EnumCount, strum::EnumIter))]
         #[derive(
             Clone,
             Copy,
@@ -1706,6 +1722,7 @@ pub mod config {
         #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
         #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
         #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
+        #[cfg_attr(feature = "strum", derive(strum::EnumCount, strum::EnumIter))]
         #[derive(
             Clone,
             Copy,
@@ -1893,6 +1910,7 @@ pub mod config {
         #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
         #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
         #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
+        #[cfg_attr(feature = "strum", derive(strum::EnumCount, strum::EnumIter))]
         #[derive(
             Clone,
             Copy,
@@ -2064,6 +2082,7 @@ pub mod config {
         #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
         #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
         #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
+        #[cfg_attr(feature = "strum", derive(strum::EnumCount, strum::EnumIter))]
         #[derive(
             Clone,
             Copy,
@@ -2177,6 +2196,7 @@ pub mod config {
         #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
         #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
         #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
+        #[cfg_attr(feature = "strum", derive(strum::EnumCount, strum::EnumIter))]
         #[derive(
             Clone,
             Copy,
@@ -2273,6 +2293,7 @@ pub mod config {
     #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
     #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
     #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
+    #[cfg_attr(feature = "strum", derive(strum::EnumCount, strum::EnumIter))]
     #[derive(Clone, PartialEq, ::prost::Oneof)]
     pub enum PayloadVariant {
         #[prost(message, tag = "1")]
@@ -2605,6 +2626,7 @@ pub mod module_config {
         #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
         #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
         #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
+        #[cfg_attr(feature = "strum", derive(strum::EnumCount, strum::EnumIter))]
         #[derive(
             Clone,
             Copy,
@@ -2705,6 +2727,7 @@ pub mod module_config {
         #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
         #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
         #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
+        #[cfg_attr(feature = "strum", derive(strum::EnumCount, strum::EnumIter))]
         #[derive(
             Clone,
             Copy,
@@ -2899,6 +2922,7 @@ pub mod module_config {
         #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
         #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
         #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
+        #[cfg_attr(feature = "strum", derive(strum::EnumCount, strum::EnumIter))]
         #[derive(
             Clone,
             Copy,
@@ -2982,6 +3006,7 @@ pub mod module_config {
         #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
         #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
         #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
+        #[cfg_attr(feature = "strum", derive(strum::EnumCount, strum::EnumIter))]
         #[derive(
             Clone,
             Copy,
@@ -3330,6 +3355,7 @@ pub mod module_config {
         #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
         #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
         #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
+        #[cfg_attr(feature = "strum", derive(strum::EnumCount, strum::EnumIter))]
         #[derive(
             Clone,
             Copy,
@@ -3447,6 +3473,7 @@ pub mod module_config {
     #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
     #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
     #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
+    #[cfg_attr(feature = "strum", derive(strum::EnumCount, strum::EnumIter))]
     #[derive(Clone, PartialEq, ::prost::Oneof)]
     pub enum PayloadVariant {
         ///
@@ -3534,6 +3561,7 @@ pub struct RemoteHardwarePin {
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
 #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
+#[cfg_attr(feature = "strum", derive(strum::EnumCount, strum::EnumIter))]
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
 #[repr(i32)]
 pub enum RemoteHardwarePinType {
@@ -3585,6 +3613,7 @@ impl RemoteHardwarePinType {
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
 #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
+#[cfg_attr(feature = "strum", derive(strum::EnumCount, strum::EnumIter))]
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
 #[repr(i32)]
 pub enum PortNum {
@@ -4336,6 +4365,7 @@ pub mod telemetry {
     #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
     #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
     #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
+    #[cfg_attr(feature = "strum", derive(strum::EnumCount, strum::EnumIter))]
     #[derive(Clone, PartialEq, ::prost::Oneof)]
     pub enum Variant {
         ///
@@ -4425,6 +4455,7 @@ pub struct Sen5xState {
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
 #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
+#[cfg_attr(feature = "strum", derive(strum::EnumCount, strum::EnumIter))]
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
 #[repr(i32)]
 pub enum TelemetrySensorType {
@@ -4709,6 +4740,7 @@ pub mod x_modem {
     #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
     #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
     #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
+    #[cfg_attr(feature = "strum", derive(strum::EnumCount, strum::EnumIter))]
     #[derive(
         Clone,
         Copy,
@@ -4890,6 +4922,7 @@ pub mod position {
     #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
     #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
     #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
+    #[cfg_attr(feature = "strum", derive(strum::EnumCount, strum::EnumIter))]
     #[derive(
         Clone,
         Copy,
@@ -4946,6 +4979,7 @@ pub mod position {
     #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
     #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
     #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
+    #[cfg_attr(feature = "strum", derive(strum::EnumCount, strum::EnumIter))]
     #[derive(
         Clone,
         Copy,
@@ -5120,6 +5154,7 @@ pub mod routing {
     #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
     #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
     #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
+    #[cfg_attr(feature = "strum", derive(strum::EnumCount, strum::EnumIter))]
     #[derive(
         Clone,
         Copy,
@@ -5247,6 +5282,7 @@ pub mod routing {
     #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
     #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
     #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
+    #[cfg_attr(feature = "strum", derive(strum::EnumCount, strum::EnumIter))]
     #[derive(Clone, PartialEq, Eq, Hash, ::prost::Oneof)]
     pub enum Variant {
         ///
@@ -5396,6 +5432,7 @@ pub mod store_forward_plus_plus {
     #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
     #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
     #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
+    #[cfg_attr(feature = "strum", derive(strum::EnumCount, strum::EnumIter))]
     #[derive(
         Clone,
         Copy,
@@ -5537,6 +5574,7 @@ pub mod mqtt_client_proxy_message {
     #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
     #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
     #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
+    #[cfg_attr(feature = "strum", derive(strum::EnumCount, strum::EnumIter))]
     #[derive(Clone, PartialEq, Eq, Hash, ::prost::Oneof)]
     pub enum PayloadVariant {
         ///
@@ -5703,6 +5741,7 @@ pub mod mesh_packet {
     #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
     #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
     #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
+    #[cfg_attr(feature = "strum", derive(strum::EnumCount, strum::EnumIter))]
     #[derive(
         Clone,
         Copy,
@@ -5792,6 +5831,7 @@ pub mod mesh_packet {
     #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
     #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
     #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
+    #[cfg_attr(feature = "strum", derive(strum::EnumCount, strum::EnumIter))]
     #[derive(
         Clone,
         Copy,
@@ -5842,6 +5882,7 @@ pub mod mesh_packet {
     #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
     #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
     #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
+    #[cfg_attr(feature = "strum", derive(strum::EnumCount, strum::EnumIter))]
     #[derive(
         Clone,
         Copy,
@@ -5915,6 +5956,7 @@ pub mod mesh_packet {
     #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
     #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
     #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
+    #[cfg_attr(feature = "strum", derive(strum::EnumCount, strum::EnumIter))]
     #[derive(Clone, PartialEq, Eq, Hash, ::prost::Oneof)]
     pub enum PayloadVariant {
         ///
@@ -6086,6 +6128,7 @@ pub mod log_record {
     #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
     #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
     #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
+    #[cfg_attr(feature = "strum", derive(strum::EnumCount, strum::EnumIter))]
     #[derive(
         Clone,
         Copy,
@@ -6200,6 +6243,7 @@ pub mod from_radio {
     #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
     #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
     #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
+    #[cfg_attr(feature = "strum", derive(strum::EnumCount, strum::EnumIter))]
     #[derive(Clone, PartialEq, ::prost::Oneof)]
     pub enum PayloadVariant {
         ///
@@ -6310,6 +6354,7 @@ pub mod client_notification {
     #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
     #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
     #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
+    #[cfg_attr(feature = "strum", derive(strum::EnumCount, strum::EnumIter))]
     #[derive(Clone, PartialEq, Eq, Hash, ::prost::Oneof)]
     pub enum PayloadVariant {
         #[prost(message, tag = "11")]
@@ -6406,6 +6451,7 @@ pub mod to_radio {
     #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
     #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
     #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
+    #[cfg_attr(feature = "strum", derive(strum::EnumCount, strum::EnumIter))]
     #[derive(Clone, PartialEq, ::prost::Oneof)]
     pub enum PayloadVariant {
         ///
@@ -6646,6 +6692,7 @@ pub mod chunked_payload_response {
     #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
     #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
     #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
+    #[cfg_attr(feature = "strum", derive(strum::EnumCount, strum::EnumIter))]
     #[derive(Clone, PartialEq, Eq, Hash, ::prost::Oneof)]
     pub enum PayloadVariant {
         ///
@@ -6670,6 +6717,7 @@ pub mod chunked_payload_response {
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
 #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
+#[cfg_attr(feature = "strum", derive(strum::EnumCount, strum::EnumIter))]
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
 #[repr(i32)]
 pub enum HardwareModel {
@@ -7349,6 +7397,7 @@ impl HardwareModel {
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
 #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
+#[cfg_attr(feature = "strum", derive(strum::EnumCount, strum::EnumIter))]
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
 #[repr(i32)]
 pub enum Constants {
@@ -7390,6 +7439,7 @@ impl Constants {
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
 #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
+#[cfg_attr(feature = "strum", derive(strum::EnumCount, strum::EnumIter))]
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
 #[repr(i32)]
 pub enum CriticalErrorCode {
@@ -7491,6 +7541,7 @@ impl CriticalErrorCode {
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
 #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
+#[cfg_attr(feature = "strum", derive(strum::EnumCount, strum::EnumIter))]
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
 #[repr(i32)]
 pub enum FirmwareEdition {
@@ -7553,6 +7604,7 @@ impl FirmwareEdition {
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
 #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
+#[cfg_attr(feature = "strum", derive(strum::EnumCount, strum::EnumIter))]
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
 #[repr(i32)]
 pub enum ExcludedModules {
@@ -7725,6 +7777,7 @@ pub mod admin_message {
     #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
     #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
     #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
+    #[cfg_attr(feature = "strum", derive(strum::EnumCount, strum::EnumIter))]
     #[derive(
         Clone,
         Copy,
@@ -7810,6 +7863,7 @@ pub mod admin_message {
     #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
     #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
     #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
+    #[cfg_attr(feature = "strum", derive(strum::EnumCount, strum::EnumIter))]
     #[derive(
         Clone,
         Copy,
@@ -7918,6 +7972,7 @@ pub mod admin_message {
     #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
     #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
     #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
+    #[cfg_attr(feature = "strum", derive(strum::EnumCount, strum::EnumIter))]
     #[derive(
         Clone,
         Copy,
@@ -7963,6 +8018,7 @@ pub mod admin_message {
     #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
     #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
     #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
+    #[cfg_attr(feature = "strum", derive(strum::EnumCount, strum::EnumIter))]
     #[derive(Clone, PartialEq, ::prost::Oneof)]
     pub enum PayloadVariant {
         ///
@@ -8298,6 +8354,7 @@ pub mod key_verification_admin {
     #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
     #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
     #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
+    #[cfg_attr(feature = "strum", derive(strum::EnumCount, strum::EnumIter))]
     #[derive(
         Clone,
         Copy,
@@ -8417,6 +8474,7 @@ pub struct Sen5xConfig {
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
 #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
+#[cfg_attr(feature = "strum", derive(strum::EnumCount, strum::EnumIter))]
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
 #[repr(i32)]
 pub enum OtaMode {
@@ -8507,6 +8565,7 @@ pub mod tak_packet {
     #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
     #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
     #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
+    #[cfg_attr(feature = "strum", derive(strum::EnumCount, strum::EnumIter))]
     #[derive(Clone, PartialEq, Eq, Hash, ::prost::Oneof)]
     pub enum PayloadVariant {
         ///
@@ -8628,6 +8687,7 @@ pub struct Pli {
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
 #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
+#[cfg_attr(feature = "strum", derive(strum::EnumCount, strum::EnumIter))]
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
 #[repr(i32)]
 pub enum Team {
@@ -8728,6 +8788,7 @@ impl Team {
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
 #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
+#[cfg_attr(feature = "strum", derive(strum::EnumCount, strum::EnumIter))]
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
 #[repr(i32)]
 pub enum MemberRole {
@@ -9252,6 +9313,7 @@ pub mod sensor_data {
     #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
     #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
     #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
+    #[cfg_attr(feature = "strum", derive(strum::EnumCount, strum::EnumIter))]
     #[derive(Clone, Copy, PartialEq, ::prost::Oneof)]
     pub enum Data {
         #[prost(float, tag = "2")]
@@ -9275,6 +9337,7 @@ pub mod interdevice_message {
     #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
     #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
     #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
+    #[cfg_attr(feature = "strum", derive(strum::EnumCount, strum::EnumIter))]
     #[derive(Clone, PartialEq, ::prost::Oneof)]
     pub enum Data {
         #[prost(string, tag = "1")]
@@ -9286,6 +9349,7 @@ pub mod interdevice_message {
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
 #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
+#[cfg_attr(feature = "strum", derive(strum::EnumCount, strum::EnumIter))]
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
 #[repr(i32)]
 pub enum MessageType {
@@ -9468,6 +9532,7 @@ pub mod power_mon {
     #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
     #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
     #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
+    #[cfg_attr(feature = "strum", derive(strum::EnumCount, strum::EnumIter))]
     #[derive(
         Clone,
         Copy,
@@ -9573,6 +9638,7 @@ pub mod power_stress_message {
     #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
     #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
     #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
+    #[cfg_attr(feature = "strum", derive(strum::EnumCount, strum::EnumIter))]
     #[derive(
         Clone,
         Copy,
@@ -9721,6 +9787,7 @@ pub mod hardware_message {
     #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
     #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
     #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
+    #[cfg_attr(feature = "strum", derive(strum::EnumCount, strum::EnumIter))]
     #[derive(
         Clone,
         Copy,
@@ -9901,6 +9968,7 @@ pub mod store_and_forward {
     #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
     #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
     #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
+    #[cfg_attr(feature = "strum", derive(strum::EnumCount, strum::EnumIter))]
     #[derive(
         Clone,
         Copy,
@@ -10018,6 +10086,7 @@ pub mod store_and_forward {
     #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
     #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
     #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
+    #[cfg_attr(feature = "strum", derive(strum::EnumCount, strum::EnumIter))]
     #[derive(Clone, PartialEq, Eq, Hash, ::prost::Oneof)]
     pub enum Variant {
         ///

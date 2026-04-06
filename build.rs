@@ -47,6 +47,10 @@ fn main() -> std::io::Result<()> {
         ".",
         "#[cfg_attr(feature = \"ts-gen\", derive(specta::Type))]",
     );
+    config.enum_attribute(
+        ".",
+        "#[cfg_attr(feature = \"strum\", derive(strum::EnumCount, strum::EnumIter))]",
+    );
 
     config.out_dir(gen_dir);
     config.compile_protos(&protos, &[src_dir])

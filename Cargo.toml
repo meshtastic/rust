@@ -17,13 +17,14 @@ edition = "2021"
 doctest = false
 
 [features]
-default = ["serde", "tokio"]
+default = ["serde", "tokio", "strum"]
 gen = ["dep:prost-build", "dep:protoc-bin-vendored", "dep:walkdir"]
 
 serde = ["dep:serde", "dep:serde_json"]
 ts-gen = ["serde", "dep:specta", "dep:specta-typescript"]
 bluetooth-le = ["dep:uuid", "dep:btleplug", "dep:futures", "dep:bluez-async"]
 tokio = ["dep:tokio", "dep:tokio-serial", "dep:tokio-util"]
+strum = ["dep:strum"]
 
 [lints.rust]
 missing_docs = "warn"
@@ -74,6 +75,7 @@ thiserror = "2.0.11"
 uuid = { version = "1.12.1", optional = true }
 btleplug = { version = "0.11.7", optional = true, features = ["serde"] }
 futures = { version = "0.3.31", optional = true }
+strum = { version = "0.28", optional = true, features = ["derive"] }
 
 #TODO: drop pinning of the bluez-async version once we move the MSRV to 1.84 and we can use
 #MSRV-aware resolver instead of this hack. See
