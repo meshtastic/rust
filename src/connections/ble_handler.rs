@@ -198,7 +198,26 @@ impl BleHandler {
                 }
                 Ok(peripherals) => {
                     for peripheral in peripherals {
-                        available_peripherals.push((peripheral, adapter.clone()));
+                        if cfg!(target_os = "linux") {
+                            // On Linux (BlueZ), `start_scan` may return all peripherals regardless of the filter.
+                            // We manually verify the Meshtastic service UUID to filter out unrelated devices.
+                            // See: https://github.com/deviceplug/btleplug/tree/master?tab=readme-ov-file#scan-filtering-on-linux-bluez
+                            match peripheral.discover_services().await {
+                                Ok(()) => {
+                                    if peripheral.services().iter().any(|s| s.uuid == MSH_SERVICE) {
+                                        available_peripherals.push((peripheral, adapter.clone()));
+                                    }
+                                }
+                                Err(e) => {
+                                    error!(
+                                        "Error getting services of {}: {e}",
+                                        peripheral.address()
+                                    )
+                                }
+                            }
+                        } else {
+                            available_peripherals.push((peripheral, adapter.clone()));
+                        }
                     }
                 }
             }
