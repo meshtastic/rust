@@ -351,7 +351,7 @@ where
 
     Ok(StreamHandle {
         stream: client,
-        join_handle: Some(handle.into()),
+        join_handle: Some(tokio_util::task::AbortOnDropHandle::new(handle)),
     })
 }
 

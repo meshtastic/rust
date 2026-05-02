@@ -38,7 +38,6 @@ pub mod api {
     pub use crate::connections::stream_api::ConnectedStreamApi;
     pub use crate::connections::stream_api::StreamApi;
     pub use crate::connections::stream_api::StreamHandle;
-    pub use crate::connections::wrappers::AbortingJoinHandle;
 }
 
 /// This module contains the global `Error` type of the library. This enum implements

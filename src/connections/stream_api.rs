@@ -5,7 +5,7 @@ use tokio::{
     io::{AsyncReadExt, AsyncWriteExt},
     sync::mpsc::UnboundedSender,
 };
-use tokio_util::sync::CancellationToken;
+use tokio_util::{sync::CancellationToken, task::AbortOnDropHandle};
 
 use crate::{errors_internal::Error, protobufs, types::EncodedToRadioPacketWithHeader, utils};
 use crate::{
@@ -18,7 +18,7 @@ use super::{
     wrappers::{
         encoded_data::{EncodedMeshPacketData, EncodedToRadioPacket, IncomingStreamData},
         mesh_channel::MeshChannel,
-        AbortingJoinHandle, NodeId,
+        NodeId,
     },
     PacketDestination, PacketRouter,
 };
@@ -69,13 +69,13 @@ pub struct StreamApi;
 pub struct ConnectedStreamApi<State = state::Configured> {
     write_input_tx: UnboundedSender<EncodedToRadioPacketWithHeader>,
 
-    read_handle: AbortingJoinHandle,
-    write_handle: AbortingJoinHandle,
-    processing_handle: AbortingJoinHandle,
-    heartbeat_handle: AbortingJoinHandle,
+    read_handle: AbortOnDropHandle<Result<(), Error>>,
+    write_handle: AbortOnDropHandle<Result<(), Error>>,
+    processing_handle: AbortOnDropHandle<Result<(), Error>>,
+    heartbeat_handle: AbortOnDropHandle<Result<(), Error>>,
     /// An optional handle to a background task that bridges data between a high-level
     /// stream and a low-level transport (e.g. BLE).
-    bridge_handle: Option<AbortingJoinHandle>,
+    bridge_handle: Option<AbortOnDropHandle<Result<(), Error>>>,
 
     cancellation_token: CancellationToken,
 
@@ -88,7 +88,7 @@ pub struct StreamHandle<T: AsyncReadExt + AsyncWriteExt + Send> {
     /// The underlying stream.
     pub stream: T,
     /// An optional join handle that processes data on the other side of the stream.
-    pub join_handle: Option<AbortingJoinHandle>,
+    pub join_handle: Option<AbortOnDropHandle<Result<(), Error>>>,
 }
 
 impl<T: AsyncReadExt + AsyncWriteExt + Send> StreamHandle<T> {
@@ -445,24 +445,28 @@ impl StreamApi {
         let (read_stream, write_stream) = tokio::io::split(stream_handle.stream);
         let cancellation_token = CancellationToken::new();
 
-        let read_handle =
-            handlers::spawn_read_handler(cancellation_token.clone(), read_stream, read_output_tx)
-                .into();
+        let read_handle = AbortOnDropHandle::new(handlers::spawn_read_handler(
+            cancellation_token.clone(),
+            read_stream,
+            read_output_tx,
+        ));
 
-        let write_handle =
-            handlers::spawn_write_handler(cancellation_token.clone(), write_stream, write_input_rx)
-                .into();
+        let write_handle = AbortOnDropHandle::new(handlers::spawn_write_handler(
+            cancellation_token.clone(),
+            write_stream,
+            write_input_rx,
+        ));
 
-        let processing_handle = handlers::spawn_processing_handler(
+        let processing_handle = AbortOnDropHandle::new(handlers::spawn_processing_handler(
             cancellation_token.clone(),
             read_output_rx,
             decoded_packet_tx,
-        )
-        .into();
+        ));
 
-        let heartbeat_handle =
-            handlers::spawn_heartbeat_handler(cancellation_token.clone(), write_input_tx.clone())
-                .into();
+        let heartbeat_handle = AbortOnDropHandle::new(handlers::spawn_heartbeat_handler(
+            cancellation_token.clone(),
+            write_input_tx.clone(),
+        ));
 
         // Return channel for receiving decoded packets
 

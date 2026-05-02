@@ -60,7 +60,7 @@ futures-util = "0.3.31"
 rand = "0.9.0"
 tokio = { version = "1.43.0", features = ["full"], optional = true }
 tokio-serial = { version = "5.4.5", optional = true }
-tokio-util = { version = "0.7.13", optional = true }
+tokio-util = { version = "0.7.13", optional = true, features = ["rt"] }
 prost = "0.14"
 log = "0.4.25"
 
