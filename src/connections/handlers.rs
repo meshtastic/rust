@@ -36,8 +36,13 @@ where
                 Ok(())
             }
             e = handle => {
-                debug!("Read handler unexpectedly terminated: {e:#?}");
-                e
+                if cancellation_token.is_cancelled() {
+                    debug!("Read handler finished during cancellation");
+                    Ok(())
+                } else {
+                    error!("Read handler unexpectedly terminated: {e:#?}");
+                    e
+                }
             }
         }
     })
@@ -106,7 +111,12 @@ where
                 Ok(())
             }
             write_result = handle => {
-                write_result.inspect_err(|e| error!("Write handler unexpectedly terminated {e:?}"))
+                if cancellation_token.is_cancelled() {
+                    debug!("Write handler finished during cancellation");
+                    Ok(())
+                } else {
+                    write_result.inspect_err(|e| error!("Write handler unexpectedly terminated {e:?}"))
+                }
             }
         }
     })
@@ -151,8 +161,13 @@ pub fn spawn_processing_handler(
                 Ok(())
             }
             _ = handle => {
-                error!("Message processing handler unexpectedly terminated");
-                Err(Error::InternalChannelError(InternalChannelError::ChannelClosedEarly {}))
+                if cancellation_token.is_cancelled() {
+                    debug!("Message processing handler finished during cancellation");
+                    Ok(())
+                } else {
+                    error!("Message processing handler unexpectedly terminated");
+                    Err(Error::InternalChannelError(InternalChannelError::ChannelClosedEarly {}))
+                }
             }
         }
     })
@@ -186,9 +201,14 @@ pub fn spawn_heartbeat_handler(
                 Ok(())
             }
             write_result = handle => {
-                write_result.inspect_err(|e|
-                    error!("Heartbeat handler unexpectedly terminated {e:?}")
-                )
+                if cancellation_token.is_cancelled() {
+                    debug!("Heartbeat handler finished during cancellation");
+                    Ok(())
+                } else {
+                    write_result.inspect_err(|e|
+                        error!("Heartbeat handler unexpectedly terminated {e:?}")
+                    )
+                }
             }
         }
     })
