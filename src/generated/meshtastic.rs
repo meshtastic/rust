@@ -1904,6 +1904,10 @@ pub mod config {
         /// Sets the ok_to_mqtt bit on outgoing packets
         #[prost(bool, tag = "105")]
         pub config_ok_to_mqtt: bool,
+        ///
+        /// Set where LORA FEM is enabled, disabled, or not present
+        #[prost(enumeration = "lo_ra_config::FemLnaMode", tag = "106")]
+        pub fem_lna_mode: i32,
     }
     /// Nested message and enum types in `LoRaConfig`.
     pub mod lo_ra_config {
@@ -2172,6 +2176,55 @@ pub mod config {
                 }
             }
         }
+        #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+        #[cfg_attr(feature = "serde", serde(rename_all = "snake_case"))]
+        #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
+        #[cfg_attr(feature = "strum", derive(strum::EnumCount, strum::EnumIter))]
+        #[derive(
+            Clone,
+            Copy,
+            Debug,
+            PartialEq,
+            Eq,
+            Hash,
+            PartialOrd,
+            Ord,
+            ::prost::Enumeration
+        )]
+        #[repr(i32)]
+        pub enum FemLnaMode {
+            ///
+            /// FEM_LNA is present but disabled
+            Disabled = 0,
+            ///
+            /// FEM_LNA is present and enabled
+            Enabled = 1,
+            ///
+            /// FEM_LNA is not present on the device
+            NotPresent = 2,
+        }
+        impl FemLnaMode {
+            /// String value of the enum field names used in the ProtoBuf definition.
+            ///
+            /// The values are not transformed in any way and thus are considered stable
+            /// (if the ProtoBuf definition does not change) and safe for programmatic use.
+            pub fn as_str_name(&self) -> &'static str {
+                match self {
+                    Self::Disabled => "DISABLED",
+                    Self::Enabled => "ENABLED",
+                    Self::NotPresent => "NOT_PRESENT",
+                }
+            }
+            /// Creates an enum from field names used in the ProtoBuf definition.
+            pub fn from_str_name(value: &str) -> ::core::option::Option<Self> {
+                match value {
+                    "DISABLED" => Some(Self::Disabled),
+                    "ENABLED" => Some(Self::Enabled),
+                    "NOT_PRESENT" => Some(Self::NotPresent),
+                    _ => None,
+                }
+            }
+        }
     }
     #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
     #[cfg_attr(feature = "serde", serde(rename_all = "snake_case"))]
@@ -2433,6 +2486,330 @@ pub struct SerialConnectionStatus {
     pub is_connected: bool,
 }
 ///
+/// Packets for the official ATAK Plugin
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", serde(rename_all = "snake_case"))]
+#[cfg_attr(feature = "ts-gen", derive(specta::Type))]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
+pub struct TakPacket {
+    ///
+    /// Are the payloads strings compressed for LoRA transport?
+    #[prost(bool, tag = "1")]
+    pub is_compressed: bool,
+    ///
+    /// The contact / callsign for ATAK user
+    #[prost(message, optional, tag = "2")]
+    pub contact: ::core::option::Option<Contact>,
+    ///
+    /// The group for ATAK user
+    #[prost(message, optional, tag = "3")]
+    pub group: ::core::option::Option<Group>,
+    ///
+    /// The status of the ATAK EUD
+    #[prost(message, optional, tag = "4")]
+    pub status: ::core::option::Option<Status>,
+    ///
+    /// The payload of the packet
+    #[prost(oneof = "tak_packet::PayloadVariant", tags = "5, 6, 7")]
+    pub payload_variant: ::core::option::Option<tak_packet::PayloadVariant>,
+}
+/// Nested message and enum types in `TAKPacket`.
+pub mod tak_packet {
+    ///
+    /// The payload of the packet
+    #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+    #[cfg_attr(feature = "serde", serde(rename_all = "snake_case"))]
+    #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
+    #[cfg_attr(feature = "strum", derive(strum::EnumCount, strum::EnumIter))]
+    #[derive(Clone, PartialEq, Eq, Hash, ::prost::Oneof)]
+    pub enum PayloadVariant {
+        ///
+        /// TAK position report
+        #[prost(message, tag = "5")]
+        Pli(super::Pli),
+        ///
+        /// ATAK GeoChat message
+        #[prost(message, tag = "6")]
+        Chat(super::GeoChat),
+        ///
+        /// Generic CoT detail XML
+        /// May be compressed / truncated by the sender (EUD)
+        #[prost(bytes, tag = "7")]
+        Detail(::prost::alloc::vec::Vec<u8>),
+    }
+}
+///
+/// ATAK GeoChat message
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", serde(rename_all = "snake_case"))]
+#[cfg_attr(feature = "ts-gen", derive(specta::Type))]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
+pub struct GeoChat {
+    ///
+    /// The text message
+    #[prost(string, tag = "1")]
+    pub message: ::prost::alloc::string::String,
+    ///
+    /// Uid recipient of the message
+    #[prost(string, optional, tag = "2")]
+    pub to: ::core::option::Option<::prost::alloc::string::String>,
+    ///
+    /// Callsign of the recipient for the message
+    #[prost(string, optional, tag = "3")]
+    pub to_callsign: ::core::option::Option<::prost::alloc::string::String>,
+}
+///
+/// ATAK Group
+/// <__group role='Team Member' name='Cyan'/>
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", serde(rename_all = "snake_case"))]
+#[cfg_attr(feature = "ts-gen", derive(specta::Type))]
+#[derive(Clone, Copy, PartialEq, Eq, Hash, ::prost::Message)]
+pub struct Group {
+    ///
+    /// Role of the group member
+    #[prost(enumeration = "MemberRole", tag = "1")]
+    pub role: i32,
+    ///
+    /// Team (color)
+    /// Default Cyan
+    #[prost(enumeration = "Team", tag = "2")]
+    pub team: i32,
+}
+///
+/// ATAK EUD Status
+/// <status battery='100' />
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", serde(rename_all = "snake_case"))]
+#[cfg_attr(feature = "ts-gen", derive(specta::Type))]
+#[derive(Clone, Copy, PartialEq, Eq, Hash, ::prost::Message)]
+pub struct Status {
+    ///
+    /// Battery level
+    #[prost(uint32, tag = "1")]
+    pub battery: u32,
+}
+///
+/// ATAK Contact
+/// <contact endpoint='0.0.0.0:4242:tcp' phone='+12345678' callsign='FALKE'/>
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", serde(rename_all = "snake_case"))]
+#[cfg_attr(feature = "ts-gen", derive(specta::Type))]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
+pub struct Contact {
+    ///
+    /// Callsign
+    #[prost(string, tag = "1")]
+    pub callsign: ::prost::alloc::string::String,
+    ///
+    /// Device callsign
+    ///
+    ///
+    /// IP address of endpoint in integer form (0.0.0.0 default)
+    #[prost(string, tag = "2")]
+    pub device_callsign: ::prost::alloc::string::String,
+}
+///
+/// Position Location Information from ATAK
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", serde(rename_all = "snake_case"))]
+#[cfg_attr(feature = "ts-gen", derive(specta::Type))]
+#[derive(Clone, Copy, PartialEq, Eq, Hash, ::prost::Message)]
+pub struct Pli {
+    ///
+    /// The new preferred location encoding, multiply by 1e-7 to get degrees
+    /// in floating point
+    #[prost(sfixed32, tag = "1")]
+    pub latitude_i: i32,
+    ///
+    /// The new preferred location encoding, multiply by 1e-7 to get degrees
+    /// in floating point
+    #[prost(sfixed32, tag = "2")]
+    pub longitude_i: i32,
+    ///
+    /// Altitude (ATAK prefers HAE)
+    #[prost(int32, tag = "3")]
+    pub altitude: i32,
+    ///
+    /// Speed
+    #[prost(uint32, tag = "4")]
+    pub speed: u32,
+    ///
+    /// Course in degrees
+    #[prost(uint32, tag = "5")]
+    pub course: u32,
+}
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", serde(rename_all = "snake_case"))]
+#[cfg_attr(feature = "ts-gen", derive(specta::Type))]
+#[cfg_attr(feature = "strum", derive(strum::EnumCount, strum::EnumIter))]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+#[repr(i32)]
+pub enum Team {
+    ///
+    /// Unspecifed
+    UnspecifedColor = 0,
+    ///
+    /// White
+    White = 1,
+    ///
+    /// Yellow
+    Yellow = 2,
+    ///
+    /// Orange
+    Orange = 3,
+    ///
+    /// Magenta
+    Magenta = 4,
+    ///
+    /// Red
+    Red = 5,
+    ///
+    /// Maroon
+    Maroon = 6,
+    ///
+    /// Purple
+    Purple = 7,
+    ///
+    /// Dark Blue
+    DarkBlue = 8,
+    ///
+    /// Blue
+    Blue = 9,
+    ///
+    /// Cyan
+    Cyan = 10,
+    ///
+    /// Teal
+    Teal = 11,
+    ///
+    /// Green
+    Green = 12,
+    ///
+    /// Dark Green
+    DarkGreen = 13,
+    ///
+    /// Brown
+    Brown = 14,
+}
+impl Team {
+    /// String value of the enum field names used in the ProtoBuf definition.
+    ///
+    /// The values are not transformed in any way and thus are considered stable
+    /// (if the ProtoBuf definition does not change) and safe for programmatic use.
+    pub fn as_str_name(&self) -> &'static str {
+        match self {
+            Self::UnspecifedColor => "Unspecifed_Color",
+            Self::White => "White",
+            Self::Yellow => "Yellow",
+            Self::Orange => "Orange",
+            Self::Magenta => "Magenta",
+            Self::Red => "Red",
+            Self::Maroon => "Maroon",
+            Self::Purple => "Purple",
+            Self::DarkBlue => "Dark_Blue",
+            Self::Blue => "Blue",
+            Self::Cyan => "Cyan",
+            Self::Teal => "Teal",
+            Self::Green => "Green",
+            Self::DarkGreen => "Dark_Green",
+            Self::Brown => "Brown",
+        }
+    }
+    /// Creates an enum from field names used in the ProtoBuf definition.
+    pub fn from_str_name(value: &str) -> ::core::option::Option<Self> {
+        match value {
+            "Unspecifed_Color" => Some(Self::UnspecifedColor),
+            "White" => Some(Self::White),
+            "Yellow" => Some(Self::Yellow),
+            "Orange" => Some(Self::Orange),
+            "Magenta" => Some(Self::Magenta),
+            "Red" => Some(Self::Red),
+            "Maroon" => Some(Self::Maroon),
+            "Purple" => Some(Self::Purple),
+            "Dark_Blue" => Some(Self::DarkBlue),
+            "Blue" => Some(Self::Blue),
+            "Cyan" => Some(Self::Cyan),
+            "Teal" => Some(Self::Teal),
+            "Green" => Some(Self::Green),
+            "Dark_Green" => Some(Self::DarkGreen),
+            "Brown" => Some(Self::Brown),
+            _ => None,
+        }
+    }
+}
+///
+/// Role of the group member
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", serde(rename_all = "snake_case"))]
+#[cfg_attr(feature = "ts-gen", derive(specta::Type))]
+#[cfg_attr(feature = "strum", derive(strum::EnumCount, strum::EnumIter))]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+#[repr(i32)]
+pub enum MemberRole {
+    ///
+    /// Unspecifed
+    Unspecifed = 0,
+    ///
+    /// Team Member
+    TeamMember = 1,
+    ///
+    /// Team Lead
+    TeamLead = 2,
+    ///
+    /// Headquarters
+    Hq = 3,
+    ///
+    /// Airsoft enthusiast
+    Sniper = 4,
+    ///
+    /// Medic
+    Medic = 5,
+    ///
+    /// ForwardObserver
+    ForwardObserver = 6,
+    ///
+    /// Radio Telephone Operator
+    Rto = 7,
+    ///
+    /// Doggo
+    K9 = 8,
+}
+impl MemberRole {
+    /// String value of the enum field names used in the ProtoBuf definition.
+    ///
+    /// The values are not transformed in any way and thus are considered stable
+    /// (if the ProtoBuf definition does not change) and safe for programmatic use.
+    pub fn as_str_name(&self) -> &'static str {
+        match self {
+            Self::Unspecifed => "Unspecifed",
+            Self::TeamMember => "TeamMember",
+            Self::TeamLead => "TeamLead",
+            Self::Hq => "HQ",
+            Self::Sniper => "Sniper",
+            Self::Medic => "Medic",
+            Self::ForwardObserver => "ForwardObserver",
+            Self::Rto => "RTO",
+            Self::K9 => "K9",
+        }
+    }
+    /// Creates an enum from field names used in the ProtoBuf definition.
+    pub fn from_str_name(value: &str) -> ::core::option::Option<Self> {
+        match value {
+            "Unspecifed" => Some(Self::Unspecifed),
+            "TeamMember" => Some(Self::TeamMember),
+            "TeamLead" => Some(Self::TeamLead),
+            "HQ" => Some(Self::Hq),
+            "Sniper" => Some(Self::Sniper),
+            "Medic" => Some(Self::Medic),
+            "ForwardObserver" => Some(Self::ForwardObserver),
+            "RTO" => Some(Self::Rto),
+            "K9" => Some(Self::K9),
+            _ => None,
+        }
+    }
+}
+///
 /// Module Config
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "snake_case"))]
@@ -2443,7 +2820,7 @@ pub struct ModuleConfig {
     /// TODO: REPLACE
     #[prost(
         oneof = "module_config::PayloadVariant",
-        tags = "1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15"
+        tags = "1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16"
     )]
     pub payload_variant: ::core::option::Option<module_config::PayloadVariant>,
 }
@@ -3469,6 +3846,24 @@ pub mod module_config {
         pub node_status: ::prost::alloc::string::String,
     }
     ///
+    /// TAK team/role configuration
+    #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+    #[cfg_attr(feature = "serde", serde(rename_all = "snake_case"))]
+    #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
+    #[derive(Clone, Copy, PartialEq, Eq, Hash, ::prost::Message)]
+    pub struct TakConfig {
+        ///
+        /// Team color.
+        /// Default Unspecifed_Color -> firmware uses Cyan
+        #[prost(enumeration = "super::Team", tag = "1")]
+        pub team: i32,
+        ///
+        /// Member role.
+        /// Default Unspecifed -> firmware uses TeamMember
+        #[prost(enumeration = "super::MemberRole", tag = "2")]
+        pub role: i32,
+    }
+    ///
     /// TODO: REPLACE
     #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
     #[cfg_attr(feature = "serde", serde(rename_all = "snake_case"))]
@@ -3536,6 +3931,10 @@ pub mod module_config {
         /// Traffic management module config for mesh network optimization
         #[prost(message, tag = "15")]
         TrafficManagement(TrafficManagementConfig),
+        ///
+        /// TAK team/role configuration for TAK_TRACKER
+        #[prost(message, tag = "16")]
+        Tak(TakConfig),
     }
 }
 ///
@@ -3764,6 +4163,10 @@ pub enum PortNum {
     /// PowerStress based monitoring support (for automated power consumption testing)
     PowerstressApp = 74,
     ///
+    /// LoraWAN Payload Transport
+    /// ENCODING: compact binary LoRaWAN uplink (10-byte RF metadata + PHY payload) - see LoRaWANBridgeModule
+    LorawanBridge = 75,
+    ///
     /// Reticulum Network Stack Tunnel App
     /// ENCODING: Fragmented RNS Packet. Handled by Meshtastic RNS interface
     ReticulumTunnelApp = 76,
@@ -3772,6 +4175,11 @@ pub enum PortNum {
     /// arbitrary telemetry over meshtastic that is not covered by telemetry.proto
     /// ENCODING: CayenneLLP
     CayenneApp = 77,
+    ///
+    /// GroupAlarm integration
+    /// Used for transporting GroupAlarm-related messages between Meshtastic nodes
+    /// and companion applications/services.
+    GroupalarmApp = 112,
     ///
     /// Private applications should use portnums >= 256.
     /// To simplify initial development and testing you can use "PRIVATE_APP"
@@ -3821,8 +4229,10 @@ impl PortNum {
             Self::AtakPlugin => "ATAK_PLUGIN",
             Self::MapReportApp => "MAP_REPORT_APP",
             Self::PowerstressApp => "POWERSTRESS_APP",
+            Self::LorawanBridge => "LORAWAN_BRIDGE",
             Self::ReticulumTunnelApp => "RETICULUM_TUNNEL_APP",
             Self::CayenneApp => "CAYENNE_APP",
+            Self::GroupalarmApp => "GROUPALARM_APP",
             Self::PrivateApp => "PRIVATE_APP",
             Self::AtakForwarder => "ATAK_FORWARDER",
             Self::Max => "MAX",
@@ -3860,8 +4270,10 @@ impl PortNum {
             "ATAK_PLUGIN" => Some(Self::AtakPlugin),
             "MAP_REPORT_APP" => Some(Self::MapReportApp),
             "POWERSTRESS_APP" => Some(Self::PowerstressApp),
+            "LORAWAN_BRIDGE" => Some(Self::LorawanBridge),
             "RETICULUM_TUNNEL_APP" => Some(Self::ReticulumTunnelApp),
             "CAYENNE_APP" => Some(Self::CayenneApp),
+            "GROUPALARM_APP" => Some(Self::GroupalarmApp),
             "PRIVATE_APP" => Some(Self::PrivateApp),
             "ATAK_FORWARDER" => Some(Self::AtakForwarder),
             "MAX" => Some(Self::Max),
@@ -4481,7 +4893,7 @@ pub enum TelemetrySensorType {
     /// High accuracy temperature and pressure
     Bmp280 = 6,
     ///
-    /// High accuracy temperature and humidity
+    /// TODO - REMOVE High accuracy temperature and humidity
     Shtc3 = 7,
     ///
     /// High accuracy pressure
@@ -4496,7 +4908,7 @@ pub enum TelemetrySensorType {
     /// 3-Axis magnetic sensor
     Qmc5883l = 11,
     ///
-    /// High accuracy temperature and humidity
+    /// TODO - REMOVE High accuracy temperature and humidity
     Sht31 = 12,
     ///
     /// PM2.5 air quality sensor
@@ -4511,7 +4923,7 @@ pub enum TelemetrySensorType {
     /// RCWL-9620 Doppler Radar Distance Sensor, used for water level detection
     Rcwl9620 = 16,
     ///
-    /// Sensirion High accuracy temperature and humidity
+    /// TODO - REMOVE Sensirion High accuracy temperature and humidity
     Sht4x = 17,
     ///
     /// VEML7700 high accuracy ambient light(Lux) digital 16-bit resolution sensor.
@@ -4601,11 +5013,17 @@ pub enum TelemetrySensorType {
     /// HDC1080 Temperature and Humidity Sensor
     Hdc1080 = 46,
     ///
-    /// STH21 Temperature and R. Humidity sensor
+    /// TODO - REMOVE STH21 Temperature and R. Humidity sensor
     Sht21 = 47,
     ///
     /// Sensirion STC31 CO2 sensor
     Stc31 = 48,
+    ///
+    /// SCD30 CO2, humidity, temperature sensor
+    Scd30 = 49,
+    ///
+    /// SHT family of sensors for temperature and humidity
+    Shtxx = 50,
 }
 impl TelemetrySensorType {
     /// String value of the enum field names used in the ProtoBuf definition.
@@ -4663,6 +5081,8 @@ impl TelemetrySensorType {
             Self::Hdc1080 => "HDC1080",
             Self::Sht21 => "SHT21",
             Self::Stc31 => "STC31",
+            Self::Scd30 => "SCD30",
+            Self::Shtxx => "SHTXX",
         }
     }
     /// Creates an enum from field names used in the ProtoBuf definition.
@@ -4717,6 +5137,8 @@ impl TelemetrySensorType {
             "HDC1080" => Some(Self::Hdc1080),
             "SHT21" => Some(Self::Sht21),
             "STC31" => Some(Self::Stc31),
+            "SCD30" => Some(Self::Scd30),
+            "SHTXX" => Some(Self::Shtxx),
             _ => None,
         }
     }
@@ -7121,6 +7543,18 @@ pub enum HardwareModel {
     /// LilyGo T5 S3 ePaper Pro (V1 and V2)
     T5S3EpaperPro = 123,
     ///
+    /// LilyGo T-Beam BPF (144-148Mhz)
+    TbeamBpf = 124,
+    ///
+    /// LilyGo T-Mini E-paper S3 Kit
+    MiniEpaperS3 = 125,
+    ///
+    /// LilyGo T-Display S3 Pro LR1121
+    TdisplayS3Pro = 126,
+    ///
+    /// Heltec Mesh Node T096 board features an nRF52840 CPU and a TFT screen.
+    HeltecMeshNodeT096 = 127,
+    ///
     /// ------------------------------------------------------------------------------------------------------------------------------------------
     /// Reserved ID For developing private Ports. These will show up in live traffic sparsely, so we can use a high number. Keep it within 8 bits.
     /// ------------------------------------------------------------------------------------------------------------------------------------------
@@ -7257,6 +7691,10 @@ impl HardwareModel {
             Self::Meshstick1262 => "MESHSTICK_1262",
             Self::Tbeam1Watt => "TBEAM_1_WATT",
             Self::T5S3EpaperPro => "T5_S3_EPAPER_PRO",
+            Self::TbeamBpf => "TBEAM_BPF",
+            Self::MiniEpaperS3 => "MINI_EPAPER_S3",
+            Self::TdisplayS3Pro => "TDISPLAY_S3_PRO",
+            Self::HeltecMeshNodeT096 => "HELTEC_MESH_NODE_T096",
             Self::PrivateHw => "PRIVATE_HW",
         }
     }
@@ -7387,6 +7825,10 @@ impl HardwareModel {
             "MESHSTICK_1262" => Some(Self::Meshstick1262),
             "TBEAM_1_WATT" => Some(Self::Tbeam1Watt),
             "T5_S3_EPAPER_PRO" => Some(Self::T5S3EpaperPro),
+            "TBEAM_BPF" => Some(Self::TbeamBpf),
+            "MINI_EPAPER_S3" => Some(Self::MiniEpaperS3),
+            "TDISPLAY_S3_PRO" => Some(Self::TdisplayS3Pro),
+            "HELTEC_MESH_NODE_T096" => Some(Self::HeltecMeshNodeT096),
             "PRIVATE_HW" => Some(Self::PrivateHw),
             _ => None,
         }
@@ -7922,6 +8364,9 @@ pub mod admin_message {
         ///
         /// Traffic management module config
         TrafficmanagementConfig = 14,
+        ///
+        /// TAK module config
+        TakConfig = 15,
     }
     impl ModuleConfigType {
         /// String value of the enum field names used in the ProtoBuf definition.
@@ -7945,6 +8390,7 @@ pub mod admin_message {
                 Self::PaxcounterConfig => "PAXCOUNTER_CONFIG",
                 Self::StatusmessageConfig => "STATUSMESSAGE_CONFIG",
                 Self::TrafficmanagementConfig => "TRAFFICMANAGEMENT_CONFIG",
+                Self::TakConfig => "TAK_CONFIG",
             }
         }
         /// Creates an enum from field names used in the ProtoBuf definition.
@@ -7965,6 +8411,7 @@ pub mod admin_message {
                 "PAXCOUNTER_CONFIG" => Some(Self::PaxcounterConfig),
                 "STATUSMESSAGE_CONFIG" => Some(Self::StatusmessageConfig),
                 "TRAFFICMANAGEMENT_CONFIG" => Some(Self::TrafficmanagementConfig),
+                "TAK_CONFIG" => Some(Self::TakConfig),
                 _ => None,
             }
         }
@@ -8420,6 +8867,14 @@ pub struct SensorConfig {
     /// SEN5X PM Sensor configuration
     #[prost(message, optional, tag = "2")]
     pub sen5x_config: ::core::option::Option<Sen5xConfig>,
+    ///
+    /// SCD30 CO2 Sensor configuration
+    #[prost(message, optional, tag = "3")]
+    pub scd30_config: ::core::option::Option<Scd30Config>,
+    ///
+    /// SHTXX temperature and relative humidity sensor configuration
+    #[prost(message, optional, tag = "4")]
+    pub shtxx_config: ::core::option::Option<ShtxxConfig>,
 }
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "snake_case"))]
@@ -8468,6 +8923,46 @@ pub struct Sen5xConfig {
     /// One-shot mode (true for low power - one-shot mode, false for normal - continuous mode)
     #[prost(bool, optional, tag = "2")]
     pub set_one_shot_mode: ::core::option::Option<bool>,
+}
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", serde(rename_all = "snake_case"))]
+#[cfg_attr(feature = "ts-gen", derive(specta::Type))]
+#[derive(Clone, Copy, PartialEq, ::prost::Message)]
+pub struct Scd30Config {
+    ///
+    /// Set Automatic self-calibration enabled
+    #[prost(bool, optional, tag = "1")]
+    pub set_asc: ::core::option::Option<bool>,
+    ///
+    /// Recalibration target CO2 concentration in ppm (FRC or ASC)
+    #[prost(uint32, optional, tag = "2")]
+    pub set_target_co2_conc: ::core::option::Option<u32>,
+    ///
+    /// Reference temperature in degC
+    #[prost(float, optional, tag = "3")]
+    pub set_temperature: ::core::option::Option<f32>,
+    ///
+    /// Altitude of sensor in meters above sea level. 0 - 3000m (overrides ambient pressure)
+    #[prost(uint32, optional, tag = "4")]
+    pub set_altitude: ::core::option::Option<u32>,
+    ///
+    /// Power mode for sensor (true for low power, false for normal)
+    #[prost(uint32, optional, tag = "5")]
+    pub set_measurement_interval: ::core::option::Option<u32>,
+    ///
+    /// Perform a factory reset of the sensor
+    #[prost(bool, optional, tag = "6")]
+    pub soft_reset: ::core::option::Option<bool>,
+}
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", serde(rename_all = "snake_case"))]
+#[cfg_attr(feature = "ts-gen", derive(specta::Type))]
+#[derive(Clone, Copy, PartialEq, Eq, Hash, ::prost::Message)]
+pub struct ShtxxConfig {
+    ///
+    /// Accuracy mode (0 = low, 1 = medium, 2 = high)
+    #[prost(uint32, optional, tag = "1")]
+    pub set_accuracy: ::core::option::Option<u32>,
 }
 ///
 /// Firmware update mode for OTA updates
@@ -8529,330 +9024,6 @@ pub struct ChannelSet {
     /// LoRa config
     #[prost(message, optional, tag = "2")]
     pub lora_config: ::core::option::Option<config::LoRaConfig>,
-}
-///
-/// Packets for the official ATAK Plugin
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[cfg_attr(feature = "serde", serde(rename_all = "snake_case"))]
-#[cfg_attr(feature = "ts-gen", derive(specta::Type))]
-#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
-pub struct TakPacket {
-    ///
-    /// Are the payloads strings compressed for LoRA transport?
-    #[prost(bool, tag = "1")]
-    pub is_compressed: bool,
-    ///
-    /// The contact / callsign for ATAK user
-    #[prost(message, optional, tag = "2")]
-    pub contact: ::core::option::Option<Contact>,
-    ///
-    /// The group for ATAK user
-    #[prost(message, optional, tag = "3")]
-    pub group: ::core::option::Option<Group>,
-    ///
-    /// The status of the ATAK EUD
-    #[prost(message, optional, tag = "4")]
-    pub status: ::core::option::Option<Status>,
-    ///
-    /// The payload of the packet
-    #[prost(oneof = "tak_packet::PayloadVariant", tags = "5, 6, 7")]
-    pub payload_variant: ::core::option::Option<tak_packet::PayloadVariant>,
-}
-/// Nested message and enum types in `TAKPacket`.
-pub mod tak_packet {
-    ///
-    /// The payload of the packet
-    #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-    #[cfg_attr(feature = "serde", serde(rename_all = "snake_case"))]
-    #[cfg_attr(feature = "ts-gen", derive(specta::Type))]
-    #[cfg_attr(feature = "strum", derive(strum::EnumCount, strum::EnumIter))]
-    #[derive(Clone, PartialEq, Eq, Hash, ::prost::Oneof)]
-    pub enum PayloadVariant {
-        ///
-        /// TAK position report
-        #[prost(message, tag = "5")]
-        Pli(super::Pli),
-        ///
-        /// ATAK GeoChat message
-        #[prost(message, tag = "6")]
-        Chat(super::GeoChat),
-        ///
-        /// Generic CoT detail XML
-        /// May be compressed / truncated by the sender (EUD)
-        #[prost(bytes, tag = "7")]
-        Detail(::prost::alloc::vec::Vec<u8>),
-    }
-}
-///
-/// ATAK GeoChat message
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[cfg_attr(feature = "serde", serde(rename_all = "snake_case"))]
-#[cfg_attr(feature = "ts-gen", derive(specta::Type))]
-#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
-pub struct GeoChat {
-    ///
-    /// The text message
-    #[prost(string, tag = "1")]
-    pub message: ::prost::alloc::string::String,
-    ///
-    /// Uid recipient of the message
-    #[prost(string, optional, tag = "2")]
-    pub to: ::core::option::Option<::prost::alloc::string::String>,
-    ///
-    /// Callsign of the recipient for the message
-    #[prost(string, optional, tag = "3")]
-    pub to_callsign: ::core::option::Option<::prost::alloc::string::String>,
-}
-///
-/// ATAK Group
-/// <__group role='Team Member' name='Cyan'/>
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[cfg_attr(feature = "serde", serde(rename_all = "snake_case"))]
-#[cfg_attr(feature = "ts-gen", derive(specta::Type))]
-#[derive(Clone, Copy, PartialEq, Eq, Hash, ::prost::Message)]
-pub struct Group {
-    ///
-    /// Role of the group member
-    #[prost(enumeration = "MemberRole", tag = "1")]
-    pub role: i32,
-    ///
-    /// Team (color)
-    /// Default Cyan
-    #[prost(enumeration = "Team", tag = "2")]
-    pub team: i32,
-}
-///
-/// ATAK EUD Status
-/// <status battery='100' />
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[cfg_attr(feature = "serde", serde(rename_all = "snake_case"))]
-#[cfg_attr(feature = "ts-gen", derive(specta::Type))]
-#[derive(Clone, Copy, PartialEq, Eq, Hash, ::prost::Message)]
-pub struct Status {
-    ///
-    /// Battery level
-    #[prost(uint32, tag = "1")]
-    pub battery: u32,
-}
-///
-/// ATAK Contact
-/// <contact endpoint='0.0.0.0:4242:tcp' phone='+12345678' callsign='FALKE'/>
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[cfg_attr(feature = "serde", serde(rename_all = "snake_case"))]
-#[cfg_attr(feature = "ts-gen", derive(specta::Type))]
-#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
-pub struct Contact {
-    ///
-    /// Callsign
-    #[prost(string, tag = "1")]
-    pub callsign: ::prost::alloc::string::String,
-    ///
-    /// Device callsign
-    ///
-    ///
-    /// IP address of endpoint in integer form (0.0.0.0 default)
-    #[prost(string, tag = "2")]
-    pub device_callsign: ::prost::alloc::string::String,
-}
-///
-/// Position Location Information from ATAK
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[cfg_attr(feature = "serde", serde(rename_all = "snake_case"))]
-#[cfg_attr(feature = "ts-gen", derive(specta::Type))]
-#[derive(Clone, Copy, PartialEq, Eq, Hash, ::prost::Message)]
-pub struct Pli {
-    ///
-    /// The new preferred location encoding, multiply by 1e-7 to get degrees
-    /// in floating point
-    #[prost(sfixed32, tag = "1")]
-    pub latitude_i: i32,
-    ///
-    /// The new preferred location encoding, multiply by 1e-7 to get degrees
-    /// in floating point
-    #[prost(sfixed32, tag = "2")]
-    pub longitude_i: i32,
-    ///
-    /// Altitude (ATAK prefers HAE)
-    #[prost(int32, tag = "3")]
-    pub altitude: i32,
-    ///
-    /// Speed
-    #[prost(uint32, tag = "4")]
-    pub speed: u32,
-    ///
-    /// Course in degrees
-    #[prost(uint32, tag = "5")]
-    pub course: u32,
-}
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[cfg_attr(feature = "serde", serde(rename_all = "snake_case"))]
-#[cfg_attr(feature = "ts-gen", derive(specta::Type))]
-#[cfg_attr(feature = "strum", derive(strum::EnumCount, strum::EnumIter))]
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
-#[repr(i32)]
-pub enum Team {
-    ///
-    /// Unspecifed
-    UnspecifedColor = 0,
-    ///
-    /// White
-    White = 1,
-    ///
-    /// Yellow
-    Yellow = 2,
-    ///
-    /// Orange
-    Orange = 3,
-    ///
-    /// Magenta
-    Magenta = 4,
-    ///
-    /// Red
-    Red = 5,
-    ///
-    /// Maroon
-    Maroon = 6,
-    ///
-    /// Purple
-    Purple = 7,
-    ///
-    /// Dark Blue
-    DarkBlue = 8,
-    ///
-    /// Blue
-    Blue = 9,
-    ///
-    /// Cyan
-    Cyan = 10,
-    ///
-    /// Teal
-    Teal = 11,
-    ///
-    /// Green
-    Green = 12,
-    ///
-    /// Dark Green
-    DarkGreen = 13,
-    ///
-    /// Brown
-    Brown = 14,
-}
-impl Team {
-    /// String value of the enum field names used in the ProtoBuf definition.
-    ///
-    /// The values are not transformed in any way and thus are considered stable
-    /// (if the ProtoBuf definition does not change) and safe for programmatic use.
-    pub fn as_str_name(&self) -> &'static str {
-        match self {
-            Self::UnspecifedColor => "Unspecifed_Color",
-            Self::White => "White",
-            Self::Yellow => "Yellow",
-            Self::Orange => "Orange",
-            Self::Magenta => "Magenta",
-            Self::Red => "Red",
-            Self::Maroon => "Maroon",
-            Self::Purple => "Purple",
-            Self::DarkBlue => "Dark_Blue",
-            Self::Blue => "Blue",
-            Self::Cyan => "Cyan",
-            Self::Teal => "Teal",
-            Self::Green => "Green",
-            Self::DarkGreen => "Dark_Green",
-            Self::Brown => "Brown",
-        }
-    }
-    /// Creates an enum from field names used in the ProtoBuf definition.
-    pub fn from_str_name(value: &str) -> ::core::option::Option<Self> {
-        match value {
-            "Unspecifed_Color" => Some(Self::UnspecifedColor),
-            "White" => Some(Self::White),
-            "Yellow" => Some(Self::Yellow),
-            "Orange" => Some(Self::Orange),
-            "Magenta" => Some(Self::Magenta),
-            "Red" => Some(Self::Red),
-            "Maroon" => Some(Self::Maroon),
-            "Purple" => Some(Self::Purple),
-            "Dark_Blue" => Some(Self::DarkBlue),
-            "Blue" => Some(Self::Blue),
-            "Cyan" => Some(Self::Cyan),
-            "Teal" => Some(Self::Teal),
-            "Green" => Some(Self::Green),
-            "Dark_Green" => Some(Self::DarkGreen),
-            "Brown" => Some(Self::Brown),
-            _ => None,
-        }
-    }
-}
-///
-/// Role of the group member
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[cfg_attr(feature = "serde", serde(rename_all = "snake_case"))]
-#[cfg_attr(feature = "ts-gen", derive(specta::Type))]
-#[cfg_attr(feature = "strum", derive(strum::EnumCount, strum::EnumIter))]
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
-#[repr(i32)]
-pub enum MemberRole {
-    ///
-    /// Unspecifed
-    Unspecifed = 0,
-    ///
-    /// Team Member
-    TeamMember = 1,
-    ///
-    /// Team Lead
-    TeamLead = 2,
-    ///
-    /// Headquarters
-    Hq = 3,
-    ///
-    /// Airsoft enthusiast
-    Sniper = 4,
-    ///
-    /// Medic
-    Medic = 5,
-    ///
-    /// ForwardObserver
-    ForwardObserver = 6,
-    ///
-    /// Radio Telephone Operator
-    Rto = 7,
-    ///
-    /// Doggo
-    K9 = 8,
-}
-impl MemberRole {
-    /// String value of the enum field names used in the ProtoBuf definition.
-    ///
-    /// The values are not transformed in any way and thus are considered stable
-    /// (if the ProtoBuf definition does not change) and safe for programmatic use.
-    pub fn as_str_name(&self) -> &'static str {
-        match self {
-            Self::Unspecifed => "Unspecifed",
-            Self::TeamMember => "TeamMember",
-            Self::TeamLead => "TeamLead",
-            Self::Hq => "HQ",
-            Self::Sniper => "Sniper",
-            Self::Medic => "Medic",
-            Self::ForwardObserver => "ForwardObserver",
-            Self::Rto => "RTO",
-            Self::K9 => "K9",
-        }
-    }
-    /// Creates an enum from field names used in the ProtoBuf definition.
-    pub fn from_str_name(value: &str) -> ::core::option::Option<Self> {
-        match value {
-            "Unspecifed" => Some(Self::Unspecifed),
-            "TeamMember" => Some(Self::TeamMember),
-            "TeamLead" => Some(Self::TeamLead),
-            "HQ" => Some(Self::Hq),
-            "Sniper" => Some(Self::Sniper),
-            "Medic" => Some(Self::Medic),
-            "ForwardObserver" => Some(Self::ForwardObserver),
-            "RTO" => Some(Self::Rto),
-            "K9" => Some(Self::K9),
-            _ => None,
-        }
-    }
 }
 ///
 /// Canned message module configuration.
@@ -8979,6 +9150,10 @@ pub struct LocalModuleConfig {
     pub traffic_management: ::core::option::Option<
         module_config::TrafficManagementConfig,
     >,
+    ///
+    /// TAK Config
+    #[prost(message, optional, tag = "17")]
+    pub tak: ::core::option::Option<module_config::TakConfig>,
     ///
     /// A version integer used to invalidate old save files when we make
     /// incompatible changes This integer is set at build time and is private to

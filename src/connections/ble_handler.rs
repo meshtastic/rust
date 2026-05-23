@@ -391,6 +391,7 @@ impl BleHandler {
                 ValueNotification {
                     uuid: FROMNUM,
                     value,
+                    ..
                 } => future::ready(Self::parse_u32(value).ok()),
                 _ => future::ready(None),
             },
