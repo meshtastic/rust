@@ -37,11 +37,19 @@ pub enum StreamBufferError {
     MissingLSB { lsb_index: usize },
     #[error("Detected malformed packet, packet buffer contains a framing byte at index {next_packet_start_idx}")]
     MalformedPacket { next_packet_start_idx: usize },
+    #[error("Declared packet size of {declared_size} bytes exceeds max packet size of {max_size} bytes")]
+    ImplausiblePacketSize {
+        declared_size: usize,
+        max_size: usize,
+    },
     #[error(transparent)]
     DecodeFailure(#[from] prost::DecodeError),
 }
 
 const PACKET_HEADER_SIZE: usize = 4;
+
+// Matches firmware's MAX_TO_FROM_RADIO_SIZE (src/mesh/PhoneAPI.h).
+const MAX_TO_FROM_RADIO_SIZE: usize = 512;
 
 impl StreamBuffer {
     /// Creates a new StreamBuffer instance that will send decoded FromRadio packets
@@ -122,6 +130,17 @@ impl StreamBuffer {
                           );
 
                         continue; // Don't need more data to continue, purge from buffer
+                    }
+                    StreamBufferError::ImplausiblePacketSize {
+                        declared_size,
+                        max_size,
+                    } => {
+                        error!(
+                            "Header declares implausible packet size {declared_size} (max {max_size}), discarding false header"
+                        );
+
+                        self.buffer.drain(0..PACKET_HEADER_SIZE.min(self.buffer.len()));
+                        continue; // Don't need more data to continue, purge false header
                     }
                     StreamBufferError::DecodeFailure { .. } => {
                         error!("Failed to decode chunk from packet, this does not affect the next iteration");
@@ -285,6 +304,13 @@ impl StreamBuffer {
         // Combine MSB and LSB of incoming packet size bytes
         // Recall that packet size doesn't include the first four magic bytes
         let incoming_packet_data_size: usize = usize::from(u16::from_le_bytes([*lsb, *msb]));
+
+        if incoming_packet_data_size > MAX_TO_FROM_RADIO_SIZE {
+            return Err(StreamBufferError::ImplausiblePacketSize {
+                declared_size: incoming_packet_data_size,
+                max_size: MAX_TO_FROM_RADIO_SIZE,
+            });
+        }
 
         Ok(incoming_packet_data_size)
     }
@@ -717,6 +743,46 @@ mod tests {
     /// within the payload and to discard the malformed packet.
     #[tokio::test]
     async fn detect_malformed_packets_with_internal_header_sequence() {}
+
+    /// Test for a [0x94, 0xc3] sequence occurring by chance inside another packet's
+    /// payload. Expected behavior is that the bogus size is rejected and the buffer
+    /// resyncs on the next real packet.
+    #[tokio::test]
+    async fn resync_after_false_header_match_with_implausible_size() {
+        // Arrange
+
+        let payload_variant_1 =
+            protobufs::from_radio::PayloadVariant::MyInfo(protobufs::MyNodeInfo::default());
+        let payload_variant_2 =
+            protobufs::from_radio::PayloadVariant::MyInfo(protobufs::MyNodeInfo::default());
+
+        let (packet_1, packet_data_1) = mock_encoded_from_radio_packet(payload_variant_1, None);
+        let (packet_2, packet_data_2) = mock_encoded_from_radio_packet(payload_variant_2, None);
+
+        let encoded_packet_1 = format_data_packet(packet_data_1.into()).unwrap();
+        let encoded_packet_2 = format_data_packet(packet_data_2.into()).unwrap();
+
+        // Header with a declared size (big-endian MSB/LSB) larger than MAX_TO_FROM_RADIO_SIZE.
+        let false_header = vec![0x94, 0xc3, 254, 6];
+
+        let (mock_tx, mut mock_rx) = unbounded_channel::<protobufs::FromRadio>();
+
+        // Act
+
+        let mut buffer = StreamBuffer::new(mock_tx);
+
+        let mut data = Vec::new();
+        data.extend_from_slice(encoded_packet_1.data());
+        data.extend_from_slice(&false_header);
+        data.extend_from_slice(encoded_packet_2.data());
+        buffer.process_incoming_bytes(data.into());
+
+        // Assert
+
+        assert_eq!(timeout_test(mock_rx.recv(), None).await, Some(packet_1));
+        assert_eq!(timeout_test(mock_rx.recv(), None).await, Some(packet_2));
+        assert_eq!(buffer.buffer.len(), 0);
+    }
 
     #[tokio::test]
     async fn process_log_lines() {
