@@ -762,7 +762,10 @@ mod tests {
         };
         let encoded_outer = format_data_packet(outer_packet.encode_to_vec().into()).unwrap();
         assert!(
-            encoded_outer.data_vec().windows(2).any(|w| w == [0x94, 0xc3]),
+            encoded_outer
+                .data_vec()
+                .windows(2)
+                .any(|w| w == [0x94, 0xc3]),
             "outer_packet no longer reproduces the coincidental header collision"
         );
 
