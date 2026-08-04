@@ -352,6 +352,13 @@ impl StreamBuffer {
             .map(|idx| idx + packet_data_start_index);
 
         if let Some(next_packet_start_idx) = next_packet_start_index {
+            // Only malformed if it doesn't decode at the declared length.
+            let declared_packet =
+                &self.buffer[packet_data_start_index..packet_data_start_index + packet_data_size];
+            if protobufs::FromRadio::decode(declared_packet).is_ok() {
+                return Ok(());
+            }
+
             // Remove malformed packet from buffer
             self.buffer.drain(..next_packet_start_idx);
 
@@ -785,6 +792,83 @@ mod tests {
         assert_eq!(timeout_test(mock_rx.recv(), None).await, Some(packet_1));
         assert_eq!(timeout_test(mock_rx.recv(), None).await, Some(packet_2));
         assert_eq!(buffer.buffer.len(), 0);
+    }
+
+    /// `outer_packet`'s serialized bytes coincidentally contain [0x94, 0xc3],
+    /// the same collision that caused a real hang before MAX_TO_FROM_RADIO_SIZE
+    /// was added. Identity fields are placeholders; device_metrics is unchanged
+    /// since that's what produces the collision. Expected behavior is that both
+    /// packets decode, since the coincidental match doesn't mean outer_packet
+    /// is malformed.
+    #[tokio::test]
+    async fn resync_after_coincidental_header_match_inside_packet_payload() {
+        let outer_packet = protobufs::FromRadio {
+            id: 0,
+            payload_variant: Some(protobufs::from_radio::PayloadVariant::NodeInfo(
+                protobufs::NodeInfo {
+                    num: 1234567890,
+                    user: Some(protobufs::User {
+                        id: "!deadbeef".to_string(),
+                        long_name: "Test Node".to_string(),
+                        short_name: "TEST".to_string(),
+                        hw_model: protobufs::HardwareModel::HeltecV3 as i32,
+                        public_key: vec![0xab; 32],
+                        ..Default::default()
+                    }),
+                    device_metrics: Some(protobufs::DeviceMetrics {
+                        battery_level: Some(100),
+                        voltage: Some(4.219),
+                        channel_utilization: Some(22.93),
+                        air_util_tx: Some(2.791),
+                        uptime_seconds: Some(14655892),
+                    }),
+                    channel: 1,
+                    via_mqtt: true,
+                    hops_away: Some(1),
+                    ..Default::default()
+                },
+            )),
+        };
+        let encoded_outer = format_data_packet(outer_packet.encode_to_vec().into()).unwrap();
+        assert!(
+            encoded_outer.data_vec().windows(2).any(|w| w == [0x94, 0xc3]),
+            "outer_packet no longer reproduces the coincidental header collision"
+        );
+
+        let recovery_packet = protobufs::FromRadio {
+            id: 0,
+            payload_variant: Some(protobufs::from_radio::PayloadVariant::NodeInfo(
+                protobufs::NodeInfo {
+                    num: 987654321,
+                    user: Some(protobufs::User {
+                        id: "!cafef00d".to_string(),
+                        long_name: "Recovery Node".to_string(),
+                        short_name: "RCVR".to_string(),
+                        hw_model: protobufs::HardwareModel::HeltecV3 as i32,
+                        public_key: vec![0xcd; 32],
+                        ..Default::default()
+                    }),
+                    channel: 1,
+                    via_mqtt: false,
+                    hops_away: Some(2),
+                    ..Default::default()
+                },
+            )),
+        };
+        let encoded_recovery = format_data_packet(recovery_packet.encode_to_vec().into()).unwrap();
+
+        let (mock_tx, mut mock_rx) = unbounded_channel::<protobufs::FromRadio>();
+        let mut buffer = StreamBuffer::new(mock_tx);
+
+        let mut data = encoded_outer.data_vec();
+        data.extend_from_slice(encoded_recovery.data());
+        buffer.process_incoming_bytes(data.into());
+
+        assert_eq!(timeout_test(mock_rx.recv(), None).await, Some(outer_packet));
+        assert_eq!(
+            timeout_test(mock_rx.recv(), None).await,
+            Some(recovery_packet)
+        );
     }
 
     #[tokio::test]
