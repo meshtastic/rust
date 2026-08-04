@@ -37,7 +37,9 @@ pub enum StreamBufferError {
     MissingLSB { lsb_index: usize },
     #[error("Detected malformed packet, packet buffer contains a framing byte at index {next_packet_start_idx}")]
     MalformedPacket { next_packet_start_idx: usize },
-    #[error("Declared packet size of {declared_size} bytes exceeds max packet size of {max_size} bytes")]
+    #[error(
+        "Declared packet size of {declared_size} bytes exceeds max packet size of {max_size} bytes"
+    )]
     ImplausiblePacketSize {
         declared_size: usize,
         max_size: usize,
@@ -139,7 +141,8 @@ impl StreamBuffer {
                             "Header declares implausible packet size {declared_size} (max {max_size}), discarding false header"
                         );
 
-                        self.buffer.drain(0..PACKET_HEADER_SIZE.min(self.buffer.len()));
+                        self.buffer
+                            .drain(0..PACKET_HEADER_SIZE.min(self.buffer.len()));
                         continue; // Don't need more data to continue, purge false header
                     }
                     StreamBufferError::DecodeFailure { .. } => {
