@@ -764,6 +764,7 @@ mod tests {
         assert!(
             encoded_outer
                 .data_vec()
+                [PACKET_HEADER_SIZE..]
                 .windows(2)
                 .any(|w| w == [0x94, 0xc3]),
             "outer_packet no longer reproduces the coincidental header collision"
