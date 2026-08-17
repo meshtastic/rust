@@ -328,6 +328,7 @@ impl StreamBuffer {
                 &self.buffer[packet_data_start_index..packet_data_start_index + packet_data_size];
             if protobufs::FromRadio::decode(&mut declared_packet).is_ok()
                 && declared_packet.is_empty()
+            {
                 return Ok(());
             }
 
