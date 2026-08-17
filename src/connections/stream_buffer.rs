@@ -734,31 +734,16 @@ mod tests {
     #[tokio::test]
     async fn resync_after_coincidental_header_match_inside_packet_payload() {
         let outer_packet = protobufs::FromRadio {
-            id: 0,
             payload_variant: Some(protobufs::from_radio::PayloadVariant::NodeInfo(
                 protobufs::NodeInfo {
-                    num: 1234567890,
-                    user: Some(protobufs::User {
-                        id: "!deadbeef".to_string(),
-                        long_name: "Test Node".to_string(),
-                        short_name: "TEST".to_string(),
-                        hw_model: protobufs::HardwareModel::HeltecV3 as i32,
-                        public_key: vec![0xab; 32],
+                    device_metrics: Some(protobufs::DeviceMetrics {
+                        uptime_seconds: Some(14655892),
                         ..Default::default()
                     }),
-                    device_metrics: Some(protobufs::DeviceMetrics {
-                        battery_level: Some(100),
-                        voltage: Some(4.219),
-                        channel_utilization: Some(22.93),
-                        air_util_tx: Some(2.791),
-                        uptime_seconds: Some(14655892),
-                    }),
-                    channel: 1,
-                    via_mqtt: true,
-                    hops_away: Some(1),
                     ..Default::default()
                 },
             )),
+            ..Default::default()
         };
         let encoded_outer = format_data_packet(outer_packet.encode_to_vec().into()).unwrap();
         assert!(
