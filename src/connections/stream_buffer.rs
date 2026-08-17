@@ -324,9 +324,10 @@ impl StreamBuffer {
 
         if let Some(next_packet_start_idx) = next_packet_start_index {
             // Only malformed if it doesn't decode at the declared length.
-            let declared_packet =
+            let mut declared_packet =
                 &self.buffer[packet_data_start_index..packet_data_start_index + packet_data_size];
-            if protobufs::FromRadio::decode(declared_packet).is_ok() {
+            if protobufs::FromRadio::decode(&mut declared_packet).is_ok()
+                && declared_packet.is_empty()
                 return Ok(());
             }
 
