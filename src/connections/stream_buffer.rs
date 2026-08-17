@@ -758,17 +758,6 @@ mod tests {
             payload_variant: Some(protobufs::from_radio::PayloadVariant::NodeInfo(
                 protobufs::NodeInfo {
                     num: 987654321,
-                    user: Some(protobufs::User {
-                        id: "!cafef00d".to_string(),
-                        long_name: "Recovery Node".to_string(),
-                        short_name: "RCVR".to_string(),
-                        hw_model: protobufs::HardwareModel::HeltecV3 as i32,
-                        public_key: vec![0xcd; 32],
-                        ..Default::default()
-                    }),
-                    channel: 1,
-                    via_mqtt: false,
-                    hops_away: Some(2),
                     ..Default::default()
                 },
             )),
