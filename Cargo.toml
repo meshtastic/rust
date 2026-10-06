@@ -10,7 +10,7 @@ authors = ["Adam McQuilkin"]
 readme = "README.md"
 license = "GPL-3.0"
 version = "0.1.9"
-rust-version = "1.85"
+rust-version = "1.88"
 edition = "2021"
 resolver = "3"
 
