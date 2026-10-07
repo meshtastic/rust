@@ -195,7 +195,7 @@ impl StreamBuffer {
             if b == b'\n' {
                 if !self.log_line.is_empty() {
                     let line = String::from_utf8_lossy(&self.log_line);
-                    debug!("Radio: {}", line);
+                    debug!("Radio: {line}");
                     self.log_line.clear();
                 }
             } else if b != b'\r' {
