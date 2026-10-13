@@ -356,22 +356,6 @@ impl BleHandler {
         Ok(u32::from_le_bytes(data))
     }
 
-    /// Reads a `u32` value from the `fromnum` characteristic.
-    ///
-    /// This characteristic indicates the number of packets available to be read from the
-    /// `fromradio` characteristic.
-    pub async fn read_fromnum(&self) -> Result<u32, Error> {
-        let data = self
-            .radio
-            .read(&self.fromnum_char)
-            .await
-            .map_err(Self::ble_read_error_fn)?;
-        if data.is_empty() {
-            return Ok(0);
-        }
-        Self::parse_u32(data)
-    }
-
     /// Returns an asynchronous stream of notifications from the `fromnum` characteristic.
     ///
     /// The stream contains `u32` values that indicate the number of packets available to be read.
