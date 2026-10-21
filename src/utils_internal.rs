@@ -3,14 +3,12 @@ use crate::connections::ble_handler::{BleDevice, BleHandler};
 use crate::errors_internal::Error;
 #[cfg(feature = "bluetooth-le")]
 use futures::stream::StreamExt;
-#[cfg(feature = "bluetooth-le")]
-use std::future::Future;
 use std::time::Duration;
 use std::time::UNIX_EPOCH;
 
 use rand::{distr::StandardUniform, prelude::Distribution, Rng};
 #[cfg(feature = "bluetooth-le")]
-use tokio::io::{AsyncReadExt, AsyncWriteExt, DuplexStream};
+use tokio::io::{AsyncReadExt, DuplexStream};
 use tokio_serial::{available_ports, SerialPort, SerialStream};
 
 use crate::connections::stream_api::StreamHandle;
@@ -307,9 +305,9 @@ where
         if let Ok(len) = server.read(&mut buf).await {
             ble_handler.write_to_radio(&buf[..len]).await?
         }
-        drain_from_radio(|| ble_handler.read_from_radio(), &mut server).await?;
+        BleHandler::drain_from_radio(|| ble_handler.read_from_radio(), &mut server).await?;
 
-        // Not every FromRadio packet is announced by a FROMNUM notification, so poll as well.
+        // Keep polling as a fallback for packets missed by notifications or post-send reads.
         let mut poll = tokio::time::interval(BLE_POLL_INTERVAL);
         poll.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Delay);
         loop {
@@ -322,16 +320,18 @@ where
                 // match the number of queued packets, so read until FROMRADIO is empty.
                 notification = notification_stream.next() => {
                     notification.ok_or(InternalStreamError::Eof)?;
-                    drain_from_radio(|| ble_handler.read_from_radio(), &mut server).await?;
+                    BleHandler::drain_from_radio(|| ble_handler.read_from_radio(), &mut server).await?;
                 },
                 _ = poll.tick() => {
-                    drain_from_radio(|| ble_handler.read_from_radio(), &mut server).await?;
+                    BleHandler::drain_from_radio(|| ble_handler.read_from_radio(), &mut server).await?;
                 },
                 // Data from user, forward it to the device
                 from_server = server.read(&mut buf) => {
                     let len = from_server.map_err(duplex_write_error_fn)?;
                     if len != 0 {
                         ble_handler.write_to_radio(&buf[..len]).await?;
+                        // Sending can queue responses without a FROMNUM notification.
+                        BleHandler::drain_from_radio(|| ble_handler.read_from_radio(), &mut server).await?;
                     }
                 },
                 event = adapter_events.next() => {
@@ -348,26 +348,6 @@ where
         stream: client,
         join_handle: Some(tokio_util::task::AbortOnDropHandle::new(handle)),
     })
-}
-
-/// Reads packets with `read` until the radio reports that FROMRADIO is empty, writing each
-/// packet to `writer`.
-#[cfg(feature = "bluetooth-le")]
-async fn drain_from_radio<F, Fut, W>(mut read: F, writer: &mut W) -> Result<(), Error>
-where
-    F: FnMut() -> Fut,
-    Fut: Future<Output = Result<crate::connections::ble_handler::RadioMessage, Error>>,
-    W: tokio::io::AsyncWrite + Unpin,
-{
-    use crate::{connections::ble_handler::RadioMessage, errors_internal::InternalStreamError};
-    while let RadioMessage::Packet(packet) = read().await? {
-        writer.write_all(packet.data()).await.map_err(|e| {
-            Error::InternalStreamError(InternalStreamError::StreamWriteError {
-                source: Box::new(e),
-            })
-        })?;
-    }
-    Ok(())
 }
 
 /// A helper method to generate random numbers using the `rand` crate.
@@ -597,40 +577,5 @@ mod tests {
         let serial_data = format_data_packet(data.into());
 
         assert!(serial_data.is_err());
-    }
-
-    #[cfg(feature = "bluetooth-le")]
-    #[tokio::test]
-    async fn drain_from_radio_reads_until_empty() {
-        use crate::connections::ble_handler::RadioMessage;
-        use std::collections::VecDeque;
-
-        let packet = |byte, len| format_data_packet(vec![byte; len].into()).unwrap();
-        let mut messages = VecDeque::from([
-            RadioMessage::Packet(packet(1, 300)),
-            RadioMessage::Packet(packet(2, 5)),
-            RadioMessage::Packet(packet(3, 300)),
-            RadioMessage::Eof,
-            RadioMessage::Packet(packet(4, 5)),
-        ]);
-        let expected = [packet(1, 300), packet(2, 5), packet(3, 300)]
-            .iter()
-            .flat_map(|p| p.data_vec())
-            .collect::<Vec<_>>();
-
-        // Smaller than a packet, so writes are only partially accepted.
-        let (mut writer, mut reader) = tokio::io::duplex(64);
-        let received = tokio::spawn(async move {
-            let mut received = Vec::new();
-            reader.read_to_end(&mut received).await.unwrap();
-            received
-        });
-
-        let read = || std::future::ready(Ok(messages.pop_front().unwrap()));
-        drain_from_radio(read, &mut writer).await.unwrap();
-        drop(writer);
-
-        assert_eq!(received.await.unwrap(), expected);
-        assert_eq!(messages.len(), 1);
     }
 }
