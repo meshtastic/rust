@@ -288,7 +288,7 @@ where
 {
     use crate::{connections::ble_handler::AdapterEvent, errors_internal::InternalStreamError};
     let ble_id: std::borrow::Cow<_> = device.into();
-    let ble_handler = BleHandler::new(&ble_id, scan_duration).await?;
+    let mut ble_handler = BleHandler::new(&ble_id, scan_duration).await?;
     // `client` will be returned to the user, server is the opposite end of the channel and it's
     // directly connected to a `BleHandler`.
     let (client, mut server) = tokio::io::duplex(1024);
@@ -305,7 +305,7 @@ where
         if let Ok(len) = server.read(&mut buf).await {
             ble_handler.write_to_radio(&buf[..len]).await?
         }
-        BleHandler::drain_from_radio(|| ble_handler.read_from_radio(), &mut server).await?;
+        ble_handler.drain_from_radio(&mut server).await?;
 
         // Keep polling as a fallback for packets missed by notifications or post-send reads.
         let mut poll = tokio::time::interval(BLE_POLL_INTERVAL);
@@ -320,10 +320,10 @@ where
                 // match the number of queued packets, so read until FROMRADIO is empty.
                 notification = notification_stream.next() => {
                     notification.ok_or(InternalStreamError::Eof)?;
-                    BleHandler::drain_from_radio(|| ble_handler.read_from_radio(), &mut server).await?;
+                    ble_handler.drain_from_radio(&mut server).await?;
                 },
                 _ = poll.tick() => {
-                    BleHandler::drain_from_radio(|| ble_handler.read_from_radio(), &mut server).await?;
+                    ble_handler.drain_from_radio(&mut server).await?;
                 },
                 // Data from user, forward it to the device
                 from_server = server.read(&mut buf) => {
@@ -331,7 +331,7 @@ where
                     if len != 0 {
                         ble_handler.write_to_radio(&buf[..len]).await?;
                         // Sending can queue responses without a FROMNUM notification.
-                        BleHandler::drain_from_radio(|| ble_handler.read_from_radio(), &mut server).await?;
+                        ble_handler.drain_from_radio(&mut server).await?;
                     }
                 },
                 event = adapter_events.next() => {

@@ -12,7 +12,7 @@ use std::fmt::Display;
 use std::future::{self, Future};
 use std::str::FromStr;
 use std::time::Duration;
-use tokio::io::AsyncWriteExt;
+use tokio::io::{AsyncWrite, AsyncWriteExt};
 use tokio::sync::OnceCell;
 use uuid::Uuid;
 
@@ -348,16 +348,21 @@ impl BleHandler {
             })
     }
 
+    /// Reads packets until the radio reports that FROMRADIO is empty, writing each to `writer`.
+    pub(crate) async fn drain_from_radio<W>(&mut self, writer: &mut W) -> Result<(), Error>
+    where
+        W: AsyncWrite + Unpin,
+    {
+        Self::drain_from_radio_impl(|| self.read_from_radio(), writer).await
+    }
+
     /// Reads packets with `read` until the radio reports that FROMRADIO is empty, writing each
     /// packet to `writer`.
-    pub(crate) async fn drain_from_radio<F, Fut, W>(
-        mut read: F,
-        writer: &mut W,
-    ) -> Result<(), Error>
+    async fn drain_from_radio_impl<F, Fut, W>(mut read: F, writer: &mut W) -> Result<(), Error>
     where
         F: FnMut() -> Fut,
         Fut: Future<Output = Result<RadioMessage, Error>>,
-        W: tokio::io::AsyncWrite + Unpin,
+        W: AsyncWrite + Unpin,
     {
         while let RadioMessage::Packet(packet) = read().await? {
             writer.write_all(packet.data()).await.map_err(|e| {
@@ -381,7 +386,7 @@ impl BleHandler {
     /// Returns an asynchronous stream of notifications from the `fromnum` characteristic.
     ///
     /// The stream contains `u32` values that indicate the number of packets available to be read.
-    pub async fn notifications(&self) -> Result<BoxStream<'_, u32>, Error> {
+    pub async fn notifications(&self) -> Result<BoxStream<'static, u32>, Error> {
         self.radio
             .subscribe(&self.fromnum_char)
             .await
@@ -407,7 +412,7 @@ impl BleHandler {
     /// Returns a stream of `AdapterEvent`s.
     ///
     /// Currently, the only supported event is `Disconnected`.
-    pub async fn adapter_events(&self) -> Result<BoxStream<'_, AdapterEvent>, Error> {
+    pub async fn adapter_events(&self) -> Result<BoxStream<'static, AdapterEvent>, Error> {
         let stream = self
             .adapter
             .events()
@@ -488,7 +493,7 @@ mod tests {
         });
 
         let read = || std::future::ready(Ok(messages.pop_front().unwrap()));
-        BleHandler::drain_from_radio(read, &mut writer)
+        BleHandler::drain_from_radio_impl(read, &mut writer)
             .await
             .unwrap();
         drop(writer);
