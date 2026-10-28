@@ -27,10 +27,6 @@ pub const DEFAULT_DTR_PIN_STATE: bool = true;
 /// The default pin state of the RTS pin of incoming serial connections created by the `build_serial_stream` method.
 pub const DEFAULT_RTS_PIN_STATE: bool = false;
 
-/// How often the BLE stream polls FROMRADIO in addition to reacting to FROMNUM notifications.
-#[cfg(feature = "bluetooth-le")]
-const BLE_POLL_INTERVAL: Duration = Duration::from_secs(30);
-
 /// A helper method that uses the `tokio_serial` crate to list the names of all
 /// available serial ports on the system. This method is intended to be used
 /// to select a valid serial port, then to pass that port name to the `connect`
@@ -306,10 +302,6 @@ where
             ble_handler.write_to_radio(&buf[..len]).await?
         }
         ble_handler.drain_from_radio(&mut server).await?;
-
-        // Keep polling as a fallback for packets missed by notifications or post-send reads.
-        let mut poll = tokio::time::interval(BLE_POLL_INTERVAL);
-        poll.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Delay);
         loop {
             // Note: the following `tokio::select` is only half-duplex on the BLE radio. While we
             // are reading from the radio, we are not writing to it and vice versa. However, BLE is
@@ -320,9 +312,6 @@ where
                 // match the number of queued packets, so read until FROMRADIO is empty.
                 notification = notification_stream.next() => {
                     notification.ok_or(InternalStreamError::Eof)?;
-                    ble_handler.drain_from_radio(&mut server).await?;
-                },
-                _ = poll.tick() => {
                     ble_handler.drain_from_radio(&mut server).await?;
                 },
                 // Data from user, forward it to the device
