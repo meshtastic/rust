@@ -3,13 +3,14 @@ use btleplug::api::{
     ValueNotification, WriteType,
 };
 use btleplug::platform::{Adapter, Manager, Peripheral};
-use futures::stream::StreamExt;
+use futures::stream::{self, Stream, StreamExt, TryStreamExt};
 use futures_util::stream::BoxStream;
 use log::error;
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 use std::fmt::Display;
-use std::future::{self, Future};
+use std::future;
+use std::pin::pin;
 use std::str::FromStr;
 use std::time::Duration;
 use tokio::io::{AsyncWrite, AsyncWriteExt};
@@ -353,18 +354,18 @@ impl BleHandler {
     where
         W: AsyncWrite + Unpin,
     {
-        Self::drain_from_radio_impl(|| self.read_from_radio(), writer).await
+        let messages = pin!(stream::repeat_with(|| self.read_from_radio()).then(|fut| fut));
+        Self::drain_from_radio_impl(messages, writer).await
     }
 
-    /// Reads packets with `read` until the radio reports that FROMRADIO is empty, writing each
+    /// Reads packets from `messages` until the radio reports that FROMRADIO is empty, writing each
     /// packet to `writer`.
-    async fn drain_from_radio_impl<F, Fut, W>(mut read: F, writer: &mut W) -> Result<(), Error>
+    async fn drain_from_radio_impl<S, W>(mut messages: S, writer: &mut W) -> Result<(), Error>
     where
-        F: FnMut() -> Fut,
-        Fut: Future<Output = Result<RadioMessage, Error>>,
+        S: Stream<Item = Result<RadioMessage, Error>> + Unpin,
         W: AsyncWrite + Unpin,
     {
-        while let RadioMessage::Packet(packet) = read().await? {
+        while let Some(RadioMessage::Packet(packet)) = messages.try_next().await? {
             writer.write_all(packet.data()).await.map_err(|e| {
                 Error::InternalStreamError(InternalStreamError::StreamWriteError {
                     source: Box::new(e),
@@ -469,16 +470,15 @@ mod tests {
 
     #[tokio::test]
     async fn drain_from_radio_reads_until_empty() {
-        use std::collections::VecDeque;
-
         let packet = |byte, len| format_data_packet(vec![byte; len].into()).unwrap();
-        let mut messages = VecDeque::from([
+        let mut messages = stream::iter([
             RadioMessage::Packet(packet(1, 300)),
             RadioMessage::Packet(packet(2, 5)),
             RadioMessage::Packet(packet(3, 300)),
             RadioMessage::Eof,
             RadioMessage::Packet(packet(4, 5)),
-        ]);
+        ])
+        .map(Ok);
         let expected = [packet(1, 300), packet(2, 5), packet(3, 300)]
             .iter()
             .flat_map(|p| p.data_vec())
@@ -492,13 +492,12 @@ mod tests {
             received
         });
 
-        let read = || std::future::ready(Ok(messages.pop_front().unwrap()));
-        BleHandler::drain_from_radio_impl(read, &mut writer)
+        BleHandler::drain_from_radio_impl(&mut messages, &mut writer)
             .await
             .unwrap();
         drop(writer);
 
         assert_eq!(received.await.unwrap(), expected);
-        assert_eq!(messages.len(), 1);
+        assert_eq!(messages.count().await, 1);
     }
 }
