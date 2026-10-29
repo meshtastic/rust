@@ -8,7 +8,7 @@ use std::time::UNIX_EPOCH;
 
 use rand::{distr::StandardUniform, prelude::Distribution, Rng};
 #[cfg(feature = "bluetooth-le")]
-use tokio::io::{AsyncReadExt, AsyncWriteExt, DuplexStream};
+use tokio::io::{AsyncReadExt, DuplexStream};
 use tokio_serial::{available_ports, SerialPort, SerialStream};
 
 use crate::connections::stream_api::StreamHandle;
@@ -282,12 +282,9 @@ pub async fn build_ble_stream<'a, B>(
 where
     B: Into<std::borrow::Cow<'a, crate::connections::ble_handler::BleId>>,
 {
-    use crate::{
-        connections::ble_handler::{AdapterEvent, RadioMessage},
-        errors_internal::InternalStreamError,
-    };
+    use crate::{connections::ble_handler::AdapterEvent, errors_internal::InternalStreamError};
     let ble_id: std::borrow::Cow<_> = device.into();
-    let ble_handler = BleHandler::new(&ble_id, scan_duration).await?;
+    let mut ble_handler = BleHandler::new(&ble_id, scan_duration).await?;
     // `client` will be returned to the user, server is the opposite end of the channel and it's
     // directly connected to a `BleHandler`.
     let (client, mut server) = tokio::io::duplex(1024);
@@ -297,46 +294,33 @@ where
                 source: Box::new(e),
             })
         };
-        let mut read_messages_count = ble_handler.read_fromnum().await?;
+        // Subscribe before the initial drain so that no FROMNUM notification is missed.
+        let mut notification_stream = ble_handler.notifications().await?;
+        let mut adapter_events = ble_handler.adapter_events().await?;
         let mut buf = [0u8; 1024];
         if let Ok(len) = server.read(&mut buf).await {
             ble_handler.write_to_radio(&buf[..len]).await?
         }
-        loop {
-            match ble_handler.read_from_radio().await? {
-                RadioMessage::Eof => break,
-                RadioMessage::Packet(packet) => {
-                    server
-                        .write(packet.data())
-                        .await
-                        .map_err(duplex_write_error_fn)?;
-                }
-            }
-        }
-
-        let mut notification_stream = ble_handler.notifications().await?;
-        let mut adapter_events = ble_handler.adapter_events().await?;
+        ble_handler.drain_from_radio(&mut server).await?;
         loop {
             // Note: the following `tokio::select` is only half-duplex on the BLE radio. While we
             // are reading from the radio, we are not writing to it and vice versa. However, BLE is
             // a half-duplex technology, so we wouldn't gain much with a full duplex solution
             // anyway.
             tokio::select!(
-                // Data from device, forward it to the user
+                // Data from device, forward it to the user. The FROMNUM value does not reliably
+                // match the number of queued packets, so read until FROMRADIO is empty.
                 notification = notification_stream.next() => {
-                    let avail_msg_count = notification.ok_or(InternalStreamError::Eof)?;
-                    for _ in read_messages_count..avail_msg_count {
-                        if let RadioMessage::Packet(packet) = ble_handler.read_from_radio().await? {
-                            server.write(packet.data()).await.map_err(duplex_write_error_fn)?;
-                        }
-                    }
-                    read_messages_count = avail_msg_count;
+                    notification.ok_or(InternalStreamError::Eof)?;
+                    ble_handler.drain_from_radio(&mut server).await?;
                 },
                 // Data from user, forward it to the device
                 from_server = server.read(&mut buf) => {
                     let len = from_server.map_err(duplex_write_error_fn)?;
                     if len != 0 {
                         ble_handler.write_to_radio(&buf[..len]).await?;
+                        // Sending can queue responses without a FROMNUM notification.
+                        ble_handler.drain_from_radio(&mut server).await?;
                     }
                 },
                 event = adapter_events.next() => {

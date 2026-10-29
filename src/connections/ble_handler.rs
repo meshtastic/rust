@@ -9,9 +9,10 @@ use log::error;
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 use std::fmt::Display;
-use std::future;
+use std::future::{self, Future};
 use std::str::FromStr;
 use std::time::Duration;
+use tokio::io::{AsyncWrite, AsyncWriteExt};
 use tokio::sync::OnceCell;
 use uuid::Uuid;
 
@@ -347,6 +348,32 @@ impl BleHandler {
             })
     }
 
+    /// Reads packets until the radio reports that FROMRADIO is empty, writing each to `writer`.
+    pub(crate) async fn drain_from_radio<W>(&mut self, writer: &mut W) -> Result<(), Error>
+    where
+        W: AsyncWrite + Unpin,
+    {
+        Self::drain_from_radio_impl(|| self.read_from_radio(), writer).await
+    }
+
+    /// Reads packets with `read` until the radio reports that FROMRADIO is empty, writing each
+    /// packet to `writer`.
+    async fn drain_from_radio_impl<F, Fut, W>(mut read: F, writer: &mut W) -> Result<(), Error>
+    where
+        F: FnMut() -> Fut,
+        Fut: Future<Output = Result<RadioMessage, Error>>,
+        W: AsyncWrite + Unpin,
+    {
+        while let RadioMessage::Packet(packet) = read().await? {
+            writer.write_all(packet.data()).await.map_err(|e| {
+                Error::InternalStreamError(InternalStreamError::StreamWriteError {
+                    source: Box::new(e),
+                })
+            })?;
+        }
+        Ok(())
+    }
+
     fn parse_u32(data: Vec<u8>) -> Result<u32, Error> {
         let data = data.as_slice().try_into().map_err(|e| {
             Error::InternalStreamError(InternalStreamError::StreamReadError {
@@ -356,26 +383,10 @@ impl BleHandler {
         Ok(u32::from_le_bytes(data))
     }
 
-    /// Reads a `u32` value from the `fromnum` characteristic.
-    ///
-    /// This characteristic indicates the number of packets available to be read from the
-    /// `fromradio` characteristic.
-    pub async fn read_fromnum(&self) -> Result<u32, Error> {
-        let data = self
-            .radio
-            .read(&self.fromnum_char)
-            .await
-            .map_err(Self::ble_read_error_fn)?;
-        if data.is_empty() {
-            return Ok(0);
-        }
-        Self::parse_u32(data)
-    }
-
     /// Returns an asynchronous stream of notifications from the `fromnum` characteristic.
     ///
     /// The stream contains `u32` values that indicate the number of packets available to be read.
-    pub async fn notifications(&self) -> Result<BoxStream<'_, u32>, Error> {
+    pub async fn notifications(&self) -> Result<BoxStream<'static, u32>, Error> {
         self.radio
             .subscribe(&self.fromnum_char)
             .await
@@ -401,7 +412,7 @@ impl BleHandler {
     /// Returns a stream of `AdapterEvent`s.
     ///
     /// Currently, the only supported event is `Disconnected`.
-    pub async fn adapter_events(&self) -> Result<BoxStream<'_, AdapterEvent>, Error> {
+    pub async fn adapter_events(&self) -> Result<BoxStream<'static, AdapterEvent>, Error> {
         let stream = self
             .adapter
             .events()
@@ -425,6 +436,7 @@ impl BleHandler {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use tokio::io::AsyncReadExt;
 
     #[test]
     fn test_ble_id_to_cow() {
@@ -453,5 +465,40 @@ mod tests {
 
         let cow_from_ble_device_owned: Cow<'_, BleId> = ble_device.into();
         assert_eq!(*cow_from_ble_device_owned, ble_id_mac);
+    }
+
+    #[tokio::test]
+    async fn drain_from_radio_reads_until_empty() {
+        use std::collections::VecDeque;
+
+        let packet = |byte, len| format_data_packet(vec![byte; len].into()).unwrap();
+        let mut messages = VecDeque::from([
+            RadioMessage::Packet(packet(1, 300)),
+            RadioMessage::Packet(packet(2, 5)),
+            RadioMessage::Packet(packet(3, 300)),
+            RadioMessage::Eof,
+            RadioMessage::Packet(packet(4, 5)),
+        ]);
+        let expected = [packet(1, 300), packet(2, 5), packet(3, 300)]
+            .iter()
+            .flat_map(|p| p.data_vec())
+            .collect::<Vec<_>>();
+
+        // Smaller than a packet, so writes are only partially accepted.
+        let (mut writer, mut reader) = tokio::io::duplex(64);
+        let received = tokio::spawn(async move {
+            let mut received = Vec::new();
+            reader.read_to_end(&mut received).await.unwrap();
+            received
+        });
+
+        let read = || std::future::ready(Ok(messages.pop_front().unwrap()));
+        BleHandler::drain_from_radio_impl(read, &mut writer)
+            .await
+            .unwrap();
+        drop(writer);
+
+        assert_eq!(received.await.unwrap(), expected);
+        assert_eq!(messages.len(), 1);
     }
 }
