@@ -63,6 +63,10 @@ pub enum Error {
         description: String,
     },
 
+    /// An error indicating an I/O failure on the underlying stream.
+    #[error(transparent)]
+    IoError(#[from] std::io::Error),
+
     /// An error indicating that the library failed when performing an operation on an internal data stream.
     #[error(transparent)]
     InternalStreamError(#[from] InternalStreamError),
