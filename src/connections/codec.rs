@@ -33,76 +33,8 @@ fn find_log_or_magic(src: &[u8]) -> LogOrMagic {
     LogOrMagic::None
 }
 
-/// Reads a canonical protobuf varint from `buf`, advancing the slice.
-/// Multi-byte varints must not end with a redundant `0x00` continuation byte.
-fn read_canonical_varint(buf: &mut &[u8]) -> Option<u64> {
-    let mut value = 0u64;
-    for i in 0..10 {
-        let &byte = buf.get(i)?;
-        if i > 0 && byte == 0x00 {
-            return None;
-        }
-        if i == 9 && byte > 0x01 {
-            return None;
-        }
-        value |= u64::from(byte & 0x7f) << (i * 7);
-        if byte & 0x80 == 0 {
-            *buf = &buf[i + 1..];
-            return Some(value);
-        }
-    }
-    None
-}
-
-/// Returns `true` if `buf` is a complete sequence of canonical protobuf wire
-/// fields (including unknown fields skipped by `prost`).
-fn has_canonical_protobuf_wire_format(mut buf: &[u8]) -> bool {
-    while !buf.is_empty() {
-        let Some(tag) = read_canonical_varint(&mut buf) else {
-            return false;
-        };
-        let field_number = tag >> 3;
-        let wire_type = tag & 0x07;
-        if field_number == 0 {
-            return false;
-        }
-        match wire_type {
-            0 => {
-                if read_canonical_varint(&mut buf).is_none() {
-                    return false;
-                }
-            }
-            1 => {
-                if buf.len() < 8 {
-                    return false;
-                }
-                buf = &buf[8..];
-            }
-            2 => {
-                let Some(len) =
-                    read_canonical_varint(&mut buf).and_then(|n| usize::try_from(n).ok())
-                else {
-                    return false;
-                };
-                if buf.len() < len {
-                    return false;
-                }
-                buf = &buf[len..];
-            }
-            5 => {
-                if buf.len() < 4 {
-                    return false;
-                }
-                buf = &buf[4..];
-            }
-            _ => return false,
-        }
-    }
-    true
-}
-
 /// Returns `true` if `src[offset..]` begins with a complete frame whose
-/// payload has canonical protobuf wire format and decodes as [`FromRadio`].
+/// payload decodes as [`FromRadio`].
 fn is_valid_frame_at(src: &[u8], offset: usize) -> bool {
     let Some(header) = src.get(offset..offset + HEADER_SIZE) else {
         return false;
@@ -114,7 +46,7 @@ fn is_valid_frame_at(src: &[u8], offset: usize) -> bool {
     let Some(payload) = src.get(offset + HEADER_SIZE..offset + HEADER_SIZE + len) else {
         return false;
     };
-    has_canonical_protobuf_wire_format(payload) && FromRadio::decode(payload).is_ok()
+    FromRadio::decode(payload).is_ok()
 }
 
 /// Searches `src[start..]` for the earliest complete, valid [`FromRadio`] frame.
@@ -318,29 +250,12 @@ impl Decoder for MeshtasticCodec {
                 return Ok(None);
             }
 
-            // Validate wire format before trusting FromRadio::decode so a truncated packet's
-            // varint cannot swallow a subsequent [0x94, 0xc3, 0x00, ...] header as overlong,
-            // while still allowing unknown protobuf fields from newer firmware.
-            let payload = &src[HEADER_SIZE..total_frame_len];
-            let canonical_wire = has_canonical_protobuf_wire_format(payload);
-            let search_end = (total_frame_len + 1).min(src.len());
-
-            if let Ok(packet) = FromRadio::decode(payload) {
-                if !canonical_wire {
-                    if let Some(next_header_idx) =
-                        find_plausible_frame_from(src, HEADER_SIZE, search_end)
-                    {
-                        log::error!(
-                            "Detected truncated packet colliding with next packet at index {next_header_idx}, purging malformed packet"
-                        );
-                        src.advance(next_header_idx);
-                        continue;
-                    }
-                }
+            if let Ok(packet) = FromRadio::decode(&src[HEADER_SIZE..total_frame_len]) {
                 src.advance(total_frame_len);
                 return Ok(Some(Frame::Packet(packet)));
             }
 
+            let search_end = (total_frame_len + 1).min(src.len());
             if let Some(next_header_idx) = find_plausible_frame_from(src, HEADER_SIZE, search_end) {
                 log::error!(
                     "Detected malformed packet with next packet starting at index {next_header_idx}, purging malformed packet"
@@ -519,9 +434,9 @@ mod tests {
         let payload_variant_3 =
             protobufs::from_radio::PayloadVariant::MyInfo(protobufs::MyNodeInfo::default());
 
-        let (packet_1, packet_data_1) = mock_encoded_from_radio_packet(payload_variant_1, None);
-        let (_packet_2, packet_data_2) = mock_encoded_from_radio_packet(payload_variant_2, None);
-        let (packet_3, packet_data_3) = mock_encoded_from_radio_packet(payload_variant_3, None);
+        let (packet_1, packet_data_1) = mock_encoded_from_radio_packet(payload_variant_1, 1);
+        let (_packet_2, packet_data_2) = mock_encoded_from_radio_packet(payload_variant_2, 2);
+        let (packet_3, packet_data_3) = mock_encoded_from_radio_packet(payload_variant_3, 3);
 
         let encoded_packet_1 = format_data_packet(packet_data_1.into()).unwrap();
         let encoded_packet_2 = format_data_packet(packet_data_2.into()).unwrap();
@@ -888,77 +803,6 @@ mod tests {
             } if data_length == MAX_PACKET_SIZE + 1
         ));
         assert!(dst.is_empty());
-    }
-
-    #[test]
-    fn handle_truncated_packet_varint_header_collision() {
-        // IDs chosen so packet_2's varint payload is interrupted after a continuation byte (>= 0x80),
-        // making naive FromRadio::decode treat packet_3's [0x94, 0xc3, 0x00, ...] header as an overlong varint.
-        let payload_variant =
-            protobufs::from_radio::PayloadVariant::MyInfo(protobufs::MyNodeInfo::default());
-        let (_packet_2, packet_data_2) =
-            mock_encoded_from_radio_packet(payload_variant.clone(), 0x0020_0080);
-        let (packet_3, packet_data_3) =
-            mock_encoded_from_radio_packet(payload_variant, 0x1000_0000);
-
-        let encoded_packet_2 = format_data_packet(packet_data_2.into()).unwrap();
-        let encoded_packet_3 = format_data_packet(packet_data_3.into()).unwrap();
-        let truncated_packet_2 = &encoded_packet_2.data()[..6];
-
-        let mut codec = MeshtasticCodec::new();
-        let mut src = BytesMut::new();
-        src.extend_from_slice(truncated_packet_2);
-        src.extend_from_slice(encoded_packet_3.data());
-
-        assert_eq!(decode_all_packets(&mut codec, &mut src), vec![packet_3]);
-        assert!(src.is_empty());
-        assert!(codec.log_line.is_empty());
-    }
-
-    #[test]
-    fn handle_truncated_packet_varint_header_collision_with_chunked_next_packet() {
-        let (_packet_2, packet_data_2) = mock_encoded_from_radio_packet(
-            protobufs::from_radio::PayloadVariant::MyInfo(protobufs::MyNodeInfo::default()),
-            0x0020_0080,
-        );
-        let packet_3 = protobufs::FromRadio {
-            id: 0x1000_0000,
-            payload_variant: Some(protobufs::from_radio::PayloadVariant::NodeInfo(
-                protobufs::NodeInfo {
-                    num: 12345,
-                    user: Some(protobufs::User {
-                        id: "!00003039".to_string(),
-                        long_name: "Chunked Recovery Packet".to_string(),
-                        short_name: "CRPK".to_string(),
-                        ..Default::default()
-                    }),
-                    ..Default::default()
-                },
-            )),
-        };
-
-        let encoded_packet_2 = format_data_packet(packet_data_2.into()).unwrap();
-        let encoded_packet_3 = format_data_packet(packet_3.encode_to_vec().into()).unwrap();
-        let truncated_packet_2 = &encoded_packet_2.data()[..6];
-        let packet_3_bytes = encoded_packet_3.data();
-
-        // Chunk 1 brings total buffered bytes >= encoded_packet_2's declared length,
-        // while packet_3 is still incomplete.
-        let split_at = encoded_packet_2.data().len() - truncated_packet_2.len();
-        assert!(split_at < packet_3_bytes.len());
-
-        let mut codec = MeshtasticCodec::new();
-        let mut src = BytesMut::new();
-        src.extend_from_slice(truncated_packet_2);
-        src.extend_from_slice(&packet_3_bytes[..split_at]);
-
-        assert!(decode_all_packets(&mut codec, &mut src).is_empty());
-        assert_eq!(&src[..], &packet_3_bytes[..split_at]);
-
-        src.extend_from_slice(&packet_3_bytes[split_at..]);
-        assert_eq!(decode_all_packets(&mut codec, &mut src), vec![packet_3]);
-        assert!(src.is_empty());
-        assert!(codec.log_line.is_empty());
     }
 
     #[test]
