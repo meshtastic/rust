@@ -49,22 +49,6 @@ fn is_valid_frame_at(src: &[u8], offset: usize) -> bool {
     FromRadio::decode(payload).is_ok()
 }
 
-/// Searches `src[start..]` for the earliest complete, valid [`FromRadio`] frame.
-fn find_valid_frame_from(src: &[u8], start: usize) -> Option<usize> {
-    let mut idx = start;
-    while let Some(rel) = src[idx..]
-        .windows(2)
-        .position(|window| window == HEADER_MAGIC)
-    {
-        let candidate = idx + rel;
-        if is_valid_frame_at(src, candidate) {
-            return Some(candidate);
-        }
-        idx = candidate + HEADER_MAGIC.len();
-    }
-    None
-}
-
 /// Searches `src[start..end]` for the earliest `[0x94, 0xc3]` header that is either
 /// a complete valid [`FromRadio`] frame or a plausible incomplete frame awaiting more bytes.
 fn find_plausible_frame_from(src: &[u8], start: usize, end: usize) -> Option<usize> {
@@ -234,18 +218,7 @@ impl Decoder for MeshtasticCodec {
             }
 
             let total_frame_len = HEADER_SIZE + packet_len;
-
-            // Wait for full packet payload unless a complete valid frame appears inside the
-            // declared range, which indicates the current packet was truncated.
             if src.len() < total_frame_len {
-                if let Some(next_header_idx) = find_valid_frame_from(src, HEADER_SIZE) {
-                    log::error!(
-                        "Detected truncated packet (expected {total_frame_len} bytes, found next header at byte {next_header_idx}), purging truncated packet"
-                    );
-                    src.advance(next_header_idx);
-                    continue;
-                }
-
                 src.reserve(total_frame_len - src.len());
                 return Ok(None);
             }
@@ -459,48 +432,6 @@ mod tests {
         assert!(src.is_empty());
     }
 
-    /// Test that a truncated large packet followed by a smaller valid packet still recovers
-    /// the valid packet even when total buffered bytes are less than the truncated packet's declared length.
-    #[test]
-    fn handle_truncated_large_packet_followed_by_small_packet() {
-        let large_packet = protobufs::FromRadio {
-            id: 1,
-            payload_variant: Some(protobufs::from_radio::PayloadVariant::NodeInfo(
-                protobufs::NodeInfo {
-                    num: 12345,
-                    user: Some(protobufs::User {
-                        id: "!00003039".to_string(),
-                        long_name: "Large Node Name For Testing Truncation".to_string(),
-                        short_name: "LNFT".to_string(),
-                        ..Default::default()
-                    }),
-                    ..Default::default()
-                },
-            )),
-        };
-        let small_packet = protobufs::FromRadio {
-            id: 2,
-            payload_variant: None,
-        };
-
-        let encoded_large = format_data_packet(large_packet.encode_to_vec().into()).unwrap();
-        let encoded_small = format_data_packet(small_packet.encode_to_vec().into()).unwrap();
-
-        // Take only 6 bytes of the large packet, so its declared length is much larger than
-        // 6 + encoded_small.data().len().
-        let truncated_large: Vec<u8> = encoded_large.data_vec().into_iter().take(6).collect();
-        assert!(truncated_large.len() + encoded_small.data().len() < encoded_large.data().len());
-
-        let mut codec = MeshtasticCodec::new();
-        let mut src = BytesMut::new();
-        src.extend_from_slice(&truncated_large);
-        src.extend_from_slice(encoded_small.data());
-
-        let packets = decode_all_packets(&mut codec, &mut src);
-        assert_eq!(packets, vec![small_packet]);
-        assert!(src.is_empty());
-    }
-
     /// Test for handling a buffer that ends with a false start (`0x94` without `0xc3` following).
     /// Expected behavior is that the function leaves the byte in the buffer, waiting for the next chunk to resolve the ambiguity.
     #[test]
@@ -622,10 +553,10 @@ mod tests {
         };
         let encoded_valid = format_data_packet(valid_packet.encode_to_vec().into()).unwrap();
 
-        // Malformed packet declaring length 20, containing a standalone 0x94 followed by invalid
+        // Malformed packet declaring length 10, containing a standalone 0x94 followed by invalid
         // protobuf wire bytes (0xff) and then a valid packet starting with [0x94, 0xc3] inside its declared payload range.
         let mut src = BytesMut::new();
-        src.extend_from_slice(&[0x94, 0xc3, 0x00, 20, 0xff, 0x94, 0xff]);
+        src.extend_from_slice(&[0x94, 0xc3, 0x00, 10, 0xff, 0x94, 0xff]);
         src.extend_from_slice(encoded_valid.data());
 
         let mut codec = MeshtasticCodec::new();
@@ -918,13 +849,17 @@ mod tests {
     #[test]
     fn accept_valid_packet_with_unknown_protobuf_field_containing_magic() {
         let mut codec = MeshtasticCodec::new();
-        // FromRadio { id: 1 } plus unknown field 99 (tag 0x9a, 0x06, len 4) containing [0x94, 0xc3, 0x00, 0x00].
+        // FromRadio { id: 1 } plus unknown field 99 (tag 0x9a, 0x06, len 5) containing [0x94, 0xc3, 0x00, 0x00, 0x61],
+        // split right after the embedded complete empty frame [0x94, 0xc3, 0x00, 0x00].
         let mut src = BytesMut::from(
             &[
-                0x94, 0xc3, 0x00, 0x09, 0x08, 0x01, 0x9a, 0x06, 0x04, 0x94, 0xc3, 0x00, 0x00,
+                0x94, 0xc3, 0x00, 0x0a, 0x08, 0x01, 0x9a, 0x06, 0x05, 0x94, 0xc3, 0x00, 0x00,
             ][..],
         );
 
+        assert!(decode_all_packets(&mut codec, &mut src).is_empty());
+
+        src.extend_from_slice(&[0x61]);
         let expected = protobufs::FromRadio {
             id: 1,
             payload_variant: None,
