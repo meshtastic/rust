@@ -6,6 +6,8 @@ use self::wrappers::NodeId;
 
 #[cfg(feature = "bluetooth-le")]
 pub mod ble_handler;
+#[allow(dead_code)]
+pub mod codec;
 pub mod handlers;
 pub mod stream_api;
 pub mod stream_buffer;
