@@ -75,6 +75,26 @@ fn find_plausible_frame_from(src: &[u8], start: usize, end: usize) -> Option<usi
     None
 }
 
+/// Searches `src[start..]` for the earliest `[0x94, 0xc3]` header that begins a
+/// complete, decodable [`FromRadio`] frame.
+fn find_complete_frame_from(src: &[u8], start: usize) -> Option<usize> {
+    let mut idx = start;
+    while idx < src.len() {
+        let Some(rel) = src[idx..]
+            .windows(2)
+            .position(|window| window == HEADER_MAGIC)
+        else {
+            break;
+        };
+        let candidate = idx + rel;
+        if is_valid_frame_at(src, candidate) {
+            return Some(candidate);
+        }
+        idx = candidate + HEADER_MAGIC.len();
+    }
+    None
+}
+
 /// Computes how many bytes to skip when a header at index 0 declares an
 /// oversized payload, preserving any `0x94` or `[0x94, 0xc3]` in the length bytes.
 fn oversized_header_advance(src: &[u8]) -> usize {
@@ -85,6 +105,22 @@ fn oversized_header_advance(src: &[u8]) -> usize {
     } else {
         HEADER_SIZE
     }
+}
+
+/// Returns `true` if `bytes` look like plausible console text output: valid UTF-8
+/// (allowing a trailing incomplete multi-byte character after a non-empty valid prefix)
+/// with no control characters other than `\t`, `\n`, `\r`, or ANSI escape (`\x1b`).
+fn is_plausible_log_text(bytes: &[u8]) -> bool {
+    let valid_prefix = match std::str::from_utf8(bytes) {
+        Ok(s) => s,
+        Err(err) if err.error_len().is_none() && err.valid_up_to() > 0 => {
+            std::str::from_utf8(&bytes[..err.valid_up_to()]).unwrap_or("")
+        }
+        Err(_) => return false,
+    };
+    valid_prefix
+        .chars()
+        .all(|c| !c.is_control() || matches!(c, '\t' | '\n' | '\r' | '\x1b'))
 }
 
 /// Validates payload size and writes the 4-byte wire header into `dst`.
@@ -135,6 +171,47 @@ impl MeshtasticCodec {
         Some(Frame::RadioLog(line))
     }
 
+    /// Clears `self.log_line` if it contains non-text binary sync noise rather than
+    /// plausible console text.
+    fn discard_non_text_log_buffer(&mut self) {
+        if !self.log_line.is_empty() && !is_plausible_log_text(&self.log_line) {
+            log::debug!(
+                "Discarding {} non-text sync bytes from log buffer",
+                self.log_line.len()
+            );
+            self.log_line.clear();
+        }
+    }
+
+    /// Flushes buffered log bytes upon hitting [`MAX_LOG_LINE_SIZE`], retaining any
+    /// trailing incomplete multi-byte UTF-8 sequence (1-3 bytes) for the next chunk
+    /// so characters straddling the limit are not corrupted into `U+FFFD`.
+    fn take_bounded_log_frame(&mut self) -> Option<Frame> {
+        if self.log_line.is_empty() {
+            return None;
+        }
+
+        let trailing_incomplete_len = self
+            .log_line
+            .utf8_chunks()
+            .last()
+            .map(|chunk| chunk.invalid())
+            .filter(|invalid| {
+                matches!(std::str::from_utf8(invalid), Err(err) if err.error_len().is_none())
+            })
+            .map_or(0, <[u8]>::len);
+
+        let split_at = if trailing_incomplete_len < self.log_line.len() {
+            self.log_line.len() - trailing_incomplete_len
+        } else {
+            self.log_line.len()
+        };
+
+        let line = String::from_utf8_lossy(&self.log_line[..split_at]).into_owned();
+        self.log_line.drain(..split_at);
+        Some(Frame::RadioLog(line))
+    }
+
     /// Consumes up to `max_len` non-packet bytes from the front of `src`,
     /// buffering into `self.log_line` and returning a [`Frame::RadioLog`] as soon
     /// as a newline (`\n`) is encountered or [`MAX_LOG_LINE_SIZE`] is reached.
@@ -152,7 +229,7 @@ impl MeshtasticCodec {
             } else if b != b'\r' {
                 self.log_line.push(b);
                 if self.log_line.len() >= MAX_LOG_LINE_SIZE {
-                    completed_line = self.take_log_frame();
+                    completed_line = self.take_bounded_log_frame();
                     break;
                 }
             }
@@ -217,6 +294,8 @@ impl Decoder for MeshtasticCodec {
                 continue;
             }
 
+            self.discard_non_text_log_buffer();
+
             let total_frame_len = HEADER_SIZE + packet_len;
             if src.len() < total_frame_len {
                 src.reserve(total_frame_len - src.len());
@@ -249,16 +328,32 @@ impl Decoder for MeshtasticCodec {
     }
 
     fn decode_eof(&mut self, src: &mut BytesMut) -> Result<Option<Self::Item>, Self::Error> {
-        if let Some(frame) = self.decode(src)? {
-            return Ok(Some(frame));
-        }
+        loop {
+            if let Some(frame) = self.decode(src)? {
+                return Ok(Some(frame));
+            }
 
-        if !src.is_empty() {
-            log::debug!("Discarding {} trailing incomplete bytes at EOF", src.len());
-            src.clear();
-        }
+            if src.len() >= HEADER_SIZE && src[..HEADER_MAGIC.len()] == HEADER_MAGIC {
+                // At EOF no more bytes will arrive, so an incomplete frame at index 0 is
+                // definitively truncated. Advance directly to the earliest complete valid
+                // frame so recoverable packets before EOF are still emitted.
+                if let Some(next_header_idx) = find_complete_frame_from(src, HEADER_SIZE) {
+                    log::warn!(
+                        "Truncated packet at EOF; recovering next frame at index {next_header_idx}"
+                    );
+                    src.advance(next_header_idx);
+                    continue;
+                }
+            }
 
-        Ok(self.take_log_frame())
+            if !src.is_empty() {
+                log::debug!("Discarding {} trailing incomplete bytes at EOF", src.len());
+                src.clear();
+            }
+
+            self.discard_non_text_log_buffer();
+            return Ok(self.take_log_frame());
+        }
     }
 }
 
@@ -485,6 +580,7 @@ mod tests {
         src.extend_from_slice(encoded_packet_2.data());
         assert_eq!(decode_all_packets(&mut codec, &mut src), vec![packet_2]);
         assert!(src.is_empty());
+        assert!(codec.log_line.is_empty());
     }
 
     /// Test for processing a large packet that spans multiple buffer chunks.
@@ -882,6 +978,142 @@ mod tests {
     }
 
     #[test]
+    fn bound_log_line_preserves_multibyte_utf8_at_boundary() {
+        let mut codec = MeshtasticCodec::new();
+        let mut data = vec![b'a'; MAX_LOG_LINE_SIZE - 2];
+        // 4-byte emoji '🐝' ([0xF0, 0x9F, 0x90, 0x9D]) straddles the MAX_LOG_LINE_SIZE boundary.
+        data.extend_from_slice("🐝 end\n".as_bytes());
+        let mut src = BytesMut::from(&data[..]);
+
+        let first = codec.decode(&mut src).unwrap();
+        assert_eq!(
+            first,
+            Some(Frame::RadioLog("a".repeat(MAX_LOG_LINE_SIZE - 2)))
+        );
+
+        let second = codec.decode(&mut src).unwrap();
+        assert_eq!(second, Some(Frame::RadioLog("🐝 end".to_string())));
+        assert_eq!(codec.decode(&mut src).unwrap(), None);
+        assert!(src.is_empty());
+        assert!(codec.log_line.is_empty());
+    }
+
+    #[test]
+    fn discard_binary_sync_noise_before_packet_without_polluting_logs() {
+        let payload_variant =
+            protobufs::from_radio::PayloadVariant::MyInfo(protobufs::MyNodeInfo::default());
+        let (valid_packet, packet_data) = mock_encoded_from_radio_packet(payload_variant, 55);
+        let encoded_valid = format_data_packet(packet_data.into()).unwrap();
+
+        // Case 1: Single-chunk mid-packet binary garbage before the first valid packet header.
+        let mut codec = MeshtasticCodec::new();
+        let mut src = BytesMut::new();
+        src.extend_from_slice(&[0xff, 0x00, 0xfe, 0x01]);
+        src.extend_from_slice(encoded_valid.data());
+        src.extend_from_slice(b"Clean radio log\n");
+
+        let mut frames = Vec::new();
+        while let Some(frame) = codec.decode(&mut src).unwrap() {
+            frames.push(frame);
+        }
+
+        assert_eq!(
+            frames,
+            vec![
+                Frame::Packet(valid_packet.clone()),
+                Frame::RadioLog("Clean radio log".to_string()),
+            ]
+        );
+        assert!(src.is_empty());
+        assert!(codec.log_line.is_empty());
+
+        // Case 2: Multi-chunk binary sync noise arriving in separate chunks before the packet header.
+        let mut codec = MeshtasticCodec::new();
+        let mut src = BytesMut::from(&[0xff, 0x00][..]);
+        assert_eq!(codec.decode(&mut src).unwrap(), None);
+
+        src.extend_from_slice(&[0xfe, 0x01]);
+        assert_eq!(codec.decode(&mut src).unwrap(), None);
+
+        src.extend_from_slice(encoded_valid.data());
+        assert_eq!(
+            codec.decode(&mut src).unwrap(),
+            Some(Frame::Packet(valid_packet))
+        );
+        assert!(codec.log_line.is_empty());
+
+        src.extend_from_slice(b"Clean radio log\n");
+        assert_eq!(
+            codec.decode(&mut src).unwrap(),
+            Some(Frame::RadioLog("Clean radio log".to_string()))
+        );
+        assert!(src.is_empty());
+        assert!(codec.log_line.is_empty());
+    }
+
+    #[test]
+    fn preserve_ansi_and_partial_utf8_log_before_packet() {
+        let payload_variant =
+            protobufs::from_radio::PayloadVariant::MyInfo(protobufs::MyNodeInfo::default());
+        let (valid_packet, packet_data) = mock_encoded_from_radio_packet(payload_variant, 77);
+        let encoded_valid = format_data_packet(packet_data.into()).unwrap();
+
+        let mut codec = MeshtasticCodec::new();
+        let mut src = BytesMut::from(&b"\x1b[32mINFO | Router: \xE2\x82"[..]);
+        assert_eq!(codec.decode(&mut src).unwrap(), None);
+
+        // Complete the '€' ([0xE2, 0x82, 0xAC]), interleave a packet before '\n', then finish the ANSI line.
+        src.extend_from_slice(&[0xAC]);
+        src.extend_from_slice(encoded_valid.data());
+        src.extend_from_slice(b" ok\x1b[0m\n");
+
+        let mut frames = Vec::new();
+        while let Some(frame) = codec.decode(&mut src).unwrap() {
+            frames.push(frame);
+        }
+
+        assert_eq!(
+            frames,
+            vec![
+                Frame::Packet(valid_packet),
+                Frame::RadioLog("\x1b[32mINFO | Router: € ok\x1b[0m".to_string()),
+            ]
+        );
+        assert!(src.is_empty());
+        assert!(codec.log_line.is_empty());
+    }
+
+    #[test]
+    fn decode_eof_recovers_valid_frame_after_truncated_packet() {
+        let valid_packet = protobufs::FromRadio {
+            id: 42,
+            payload_variant: Some(protobufs::from_radio::PayloadVariant::MyInfo(
+                protobufs::MyNodeInfo::default(),
+            )),
+        };
+        let encoded_valid = format_data_packet(valid_packet.encode_to_vec().into()).unwrap();
+
+        let mut codec = MeshtasticCodec::new();
+        let mut src = BytesMut::new();
+        // Two consecutive truncated packets declaring 512 and 256 bytes, followed by a complete valid frame.
+        src.extend_from_slice(&[0x94, 0xc3, 0x02, 0x00, 0x08, 0x01]);
+        src.extend_from_slice(&[0x94, 0xc3, 0x01, 0x00, 0x08, 0x02]);
+        src.extend_from_slice(encoded_valid.data());
+
+        // During streaming, decode waits for the declared 512 bytes.
+        assert_eq!(codec.decode(&mut src).unwrap(), None);
+
+        // At EOF, both truncated frames are skipped directly to the complete valid frame.
+        assert_eq!(
+            codec.decode_eof(&mut src).unwrap(),
+            Some(Frame::Packet(valid_packet))
+        );
+        assert_eq!(codec.decode_eof(&mut src).unwrap(), None);
+        assert!(src.is_empty());
+        assert!(codec.log_line.is_empty());
+    }
+
+    #[test]
     fn decode_eof_flushes_log_and_discards_incomplete_data() {
         let mut codec = MeshtasticCodec::new();
 
@@ -899,9 +1131,15 @@ mod tests {
         assert_eq!(codec.decode_eof(&mut src).unwrap(), None);
         assert!(src.is_empty());
 
-        // Trailing incomplete frame is discarded cleanly at EOF without error.
-        let mut src = BytesMut::from(&[0x94, 0xc3, 0x00, 0x10, 0x01, 0x02][..]);
+        // Trailing incomplete frame (including trailing incomplete magic) is discarded cleanly at EOF.
+        let mut src = BytesMut::from(&[0x94, 0xc3, 0x00, 0x10, 0x01, 0x02, 0x94, 0xc3][..]);
         assert_eq!(codec.decode_eof(&mut src).unwrap(), None);
         assert!(src.is_empty());
+
+        // Trailing binary sync noise / false starts at EOF are discarded rather than emitted as RadioLog.
+        let mut src = BytesMut::from(&[0x94, 0x00, 0x94, 0x94, 0x00][..]);
+        assert_eq!(codec.decode_eof(&mut src).unwrap(), None);
+        assert!(src.is_empty());
+        assert!(codec.log_line.is_empty());
     }
 }
