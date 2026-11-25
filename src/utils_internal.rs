@@ -6,7 +6,7 @@ use futures::stream::StreamExt;
 use std::time::Duration;
 use std::time::UNIX_EPOCH;
 
-use rand::{distr::StandardUniform, prelude::Distribution, Rng};
+use rand::{distr::StandardUniform, prelude::Distribution, RngExt};
 #[cfg(feature = "bluetooth-le")]
 use tokio::io::{AsyncReadExt, DuplexStream};
 use tokio_serial::{available_ports, SerialPort, SerialStream};
