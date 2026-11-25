@@ -30,6 +30,9 @@ strum = ["dep:strum"]
 [lints.rust]
 missing_docs = "warn"
 
+[lints.clippy]
+large_enum_variant = "allow"
+
 [[example]]
 name = "basic_serial"
 required-features = ["tokio"]
