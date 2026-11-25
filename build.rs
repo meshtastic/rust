@@ -43,6 +43,7 @@ fn main() -> std::io::Result<()> {
         ".",
         "#[cfg_attr(feature = \"serde\", serde(rename_all = \"snake_case\"))]",
     );
+    config.message_attribute(".", "#[cfg_attr(feature = \"serde\", serde(default))]");
     config.type_attribute(
         ".",
         "#[cfg_attr(feature = \"ts-gen\", derive(specta::Type))]",
